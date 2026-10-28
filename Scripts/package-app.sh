@@ -25,8 +25,12 @@ SIGNING_IDENTITY="${OMNIWM_SIGNING_IDENTITY:-Developer ID Application: Oliver Ni
 NOTARIZE_PROFILE="${OMNIWM_NOTARIZE_PROFILE:-OmniWM-Notarize}"
 ENTITLEMENTS="$ROOT_DIR/OmniWM.entitlements"
 
-echo "Running release checks..."
-make -C "$ROOT_DIR" release-check
+# Fork: dev builds skip the release checks. The localization check would flag
+# the strings of the compiled-out Ghostty Quake terminal as missing.
+if [ "$SIGN_AND_NOTARIZE" != "dev" ]; then
+  echo "Running release checks..."
+  make -C "$ROOT_DIR" release-check
+fi
 
 echo "Building OmniWM arm64 binary ($CONFIG)..."
 # Fork: GhosttyKit isn't linked, so no Ghostty library path or preflight.

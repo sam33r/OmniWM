@@ -574,13 +574,8 @@ def localized_strings(dump):
 
 
 def compiler_stringsdata():
-    library_dir = subprocess.run(
-        [str(ROOT / "Scripts/ghostty-preflight.sh"), "print-library-dir"],
-        cwd=ROOT, check=True, capture_output=True, text=True,
-    ).stdout.strip()
+    # Fork: GhosttyKit isn't linked, so no Ghostty library path is needed.
     environment = os.environ.copy()
-    library_path = environment.get("LIBRARY_PATH")
-    environment["LIBRARY_PATH"] = library_dir + (f":{library_path}" if library_path else "")
     scratch = ROOT / ".build/localization"
     subprocess.run([
         str(swiftly_bin() / "swift"), "build",
