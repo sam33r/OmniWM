@@ -222,6 +222,35 @@ enum StructuralMutationOutcome: Equatable {
             requestLayoutCommandRelayout(in: workspaceId)
         }
     }
+
+    func pointerHoverScrollIsWithinLimit(
+        _ window: NiriWindow,
+        in workspaceId: WorkspaceDescriptor.ID
+    ) -> Bool {
+        guard let controller,
+              let maxScrollPercent = controller.settings.focus.followsMouseMaxScrollPercent,
+              let engine = controller.niriEngine,
+              engine.singleWindowLayoutContext(in: workspaceId) == nil,
+              let monitor = controller.workspaceManager.monitor(for: workspaceId)
+        else {
+            return true
+        }
+        let geometry = controller.niriInteractionGeometry(for: monitor)
+        let orientation = resolvedOrientation(for: workspaceId, monitor: monitor, engine: engine)
+        let distance = engine.selectionRevealDistance(
+            node: window,
+            context: .init(
+                workspaceId: workspaceId,
+                motion: controller.motionPolicy.snapshot(),
+                workingFrame: geometry.workingFrame,
+                gaps: geometry.innerGap,
+                orientation: orientation
+            ),
+            state: controller.workspaceManager.niriViewportState(for: workspaceId)
+        )
+        let viewportSpan = orientation == .horizontal ? geometry.workingFrame.width : geometry.workingFrame.height
+        return distance <= viewportSpan * CGFloat(maxScrollPercent) / 100
+    }
 }
 
 struct NodeActivationOptions {

@@ -392,6 +392,14 @@ extension NiriLayoutEngine {
             orientation: context.orientation,
             motion: context.motion
         )
+        return withResolvedProjectedPrimarySpans(projectedColumns, context: context, operation)
+    }
+
+    func withResolvedProjectedPrimarySpans<Result>(
+        _ projectedColumns: [NiriProjectedColumn],
+        context: NiriInteractionContext,
+        _ operation: () -> Result
+    ) -> Result {
         let originalSpans = projectedColumns.map {
             context.orientation == .horizontal ? $0.column.cachedWidth : $0.column.cachedHeight
         }

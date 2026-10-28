@@ -59,6 +59,7 @@ Pointer-driven focus and monitor-edge focus/move behavior.
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `followsMouse` | boolean | `false` | Focuses a managed window when the pointer enters it, no click needed. |
+| `followsMouseMaxScrollPercent` *(optional)* | integer | unset | Limits how far focus-follows-mouse may scroll a Niri workspace, like niri's `max-scroll-amount`: hovering a window is ignored when revealing it would scroll the view by more than this percentage of the working area (its width, or its height in vertical orientation). `0` focuses only windows that need no scrolling. Unset means no limit. Values are clamped to `0`–`100`. Keyboard focus, Dwindle workspaces, floating windows, and edge navigation are unaffected. |
 | `edgeNavigationInterval` *(optional)* | float | `1.5` | Seconds before hovering at a Niri edge moves one column, and between further moves while the pointer stays on the edge or preview. Requires `followsMouse`; moving away stops navigation. Values are clamped to `0.25`–`2.0` and rounded to the nearest `0.25`; nonfinite values use `1.5`. |
 | `raiseOnMouseFocus` | boolean | `false` | Also raises the window when focus-follows-mouse focuses it. A tiled window that a visible floating window overlaps from the front is focused without raising. |
 | `lockModifier` | string | `"off"` | Modifier that holds focus in place while pressed: `off`, `option`, `leftOption`, `rightOption`, `command`, `leftCommand`, `rightCommand`, `control`, `leftControl`, `rightControl`, `shift`, `leftShift`, `rightShift`. |

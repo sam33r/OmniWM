@@ -20,8 +20,27 @@ final class FocusSettings {
         return (clamped / edgeNavigationIntervalStep).rounded() * edgeNavigationIntervalStep
     }
 
+    nonisolated static let followsMouseMaxScrollPercentRange = 0 ... 100
+
+    nonisolated static func normalizedFollowsMouseMaxScrollPercent(_ value: Int?) -> Int? {
+        value.map {
+            min(max($0, followsMouseMaxScrollPercentRange.lowerBound), followsMouseMaxScrollPercentRange.upperBound)
+        }
+    }
+
     var followsMouse = FocusSettings.defaults.followsMouse {
         didSet { onChange?() }
+    }
+
+    var followsMouseMaxScrollPercent = FocusSettings.defaults.followsMouseMaxScrollPercent {
+        didSet {
+            let normalized = FocusSettings.normalizedFollowsMouseMaxScrollPercent(followsMouseMaxScrollPercent)
+            guard normalized == followsMouseMaxScrollPercent else {
+                followsMouseMaxScrollPercent = normalized
+                return
+            }
+            onChange?()
+        }
     }
 
     var edgeNavigationInterval = FocusSettings.defaults.edgeNavigationInterval {
@@ -68,7 +87,8 @@ final class FocusSettings {
             moveMouseToFocusedWindow: moveMouseToFocusedWindow,
             followsWindowToMonitor: followsWindowToMonitor,
             crossesMonitorAtEdge: crossesMonitorAtEdge,
-            moveCrossesMonitorAtEdge: moveCrossesMonitorAtEdge
+            moveCrossesMonitorAtEdge: moveCrossesMonitorAtEdge,
+            followsMouseMaxScrollPercent: followsMouseMaxScrollPercent
         )
     }
 
@@ -81,5 +101,6 @@ final class FocusSettings {
         followsWindowToMonitor = focus.followsWindowToMonitor
         crossesMonitorAtEdge = focus.crossesMonitorAtEdge
         moveCrossesMonitorAtEdge = focus.moveCrossesMonitorAtEdge
+        followsMouseMaxScrollPercent = focus.followsMouseMaxScrollPercent
     }
 }

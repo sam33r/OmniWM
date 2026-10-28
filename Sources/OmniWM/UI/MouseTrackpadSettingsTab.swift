@@ -150,6 +150,26 @@ struct MouseTrackpadSettingsTab: View {
                 .id("Raise Window When Focus Follows Mouse")
                 .disabled(!settings.focus.followsMouse)
 
+            Toggle("Limit Scrolling for Mouse Focus", isOn: followsMouseScrollLimitEnabled)
+                .id("Limit Scrolling for Mouse Focus")
+                .disabled(!settings.focus.followsMouse)
+
+            if let maxScrollPercent = settings.focus.followsMouseMaxScrollPercent {
+                SettingsSliderRow(
+                    label: String(localized: "Maximum Mouse Focus Scroll"),
+                    value: followsMouseMaxScrollPercent,
+                    range: 0 ... 100,
+                    step: 5,
+                    valueText: "\(maxScrollPercent)%"
+                )
+                .id("Maximum Mouse Focus Scroll")
+                .disabled(!settings.focus.followsMouse)
+            }
+
+            SettingsCaption(
+                localized: "In Niri, hovering a window doesn't focus it if revealing it would scroll the view by more than this share of the screen. At 0%, only windows that need no scrolling get focus."
+            )
+
             SettingsSliderRow(
                 label: String(localized: "Edge navigation interval"),
                 value: Bindable(settings.focus).edgeNavigationInterval,
@@ -179,5 +199,19 @@ struct MouseTrackpadSettingsTab: View {
             )
         }
         .id("Focus Follows Mouse")
+    }
+
+    private var followsMouseScrollLimitEnabled: Binding<Bool> {
+        Binding(
+            get: { settings.focus.followsMouseMaxScrollPercent != nil },
+            set: { settings.focus.followsMouseMaxScrollPercent = $0 ? 0 : nil }
+        )
+    }
+
+    private var followsMouseMaxScrollPercent: Binding<Double> {
+        Binding(
+            get: { Double(settings.focus.followsMouseMaxScrollPercent ?? 0) },
+            set: { settings.focus.followsMouseMaxScrollPercent = Int($0.rounded()) }
+        )
     }
 }

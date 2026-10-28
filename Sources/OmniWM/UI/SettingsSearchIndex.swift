@@ -229,6 +229,18 @@ enum SettingsSearchIndex {
             tab: "mouse",
             anchor: "Raise Window When Focus Follows Mouse"
         ),
+        setting(
+            "Limit Scrolling for Mouse Focus",
+            section: .mouseTrackpad,
+            tab: "mouse",
+            anchor: "Limit Scrolling for Mouse Focus"
+        ),
+        setting(
+            "Maximum Mouse Focus Scroll",
+            section: .mouseTrackpad,
+            tab: "mouse",
+            anchor: "Maximum Mouse Focus Scroll"
+        ),
         setting("Focus Lock Modifier", section: .mouseTrackpad, tab: "mouse", anchor: "Focus Lock Modifier"),
         setting("Edge navigation interval", section: .mouseTrackpad, tab: "mouse", anchor: "Edge navigation interval"),
         setting("Quake Terminal", section: .quakeTerminal, anchor: "Quake Terminal"),

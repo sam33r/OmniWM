@@ -122,7 +122,9 @@ extension MouseEventHandler {
         ) else { return }
         let token = focusFollowsMouseToken(for: target)
 
-        guard token != controller.workspaceManager.nativeManagedFocusToken else { return }
+        guard token != controller.workspaceManager.nativeManagedFocusToken,
+              focusFollowsMouseScrollIsWithinLimit(target)
+        else { return }
         controller.focusPolicyEngine.performIfFocusFollowsMouseAllowed {
             state.lastFocusFollowsMouseTime = now
             activateFocusFollowsMouseTarget(target)
@@ -233,6 +235,11 @@ extension MouseEventHandler {
                 return .dwindle(workspaceId: entry.workspaceId, token: entry.token)
             }
         }
+    }
+
+    private func focusFollowsMouseScrollIsWithinLimit(_ target: FocusFollowsMouseTarget) -> Bool {
+        guard case let .niri(workspaceId, window) = target else { return true }
+        return controller?.niriLayoutHandler.pointerHoverScrollIsWithinLimit(window, in: workspaceId) ?? true
     }
 
     private func focusFollowsMouseToken(for target: FocusFollowsMouseTarget) -> WindowToken {
