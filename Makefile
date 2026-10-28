@@ -46,9 +46,9 @@ lint-fix: check-tool-versions
 	"$(SWIFTLINT)" lint
 
 # Fork: GhosttyKit isn't linked (the Quake terminal is compiled out), so there is
-# nothing to preflight.
+# nothing to preflight. --disable-sandbox lets agents build from a sandboxed shell.
 build:
-	"$(SWIFT)" build --arch arm64
+	"$(SWIFT)" build --arch arm64 --disable-sandbox
 
 localization-check: build
 	python3 Scripts/localization.py check

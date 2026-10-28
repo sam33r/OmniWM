@@ -18,7 +18,9 @@ case "$APP_NAME" in
     ;;
 esac
 APP_DIR="$ROOT_DIR/dist/$APP_NAME.app"
-SWIFT_BUILD_ARGS=(-c "$CONFIG" --arch arm64)
+# Fork: --disable-sandbox so agents whose shell already runs in a sandbox can
+# build (SwiftPM's manifest sandbox can't nest inside another one).
+SWIFT_BUILD_ARGS=(-c "$CONFIG" --arch arm64 --disable-sandbox)
 
 # Signing identity and notarization profile
 SIGNING_IDENTITY="${OMNIWM_SIGNING_IDENTITY:-Developer ID Application: Oliver Nikolic (VF8LDJRGFM)}"
