@@ -20,6 +20,7 @@ extension SettingsStore {
            let conflict = GestureSettingsValidation.conflict(
                gestures: candidate,
                orientationOverrides: self.monitors.orientationOverrides,
+               defaultOrientation: self.monitors.defaultOrientation,
                monitors: monitors
            )
         {
@@ -47,11 +48,28 @@ extension SettingsStore {
         if let conflict = GestureSettingsValidation.conflict(
             gestures: gestures.export(),
             orientationOverrides: overrides,
+            defaultOrientation: self.monitors.defaultOrientation,
             monitors: monitors
         ) {
             return conflict
         }
         self.monitors.orientationOverrides = overrides
+        return nil
+    }
+
+    func updateDefaultMonitorOrientation(
+        _ orientation: MonitorOrientationMode,
+        monitors: [Monitor]
+    ) -> TrackpadGestureConflict? {
+        if let conflict = GestureSettingsValidation.conflict(
+            gestures: gestures.export(),
+            orientationOverrides: self.monitors.orientationOverrides,
+            defaultOrientation: orientation,
+            monitors: monitors
+        ) {
+            return conflict
+        }
+        self.monitors.defaultOrientation = orientation
         return nil
     }
 }

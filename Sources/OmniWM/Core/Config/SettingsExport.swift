@@ -10,6 +10,7 @@ struct SettingsExport: Equatable {
     var mouseWarp: MouseWarp
     var routing: Routing
     var monitorRanking: [OutputId]
+    var defaultMonitorOrientation: MonitorOrientationMode = .auto
     var gaps: Gaps
 
     var niri: Niri

@@ -176,6 +176,7 @@ enum SettingsSearchIndex {
             anchor: "Constrain Cursor to Arrangement"
         ),
         setting("Monitor Orientation", section: .monitors, tab: "behavior", anchor: "Monitor Orientation"),
+        setting("Default Orientation", section: .monitors, tab: "behavior", anchor: "Default Orientation"),
         setting("Orientation Override", section: .monitors, tab: "behavior", anchor: "Orientation Override"),
         setting("Reset to Auto", section: .monitors, tab: "behavior", anchor: "Reset to Auto"),
         setting("Overview", section: .overview, anchor: "Overview"),

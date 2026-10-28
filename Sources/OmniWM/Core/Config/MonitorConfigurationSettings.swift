@@ -34,6 +34,10 @@ final class MonitorConfigurationSettings {
         didSet { onChange?() }
     }
 
+    var defaultOrientation: MonitorOrientationMode = .auto {
+        didSet { onChange?() }
+    }
+
     func export() -> SettingsExport.Routing {
         SettingsExport.Routing(
             mode: routingMode,
@@ -46,12 +50,11 @@ final class MonitorConfigurationSettings {
     }
 
     func effectiveOrientation(for monitor: Monitor) -> Monitor.Orientation {
-        if let override = orientationSettings(for: monitor),
-           let orientation = override.orientation
-        {
-            return orientation
-        }
-        return monitor.autoOrientation
+        MonitorOrientationSettings.effectiveOrientation(
+            for: monitor,
+            overrides: orientationOverrides,
+            defaultOrientation: defaultOrientation
+        )
     }
 
     func updateOrientationSettings(_ settings: MonitorOrientationSettings, for monitor: Monitor) {

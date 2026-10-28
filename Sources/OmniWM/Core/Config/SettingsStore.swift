@@ -445,6 +445,7 @@ extension SettingsStore {
 
         appRules = export.appRules
         monitors.orientationOverrides = export.monitorOrientationSettings
+        monitors.defaultOrientation = export.defaultMonitorOrientation
         niri.monitorOverrides = export.monitorNiriSettings
 
         dwindle.apply(export.dwindle)

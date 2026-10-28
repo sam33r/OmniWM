@@ -153,6 +153,33 @@ final class OverviewGestureSettingsTests: XCTestCase {
         }
     }
 
+    func testDefaultOrientationIsValidatedLikeAnOverride() throws {
+        let landscape = makeMonitor(orientation: .horizontal)
+        let portrait = makeMonitor(orientation: .vertical)
+        var export: SettingsExport?
+        withSettings { settings in
+            configureColumnAndOverview(settings)
+            var changes = 0
+            settings.monitors.onChange = { changes += 1 }
+
+            XCTAssertNotNil(settings.updateDefaultMonitorOrientation(.vertical, monitors: [landscape]))
+            XCTAssertEqual(settings.monitors.defaultOrientation, .auto)
+            XCTAssertEqual(changes, 0)
+
+            XCTAssertNil(settings.updateDefaultMonitorOrientation(.horizontal, monitors: [portrait]))
+            XCTAssertEqual(settings.monitors.effectiveOrientation(for: portrait), .horizontal)
+            XCTAssertEqual(changes, 1)
+            XCTAssertNotNil(settings.updateMonitorOrientation(.vertical, for: portrait, monitors: [portrait]))
+            XCTAssertTrue(settings.monitors.orientationOverrides.isEmpty)
+            export = settings.toExport()
+        }
+
+        var loaded = try XCTUnwrap(export)
+        XCTAssertNoThrow(try GestureSettingsValidation.validate(loaded, monitorProvider: { [portrait] }))
+        loaded.defaultMonitorOrientation = .auto
+        XCTAssertThrowsError(try GestureSettingsValidation.validate(loaded, monitorProvider: { [portrait] }))
+    }
+
     func testDisableThenReassignRemainsPossible() {
         withSettings { settings in
             let monitors = [makeMonitor(orientation: .vertical)]

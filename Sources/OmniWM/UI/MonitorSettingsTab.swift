@@ -270,6 +270,8 @@ struct MonitorSettingsTab: View {
         .id("Cross-Monitor Behavior")
 
         Section("Monitor Orientation") {
+            DefaultOrientationPicker(settings: settings, controller: controller)
+
             if let monitor = selectedConnectedMonitor,
                let displayLabel = displayLabels[monitor.id]
             {
@@ -398,6 +400,41 @@ private struct MonitorBadge: View {
     }
 }
 
+private struct DefaultOrientationPicker: View {
+    @Bindable var settings: SettingsStore
+    @Bindable var controller: WMController
+    @State private var rejectedGestureConflict: TrackpadGestureConflict?
+
+    var body: some View {
+        Picker("Default Orientation", selection: Binding(
+            get: { settings.monitors.defaultOrientation },
+            set: { newValue in
+                rejectedGestureConflict = settings.updateDefaultMonitorOrientation(
+                    newValue,
+                    monitors: controller.workspaceManager.monitors
+                )
+                guard rejectedGestureConflict == nil else { return }
+                controller.updateMonitorOrientations()
+            }
+        )) {
+            Text("Auto").tag(MonitorOrientationMode.auto)
+            Text("Horizontal").tag(MonitorOrientationMode.horizontal)
+            Text("Vertical").tag(MonitorOrientationMode.vertical)
+        }
+        .id("Default Orientation")
+        .pickerStyle(.segmented)
+
+        SettingsCaption(
+            localized: "Used by displays without an orientation override. Auto makes portrait displays vertical."
+        )
+
+        if let conflict = rejectedGestureConflict {
+            Label(conflict.localizedDescription, systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+        }
+    }
+}
+
 private struct SelectedMonitorDetails: View {
     @Bindable var settings: SettingsStore
     @Bindable var controller: WMController
@@ -417,6 +454,7 @@ private struct SelectedMonitorDetails: View {
         rejectedGestureConflict ?? GestureSettingsValidation.conflict(
             gestures: settings.gestures.export(),
             orientationOverrides: settings.monitors.orientationOverrides,
+            defaultOrientation: settings.monitors.defaultOrientation,
             monitors: controller.workspaceManager.monitors
         )
     }

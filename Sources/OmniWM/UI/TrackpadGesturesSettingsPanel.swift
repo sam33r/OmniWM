@@ -36,6 +36,7 @@ struct TrackpadGesturesSettingsPanel: View {
         }
         .onChange(of: settings.gestures.export()) { _, _ in refreshProposal() }
         .onChange(of: settings.monitors.orientationOverrides) { _, _ in refreshProposal() }
+        .onChange(of: settings.monitors.defaultOrientation) { _, _ in refreshProposal() }
         .onChange(of: monitors) { _, _ in refreshProposal() }
         .onChange(of: editor.proposal?.edit) { previous, edit in
             focusedProposal = edit?.action

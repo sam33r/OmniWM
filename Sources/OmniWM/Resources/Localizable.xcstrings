@@ -173016,6 +173016,12 @@
     },
     "Live opacity needs a new Kitty Quake session. Close the Kitty panel when ready, then reopen it; OmniWM will not restart its shells." : {
 
+    },
+    "Default Orientation" : {
+
+    },
+    "Used by displays without an orientation override. Auto makes portrait displays vertical." : {
+
     }
   },
   "version" : "1.0"

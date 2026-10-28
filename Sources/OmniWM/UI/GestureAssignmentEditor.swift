@@ -201,12 +201,14 @@ struct GestureAssignmentProposal {
 private struct GestureAssignmentContext: Equatable {
     let gestures: SettingsExport.Gestures
     let orientationOverrides: [MonitorOrientationSettings]
+    let defaultOrientation: MonitorOrientationMode
     let monitors: [Monitor]
 
     @MainActor
     init(settings: SettingsStore, monitors: [Monitor]) {
         gestures = settings.gestures.export()
         orientationOverrides = settings.monitors.orientationOverrides
+        defaultOrientation = settings.monitors.defaultOrientation
         self.monitors = monitors
     }
 
@@ -214,6 +216,7 @@ private struct GestureAssignmentContext: Equatable {
         GestureSettingsValidation.conflict(
             gestures: candidate,
             orientationOverrides: orientationOverrides,
+            defaultOrientation: defaultOrientation,
             monitors: monitors
         )
     }

@@ -50,7 +50,8 @@ struct CanonicalTOMLConfig: Codable, Equatable {
     }
 
     struct Monitors: Codable, Equatable {
-        var ranking: [OutputId]
+        var ranking: [OutputId]?
+        var defaultOrientation: MonitorOrientationMode?
     }
 
     struct Appearance: Codable, Equatable {
@@ -140,7 +141,12 @@ extension CanonicalTOMLConfig {
         focus.edgeNavigationInterval = FocusSettings.normalizedEdgeNavigationInterval(focus.edgeNavigationInterval)
         mouseWarp = export.mouseWarp
         routing = export.routing
-        monitors = export.monitorRanking.isEmpty ? nil : Monitors(ranking: export.monitorRanking)
+        monitors = export.monitorRanking.isEmpty && export.defaultMonitorOrientation == .auto
+            ? nil
+            : Monitors(
+                ranking: export.monitorRanking.isEmpty ? nil : export.monitorRanking,
+                defaultOrientation: export.defaultMonitorOrientation
+            )
         gaps = export.gaps
         niri = export.niri
         dwindle = export.dwindle
@@ -174,6 +180,7 @@ extension CanonicalTOMLConfig {
             mouseWarp: mouseWarp,
             routing: routing,
             monitorRanking: monitors?.ranking ?? [],
+            defaultMonitorOrientation: monitors?.defaultOrientation ?? .auto,
             gaps: gaps,
             niri: niri,
             workspaceConfigurations: workspaces,
