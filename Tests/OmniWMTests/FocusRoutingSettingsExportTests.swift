@@ -20,7 +20,8 @@ final class FocusRoutingSettingsExportTests: XCTestCase {
             "moveMouseToFocusedWindow": .boolean(false),
             "followsWindowToMonitor": .boolean(false),
             "crossesMonitorAtEdge": .boolean(false),
-            "moveCrossesMonitorAtEdge": .boolean(false)
+            "moveCrossesMonitorAtEdge": .boolean(false),
+            "moveToMonitorWrapsAround": .boolean(false)
         ]))
         XCTAssertEqual(tree["mouseWarp"], .table([
             "margin": .integer(1),
@@ -85,6 +86,32 @@ final class FocusRoutingSettingsExportTests: XCTestCase {
             }
             XCTAssertEqual(context.codingPath.map(\.stringValue), ["focus", "edgeNavigationInterval"])
         }
+    }
+
+    func testMoveToMonitorWrapAroundIsOptionalAndRoundTrips() throws {
+        XCTAssertFalse(SettingsExport.defaults().focus.moveToMonitorWrapsAround)
+        for wraps in [false, true] {
+            var export = SettingsExport.defaults()
+            export.focus.moveToMonitorWrapsAround = wraps
+            let data = try SettingsTOMLCodec.encode(export)
+            let result = try SettingsTOMLCodec.decodeForLoad(data)
+            XCTAssertEqual(result.export, export)
+            XCTAssertNil(result.migration)
+            XCTAssertTrue(SettingsTOMLCodec.unknownKeyPaths(in: data).isEmpty)
+        }
+
+        let source = String(decoding: try SettingsTOMLCodec.encode(.defaults()), as: UTF8.self)
+        let missing = try removing(key: "moveToMonitorWrapsAround", from: "focus", in: source)
+        let result = try SettingsTOMLCodec.decodeForLoad(Data(missing.utf8))
+        XCTAssertFalse(result.export.focus.moveToMonitorWrapsAround)
+        XCTAssertNil(result.migration)
+        XCTAssertNil(result.migratedData)
+
+        let malformed = source.replacingOccurrences(
+            of: "moveToMonitorWrapsAround = false",
+            with: "moveToMonitorWrapsAround = 1"
+        )
+        XCTAssertThrowsError(try SettingsTOMLCodec.decode(Data(malformed.utf8)))
     }
 
     func testExistingSectionFieldsRemainRequired() throws {

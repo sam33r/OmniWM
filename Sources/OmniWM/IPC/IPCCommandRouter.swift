@@ -177,7 +177,11 @@ final class IPCCommandRouter {
         guard let token = controller.workspaceManager.selectedManagedToken,
               let workspaceId = controller.workspaceManager.workspace(for: token),
               let monitorId = controller.workspaceManager.monitorId(for: workspaceId),
-              controller.workspaceManager.adjacentMonitor(from: monitorId, direction: direction) != nil
+              controller.workspaceManager.adjacentMonitor(
+                  from: monitorId,
+                  direction: direction,
+                  wrapAround: controller.settings.focus.moveToMonitorWrapsAround
+              ) != nil
         else { return .notFound }
         return moveFocusedWindow(using: .workspace(.moveToMonitor(direction)))
     }

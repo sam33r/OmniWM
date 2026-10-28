@@ -170,12 +170,19 @@ enum SettingsSearchIndex {
         ),
         setting("Follow Window to Monitor", section: .monitors, tab: "behavior", anchor: "Follow Window to Monitor"),
         setting(
+            "Move Window to Monitor Wraps Around",
+            section: .monitors,
+            tab: "behavior",
+            anchor: "Move Window to Monitor Wraps Around"
+        ),
+        setting(
             "Constrain Cursor to Arrangement",
             section: .monitors,
             tab: "behavior",
             anchor: "Constrain Cursor to Arrangement"
         ),
         setting("Monitor Orientation", section: .monitors, tab: "behavior", anchor: "Monitor Orientation"),
+        setting("Default Orientation", section: .monitors, tab: "behavior", anchor: "Default Orientation"),
         setting("Orientation Override", section: .monitors, tab: "behavior", anchor: "Orientation Override"),
         setting("Reset to Auto", section: .monitors, tab: "behavior", anchor: "Reset to Auto"),
         setting("Overview", section: .overview, anchor: "Overview"),

@@ -9,6 +9,7 @@ extension SettingsStore {
             mouseWarp: pointer.export(),
             routing: monitors.export(),
             monitorRanking: monitors.ranking,
+            defaultMonitorOrientation: monitors.defaultOrientation,
             gaps: gaps.export(),
             niri: niri.export(),
             workspaceConfigurations: workspaces.configurations,

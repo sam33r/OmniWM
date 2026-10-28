@@ -3,6 +3,20 @@
 
 import CoreGraphics
 
+enum MonitorOrientationMode: String, Codable, CaseIterable {
+    case auto
+    case horizontal
+    case vertical
+
+    var fixedOrientation: Monitor.Orientation? {
+        switch self {
+        case .auto: nil
+        case .horizontal: .horizontal
+        case .vertical: .vertical
+        }
+    }
+}
+
 struct MonitorOrientationSettings: MonitorSettingsType {
     var id: String {
         DisplayUUID.canonical(monitorDisplayUUID) ??
@@ -50,5 +64,18 @@ struct MonitorOrientationSettings: MonitorSettingsType {
             displayIdKey: .monitorDisplayId
         )
         try container.encodeIfPresent(orientation, forKey: .orientation)
+    }
+}
+
+extension MonitorOrientationSettings {
+    /// A per-monitor override wins, then the global default; `auto` follows the display's aspect ratio.
+    static func effectiveOrientation(
+        for monitor: Monitor,
+        overrides: [MonitorOrientationSettings],
+        defaultOrientation: MonitorOrientationMode
+    ) -> Monitor.Orientation {
+        MonitorSettingsStore.get(for: monitor, in: overrides)?.orientation
+            ?? defaultOrientation.fixedOrientation
+            ?? monitor.autoOrientation
     }
 }

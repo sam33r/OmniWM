@@ -41,6 +41,7 @@ enum GestureSettingsValidation {
         if let conflict = conflict(
             gestures: export.gestures,
             orientationOverrides: export.monitorOrientationSettings,
+            defaultOrientation: export.defaultMonitorOrientation,
             monitors: export.gestures.overviewGestureEnabled == true ? monitorProvider() : []
         ) {
             throw conflict
@@ -50,6 +51,7 @@ enum GestureSettingsValidation {
     static func conflict(
         gestures: SettingsExport.Gestures,
         orientationOverrides: [MonitorOrientationSettings],
+        defaultOrientation: MonitorOrientationMode,
         monitors: [Monitor]
     ) -> TrackpadGestureConflict? {
         let config = TrackpadGestureIntent.Config(
@@ -82,8 +84,11 @@ enum GestureSettingsValidation {
             )
         }
         for monitor in monitors {
-            let orientation = MonitorSettingsStore.get(for: monitor, in: orientationOverrides)?.orientation
-                ?? monitor.autoOrientation
+            let orientation = MonitorOrientationSettings.effectiveOrientation(
+                for: monitor,
+                overrides: orientationOverrides,
+                defaultOrientation: defaultOrientation
+            )
             if let other = TrackpadGestureIntent.overviewConflict(
                 config,
                 columnScrollAxis: orientation == .horizontal ? .horizontal : .vertical

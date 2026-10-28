@@ -5,6 +5,7 @@ import ApplicationServices
 import CoreGraphics
 import Foundation
 @testable import OmniWM
+import OmniWMIPC
 import XCTest
 
 @MainActor
@@ -641,6 +642,126 @@ final class WorkspaceMoveFocusBehaviorTests: XCTestCase {
         XCTAssertEqual(manager.interactionMonitorId, fixture.sourceMonitor.id)
         XCTAssertTrue(fixture.focusRecorder.focusedTokens.isEmpty)
         XCTAssertNil(controller.layoutRefreshController.layoutState.activeRefresh)
+        XCTAssertNil(controller.layoutRefreshController.layoutState.pendingRefresh)
+    }
+
+    func testDirectMonitorMoveWrapsAtEdgeOnlyWhenEnabledAndHonorsFollowSetting() throws {
+        for wraps in [false, true] {
+            for followsFocus in [false, true] {
+                let fixture = try makeMonitorMoveFixture(layout: .niri, followsFocus: followsFocus)
+                let controller = fixture.controller
+                let manager = controller.workspaceManager
+                controller.settings.focus.moveToMonitorWrapsAround = wraps
+                let pid = pid_t(488_300 + (wraps ? 10 : 0) + (followsFocus ? 1 : 0))
+                let fallback = try addManagedWindow(
+                    pid: pid,
+                    windowId: 1,
+                    to: fixture.sourceWorkspaceId,
+                    controller: controller
+                )
+                let moved = try addManagedWindow(
+                    pid: pid,
+                    windowId: 2,
+                    to: fixture.sourceWorkspaceId,
+                    controller: controller
+                )
+                try select(
+                    moved,
+                    in: fixture.sourceWorkspaceId,
+                    on: fixture.sourceMonitor,
+                    controller: controller,
+                    focusRecorder: fixture.focusRecorder
+                )
+                controller.layoutRefreshController.resetState()
+                let worldSeq = manager.worldSeq
+
+                try withBlockedLayoutRefreshes(
+                    controller: controller,
+                    affectedWorkspaceId: fixture.sourceWorkspaceId
+                ) {
+                    XCTAssertEqual(
+                        controller.commandHandler.performCommand(.workspace(.moveToMonitor(.left))),
+                        .executed
+                    )
+                }
+
+                XCTAssertEqual(manager.workspace(for: fallback.id), fixture.sourceWorkspaceId)
+                guard wraps else {
+                    XCTAssertEqual(manager.workspace(for: moved.id), fixture.sourceWorkspaceId)
+                    XCTAssertEqual(manager.worldSeq, worldSeq)
+                    XCTAssertEqual(manager.interactionMonitorId, fixture.sourceMonitor.id)
+                    continue
+                }
+                XCTAssertEqual(manager.workspace(for: moved.id), fixture.activeTargetWorkspaceId)
+                XCTAssertEqual(
+                    manager.interactionMonitorId,
+                    followsFocus ? fixture.targetMonitor.id : fixture.sourceMonitor.id
+                )
+            }
+        }
+    }
+
+    func testIPCMonitorMoveWrapsAtEdgeOnlyWhenEnabled() throws {
+        for wraps in [false, true] {
+            let fixture = try makeMonitorMoveFixture(layout: .dwindle, followsFocus: false)
+            let controller = fixture.controller
+            controller.settings.focus.moveToMonitorWrapsAround = wraps
+            let window = try addManagedWindow(
+                pid: pid_t(488_400 + (wraps ? 1 : 0)),
+                windowId: 1,
+                to: fixture.activeTargetWorkspaceId,
+                controller: controller
+            )
+            try select(
+                window,
+                in: fixture.activeTargetWorkspaceId,
+                on: fixture.targetMonitor,
+                controller: controller,
+                focusRecorder: fixture.focusRecorder
+            )
+            controller.layoutRefreshController.resetState()
+            let router = IPCCommandRouter(controller: controller, sessionToken: "test")
+
+            let result = try withBlockedLayoutRefreshes(
+                controller: controller,
+                affectedWorkspaceId: fixture.activeTargetWorkspaceId
+            ) {
+                router.handle(.workspace(.moveToMonitor(direction: .right)))
+            }
+
+            XCTAssertEqual(result, wraps ? .executed : .notFound)
+            XCTAssertEqual(
+                controller.workspaceManager.workspace(for: window.id),
+                wraps ? fixture.sourceWorkspaceId : fixture.activeTargetWorkspaceId
+            )
+        }
+    }
+
+    func testEdgeCrossingMoveNeverWrapsAcrossMonitors() throws {
+        let fixture = try makeMonitorMoveFixture(layout: .niri, followsFocus: false)
+        let controller = fixture.controller
+        let manager = controller.workspaceManager
+        controller.settings.focus.moveToMonitorWrapsAround = true
+        let window = try addManagedWindow(
+            pid: 488_500,
+            windowId: 1,
+            to: fixture.sourceWorkspaceId,
+            controller: controller
+        )
+        try select(
+            window,
+            in: fixture.sourceWorkspaceId,
+            on: fixture.sourceMonitor,
+            controller: controller,
+            focusRecorder: fixture.focusRecorder
+        )
+        controller.layoutRefreshController.resetState()
+        let worldSeq = manager.worldSeq
+
+        controller.workspaceNavigationHandler.moveWindowAcrossMonitorAtEdge(direction: .left)
+
+        XCTAssertEqual(manager.workspace(for: window.id), fixture.sourceWorkspaceId)
+        XCTAssertEqual(manager.worldSeq, worldSeq)
         XCTAssertNil(controller.layoutRefreshController.layoutState.pendingRefresh)
     }
 }

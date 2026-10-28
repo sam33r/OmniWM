@@ -66,6 +66,7 @@ Pointer-driven focus and monitor-edge focus/move behavior.
 | `followsWindowToMonitor` | boolean | `false` | Follows ordinary window or column transfers to another workspace, including dedicated monitor-move actions. Edge-crossing moves always follow. |
 | `crossesMonitorAtEdge` | boolean | `false` | Directional focus continues onto the neighboring monitor at the screen edge. |
 | `moveCrossesMonitorAtEdge` | boolean | `false` | Directional window move continues onto the neighboring monitor at the workspace edge and always follows the moved window. |
+| `moveToMonitorWrapsAround` *(optional)* | boolean | `false` | When **Move Focused Window to Monitor** (`omniwmctl command move-to-monitor`) finds no monitor in the requested direction, it moves the window to the farthest monitor in the opposite direction along the same row or column of the routing arrangement. Follows `followsWindowToMonitor`. Edge-crossing moves never wrap. |
 
 ## mouseWarp
 
@@ -116,13 +117,14 @@ For no saved arrangements, use `arrangements = []` inside `[routing]` and omit t
 
 ## monitors
 
-Optional table that ranks displays for OmniWM's monitor roles. Omit it to keep the default roles: **Main** is the display with the macOS menu bar, and **Secondary** and **Tertiary** are the next displays in arrangement order.
+Optional table that ranks displays for OmniWM's monitor roles and sets their default Niri orientation. Omit it to keep the default roles: **Main** is the display with the macOS menu bar, and **Secondary** and **Tertiary** are the next displays in arrangement order.
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `ranking` | array of tables | unset | Displays in preference order, written as `[[monitors.ranking]]` rows. The highest-ranked connected display is Main, the next connected one is Secondary, the third is Tertiary, and unranked displays follow in the default order. |
+| `defaultOrientation` *(optional)* | string | `"auto"` | Orientation for displays without a [`monitorOrientationOverrides`](#per-monitor-overrides) entry: `auto` (portrait displays are `vertical`, others `horizontal`), `horizontal`, or `vertical`. A per-monitor override still wins. |
 
-Each row requires `name`; `displayUUID` and `displayId` are optional identity fields that Settings records automatically. A row with a `displayUUID` matches only that display. A row without one falls back to the display-ID/name pair, and then to a case-insensitive name match when it identifies exactly one connected display. A row whose display is disconnected is skipped, so a docked external display can outrank the built-in display while the built-in display becomes Main again when undocked.
+Each ranking row requires `name`; `displayUUID` and `displayId` are optional identity fields that Settings records automatically. A row with a `displayUUID` matches only that display. A row without one falls back to the display-ID/name pair, and then to a case-insensitive name match when it identifies exactly one connected display. A row whose display is disconnected is skipped, so a docked external display can outrank the built-in display while the built-in display becomes Main again when undocked.
 
 ```toml
 [[monitors.ranking]]
@@ -540,7 +542,7 @@ When `workspaceBar.enabled = false`, no monitor can show its bar. Saved `monitor
 | Array | Overridable keys |
 | --- | --- |
 | `monitorBarOverrides` | `enabled`, `showLabels`, `showFloatingWindows`, `deduplicateAppIcons`, `hideEmptyWorkspaces`, `reserveLayoutSpace`, `autoHide`, `notchMode`, `notchActiveZoneWidth`, `fullWidth`, `fullWidthNotchMode`, `position`, `windowLevel`, `height`, `backgroundOpacity`, `inactiveIconOpacity`, `transparentBackground`, `solidBlackBackground`, `showItemBackgrounds`, `showAccentHighlights`, `xOffset`, `yOffset` — see [`workspaceBar`](#workspacebar). `fullWidth` and `fullWidthNotchMode` are Unreleased: available when building from `main`. |
-| `monitorOrientationOverrides` | `orientation`: `horizontal` or `vertical` layout orientation for that monitor |
+| `monitorOrientationOverrides` | `orientation`: `horizontal` or `vertical` layout orientation for that monitor — see [`monitors.defaultOrientation`](#monitors) |
 | `monitorNiriOverrides` | `visibleContainerCount`, `defaultContainerPrimarySpan`, `centerFocusedColumn`, `alwaysCenterSingleColumn`, `singleWindowFit`, `infiniteLoop` — see [`niri`](#niri) |
 | `monitorDwindleOverrides` | `smartSplit`, `defaultSplitRatio`, `splitWidthMultiplier`, `singleWindowFit`, `useGlobalGaps`, `innerGap` — see [`dwindle`](#dwindle) |
 | `monitorGapOverrides` | `innerGap`, `outerGapLeft`, `outerGapRight`, `outerGapTop`, `outerGapBottom`, `fullscreenUsesOuterGaps` — see [`gaps`](#gaps) |

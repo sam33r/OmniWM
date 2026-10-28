@@ -73,7 +73,10 @@ final class WindowGestureSettingsTests: XCTestCase {
             XCTAssertNil(settings.updateGestureSettings(candidate, monitors: []))
             XCTAssertFalse(settings.gestures.windowMoveEnabled)
             XCTAssertNotNil(GestureSettingsValidation.conflict(
-                gestures: settings.gestures.export(), orientationOverrides: [], monitors: []
+                gestures: settings.gestures.export(),
+                orientationOverrides: [],
+                defaultOrientation: .auto,
+                monitors: []
             ))
 
             candidate.windowResizeEnabled = false

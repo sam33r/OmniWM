@@ -7,16 +7,21 @@ import OmniWMIPC
 
 extension WorkspaceNavigationHandler {
     func moveWindowToMonitor(direction: Direction) {
-        moveFocusedWindowToMonitor(direction: direction, focusPolicy: .configured)
+        moveFocusedWindowToMonitor(
+            direction: direction,
+            focusPolicy: .configured,
+            wrapAround: controller?.settings.focus.moveToMonitorWrapsAround ?? false
+        )
     }
 
     func moveWindowAcrossMonitorAtEdge(direction: Direction) {
-        moveFocusedWindowToMonitor(direction: direction, focusPolicy: .alwaysFollow)
+        moveFocusedWindowToMonitor(direction: direction, focusPolicy: .alwaysFollow, wrapAround: false)
     }
 
     private func moveFocusedWindowToMonitor(
         direction: Direction,
-        focusPolicy: WorkspaceMoveFocusPolicy
+        focusPolicy: WorkspaceMoveFocusPolicy,
+        wrapAround: Bool
     ) {
         guard let controller else { return }
         guard let token = controller.workspaceManager.selectedManagedToken else { return }
@@ -25,21 +30,26 @@ extension WorkspaceNavigationHandler {
         saveNiriViewportState(for: currentWsId)
         guard case let .changed(mutation) = moveWindowToMonitor(
             handle: WindowHandle(id: token),
-            direction: direction
+            direction: direction,
+            wrapAround: wrapAround
         ) else { return }
         finishWorkspaceMove(mutation, focusPolicy: focusPolicy)
     }
 
+    /// With `wrapAround`, a move past the last monitor in `direction` goes to the farthest monitor the
+    /// opposite way along the same axis.
     func moveWindowToMonitor(
         handle: WindowHandle,
-        direction: Direction
+        direction: Direction,
+        wrapAround: Bool = false
     ) -> StructuralMutationOutcome {
         guard let controller,
               let sourceWorkspaceId = controller.workspaceManager.workspace(for: handle.id),
               let sourceMonitorId = controller.workspaceManager.monitorId(for: sourceWorkspaceId),
               let targetMonitor = controller.workspaceManager.adjacentMonitor(
                   from: sourceMonitorId,
-                  direction: direction
+                  direction: direction,
+                  wrapAround: wrapAround
               ),
               let targetWorkspace = controller.workspaceManager.activeWorkspaceOrFirst(on: targetMonitor.id),
               targetWorkspace.id != sourceWorkspaceId

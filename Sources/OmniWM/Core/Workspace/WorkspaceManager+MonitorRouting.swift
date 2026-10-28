@@ -130,22 +130,26 @@ extension WorkspaceManager {
         let others = monitors.filter { $0.id != current.id }
         guard !others.isEmpty else { return nil }
 
-        let directional = others.filter { candidate in
-            let delta = monitorDelta(from: current, to: candidate)
-            switch direction {
-            case .left: return delta.dx < 0 && abs(delta.dx) >= abs(delta.dy)
-            case .right: return delta.dx > 0 && abs(delta.dx) >= abs(delta.dy)
-            case .up: return delta.dy > 0 && abs(delta.dy) >= abs(delta.dx)
-            case .down: return delta.dy < 0 && abs(delta.dy) >= abs(delta.dx)
-            }
-        }
+        let directional = others.filter { isMonitor($0, toward: direction, from: current) }
 
         if let bestDirectional = bestMonitor(in: directional, from: current, direction: direction) {
             return bestDirectional
         }
 
         guard wrapAround else { return nil }
-        return wrappedMonitor(in: others, from: current, direction: direction)
+        // Wrap along the requested axis only: to the farthest monitor lying the opposite way.
+        let behind = others.filter { isMonitor($0, toward: direction.reversed, from: current) }
+        return wrappedMonitor(in: behind, from: current, direction: direction)
+    }
+
+    private func isMonitor(_ candidate: Monitor, toward direction: Direction, from current: Monitor) -> Bool {
+        let delta = monitorDelta(from: current, to: candidate)
+        switch direction {
+        case .left: return delta.dx < 0 && abs(delta.dx) >= abs(delta.dy)
+        case .right: return delta.dx > 0 && abs(delta.dx) >= abs(delta.dy)
+        case .up: return delta.dy > 0 && abs(delta.dy) >= abs(delta.dx)
+        case .down: return delta.dy < 0 && abs(delta.dy) >= abs(delta.dx)
+        }
     }
 
     private func monitorDelta(from source: Monitor, to target: Monitor) -> (dx: CGFloat, dy: CGFloat) {
@@ -235,5 +239,16 @@ extension WorkspaceManager {
     private func monitorDistanceSquared(from source: Monitor, to target: Monitor) -> CGFloat {
         let delta = monitorDelta(from: source, to: target)
         return delta.dx * delta.dx + delta.dy * delta.dy
+    }
+}
+
+extension Direction {
+    fileprivate var reversed: Direction {
+        switch self {
+        case .left: .right
+        case .right: .left
+        case .up: .down
+        case .down: .up
+        }
     }
 }

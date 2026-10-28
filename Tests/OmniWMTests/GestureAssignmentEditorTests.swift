@@ -284,7 +284,10 @@ final class GestureAssignmentEditorTests: XCTestCase {
             XCTAssertFalse(settings.gestures.windowResizeEnabled)
             XCTAssertNil(editor.proposal)
             XCTAssertNotNil(GestureSettingsValidation.conflict(
-                gestures: settings.gestures.export(), orientationOverrides: [], monitors: monitors
+                gestures: settings.gestures.export(),
+                orientationOverrides: [],
+                defaultOrientation: .auto,
+                monitors: monitors
             ))
         }
     }
