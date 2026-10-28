@@ -244,6 +244,13 @@ struct MonitorSettingsTab: View {
                 .id("Move Window Across Monitor at Edge")
             Toggle("Follow Window to Monitor", isOn: Bindable(settings.focus).followsWindowToMonitor)
                 .id("Follow Window to Monitor")
+            Toggle("Move Window to Monitor Wraps Around", isOn: Bindable(settings.focus).moveToMonitorWrapsAround)
+                .id("Move Window to Monitor Wraps Around")
+
+            SettingsCaption(
+                localized: "Moving the focused window to a monitor in a direction with no monitor sends it to the farthest monitor on the other side of the same row or column."
+            )
+
             Toggle(isOn: Bindable(settings.pointer).enabled) {
                 HStack(spacing: 8) {
                     Text("Mouse Warp")

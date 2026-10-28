@@ -173022,6 +173022,12 @@
     },
     "Used by displays without an orientation override. Auto makes portrait displays vertical." : {
 
+    },
+    "Move Window to Monitor Wraps Around" : {
+
+    },
+    "Moving the focused window to a monitor in a direction with no monitor sends it to the farthest monitor on the other side of the same row or column." : {
+
     }
   },
   "version" : "1.0"

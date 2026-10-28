@@ -170,6 +170,12 @@ enum SettingsSearchIndex {
         ),
         setting("Follow Window to Monitor", section: .monitors, tab: "behavior", anchor: "Follow Window to Monitor"),
         setting(
+            "Move Window to Monitor Wraps Around",
+            section: .monitors,
+            tab: "behavior",
+            anchor: "Move Window to Monitor Wraps Around"
+        ),
+        setting(
             "Constrain Cursor to Arrangement",
             section: .monitors,
             tab: "behavior",

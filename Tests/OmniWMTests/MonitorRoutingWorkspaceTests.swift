@@ -73,6 +73,72 @@ final class MonitorRoutingWorkspaceTests: XCTestCase {
         XCTAssertEqual(manager.adjacentMonitor(from: bottom.id, direction: .up)?.id, top.id)
     }
 
+    func testMacOSModeWrapsToFarthestMonitorAlongTheSameAxis() {
+        let manager = WorkspaceManager(settings: makeSettings())
+        let left = makeMonitor(1, "L", CGRect(x: 0, y: 0, width: 1920, height: 1080))
+        let right = makeMonitor(2, "R", CGRect(x: 1920, y: 0, width: 1920, height: 1080))
+        manager.applyMonitorConfigurationChange([left, right])
+
+        XCTAssertNil(manager.adjacentMonitor(from: left.id, direction: .left))
+        XCTAssertEqual(manager.adjacentMonitor(from: left.id, direction: .left, wrapAround: true), right)
+        XCTAssertEqual(manager.adjacentMonitor(from: right.id, direction: .right, wrapAround: true), left)
+        XCTAssertEqual(manager.adjacentMonitor(from: left.id, direction: .right, wrapAround: true), right)
+        for direction in [Direction.up, .down] {
+            XCTAssertNil(manager.adjacentMonitor(from: left.id, direction: direction, wrapAround: true))
+        }
+
+        let center = makeMonitor(3, "C", CGRect(x: 1920, y: 0, width: 1920, height: 1080))
+        let farRight = makeMonitor(4, "FR", CGRect(x: 3840, y: 0, width: 1920, height: 1080))
+        manager.applyMonitorConfigurationChange([left, center, farRight])
+
+        XCTAssertNil(manager.adjacentMonitor(from: left.id, direction: .left))
+        XCTAssertEqual(manager.adjacentMonitor(from: left.id, direction: .left, wrapAround: true), farRight)
+        XCTAssertEqual(manager.adjacentMonitor(from: farRight.id, direction: .right, wrapAround: true), left)
+        XCTAssertEqual(manager.adjacentMonitor(from: center.id, direction: .left, wrapAround: true), left)
+        XCTAssertEqual(manager.adjacentMonitor(from: center.id, direction: .right, wrapAround: true), farRight)
+    }
+
+    func testMacOSModeWrapsVerticallyAndIgnoresOtherAxes() {
+        let manager = WorkspaceManager(settings: makeSettings())
+        let top = makeMonitor(1, "Top", CGRect(x: 0, y: 2160, width: 1920, height: 1080))
+        let middle = makeMonitor(2, "Middle", CGRect(x: 0, y: 1080, width: 1920, height: 1080))
+        let bottom = makeMonitor(3, "Bottom", CGRect(x: 0, y: 0, width: 1920, height: 1080))
+        manager.applyMonitorConfigurationChange([top, middle, bottom])
+
+        XCTAssertNil(manager.adjacentMonitor(from: top.id, direction: .up))
+        XCTAssertEqual(manager.adjacentMonitor(from: top.id, direction: .up, wrapAround: true), bottom)
+        XCTAssertEqual(manager.adjacentMonitor(from: bottom.id, direction: .down, wrapAround: true), top)
+        XCTAssertEqual(manager.adjacentMonitor(from: middle.id, direction: .up, wrapAround: true), top)
+        for direction in [Direction.left, .right] {
+            XCTAssertNil(manager.adjacentMonitor(from: middle.id, direction: direction, wrapAround: true))
+        }
+    }
+
+    func testCustomRoutingWrapsWithinTheSameRowOrColumn() {
+        let settings = makeSettings()
+        let manager = WorkspaceManager(settings: settings)
+        let left = makeMonitor(1, "L", CGRect(x: 0, y: 0, width: 1920, height: 1080))
+        let center = makeMonitor(2, "C", CGRect(x: 1920, y: 0, width: 1920, height: 1080))
+        let right = makeMonitor(3, "R", CGRect(x: 3840, y: 0, width: 1920, height: 1080))
+        let above = makeMonitor(4, "A", CGRect(x: 1920, y: 1080, width: 1920, height: 1080))
+        manager.applyMonitorConfigurationChange([left, center, right, above])
+        settings.monitors.routingMode = .custom
+        settings.monitors.arrangements = [MonitorArrangement(monitors: [
+            routing(1, "L", 0, 1),
+            routing(2, "C", 1, 1),
+            routing(3, "R", 2, 1),
+            routing(4, "A", 1, 0)
+        ])]
+
+        XCTAssertNil(manager.adjacentMonitor(from: left.id, direction: .left))
+        XCTAssertEqual(manager.adjacentMonitor(from: left.id, direction: .left, wrapAround: true), right)
+        XCTAssertEqual(manager.adjacentMonitor(from: right.id, direction: .right, wrapAround: true), left)
+        XCTAssertEqual(manager.adjacentMonitor(from: above.id, direction: .up, wrapAround: true), center)
+        XCTAssertEqual(manager.adjacentMonitor(from: center.id, direction: .down, wrapAround: true), above)
+        XCTAssertNil(manager.adjacentMonitor(from: above.id, direction: .left, wrapAround: true))
+        XCTAssertNil(manager.adjacentMonitor(from: left.id, direction: .up, wrapAround: true))
+    }
+
     func testCustomRoutingDivergesFromMacOSGeometry() {
         let settings = makeSettings()
         let manager = WorkspaceManager(settings: settings)

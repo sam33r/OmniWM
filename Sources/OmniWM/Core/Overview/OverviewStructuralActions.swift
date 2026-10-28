@@ -187,7 +187,8 @@ extension OverviewStructuralActions {
         case let .moveToMonitor(direction):
             return wmController.workspaceNavigationHandler.moveWindowToMonitor(
                 handle: selectedHandle,
-                direction: direction
+                direction: direction,
+                wrapAround: wmController.settings.focus.moveToMonitorWrapsAround
             )
         case let .moveTo(index):
             return wmController.workspaceNavigationHandler.moveWindow(
