@@ -1,7 +1,7 @@
 # sam33r/OmniWM fork
 
-Personal fork of [OmniNull/OmniWM](https://github.com/OmniNull/OmniWM). All fork
-changes live on the **`custom`** branch, on top of upstream `main`. Run it as
+Personal fork of [OmniNull/OmniWM](https://github.com/OmniNull/OmniWM). Fork changes
+live on this fork's **`main`** branch, on top of upstream `main`. Run it as
 **OmniWM Dev** (`~/Applications/OmniWM Dev.app`), next to the Homebrew release.
 
 ## What the fork changes
@@ -27,7 +27,6 @@ quitting/launching apps. An agent can do the rest.
 1. **Clone the fork:**
    ```bash
    git clone git@github.com:sam33r/OmniWM.git ~/src/OmniWM   # or: git -C ~/src/OmniWM fetch
-   git -C ~/src/OmniWM switch custom
    ```
 2. **Swift toolchain.** The repo pins a development snapshot in `.swift-version`.
    ```bash
@@ -50,7 +49,7 @@ quitting/launching apps. An agent can do the rest.
    Accessibility and Input Monitoring (Screen Recording is optional), follow
    any restart prompt, then click **Start OmniWM**.
 6. **Verify:** `omniwmctl version` should report `protocol 22` and `debug` with
-   the `custom` commit. `~/bin/omniwmctl` picks the CLI of whichever OmniWM is
+   the fork's `main` commit. `~/bin/omniwmctl` picks the CLI of whichever OmniWM is
    running; the fork's IPC protocol differs from the 0.7.6 release, which
    would reject a mismatched client and break the skhd bindings.
 
@@ -67,5 +66,5 @@ In the user's own terminal, `make -C ~/src/OmniWM run` does steps 4 and 5 in one
   first launch (backup: `settings.toml.pre-v5`). OmniWM reloads it live.
   `~/.config/omniwm/CHANGES.md` in the dotfiles repo logs every settings change.
 - **Pull upstream:** `git fetch upstream && git rebase upstream/main` on
-  `custom` (add the remote once: `git remote add upstream https://github.com/OmniNull/OmniWM.git`). If upstream changes `QuakeTerminalController`'s interface,
+  `main`, then `git push --force-with-lease` (add the remote once: `git remote add upstream https://github.com/OmniNull/OmniWM.git`). If upstream changes `QuakeTerminalController`'s interface,
   update `QuakeTerminalDisabled.swift` to match.
