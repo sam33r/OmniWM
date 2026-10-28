@@ -514,7 +514,7 @@ Array of per-app window rules, editable in the **App Rules** window. Matchers se
 | `titleRegex` *(optional)* | string | Regex match on the window title; when both title matchers are set, the regex wins. |
 | `axRole` *(optional)* | string | Matches the accessibility role. |
 | `axSubrole` *(optional)* | string | Matches the accessibility subrole. |
-| `layout` *(optional)* | string | `auto` (default), `tile`, or `float`. |
+| `layout` *(optional)* | string | `auto` (default), `tile`, `float`, or `ignore`. `ignore` leaves matching windows unmanaged: they are not tiled, floated, or tracked for Overview, the workspace bar, focus, or borders, and an already-managed window is released when the rule starts matching it. |
 | `assignToWorkspace` *(optional)* | string | Workspace name the window is routed to. |
 | `initialContainerPrimarySpan` *(optional)* | float | Initial Niri span for the window's container (`0.05`–`1.0`). |
 | `minWidth` *(optional)* | float | Minimum layout width in points. |

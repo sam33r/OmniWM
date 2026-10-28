@@ -120,6 +120,8 @@ enum IPCRuleProjection {
             .tile
         case .float:
             .float
+        case .ignore:
+            .ignore
         }
     }
 
@@ -131,6 +133,8 @@ enum IPCRuleProjection {
             .tile
         case .float:
             .float
+        case .ignore:
+            .ignore
         }
     }
 

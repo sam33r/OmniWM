@@ -3,6 +3,7 @@
 
 import Foundation
 @testable import OmniWM
+import OmniWMIPC
 import XCTest
 
 final class AppRuleTests: XCTestCase {
@@ -148,6 +149,30 @@ final class AppRuleTests: XCTestCase {
         XCTAssertEqual(projectedRule, rule)
         XCTAssertEqual(snapshot.initialContainerPrimarySpan, 0.5)
         XCTAssertTrue(snapshot.isValid)
+    }
+
+    @MainActor
+    func testIgnoreLayoutRoundTripsThroughTOMLAndIPC() throws {
+        let rule = AppRule(bundleId: "", appNameSubstring: "goosed", titleSubstring: "Goose Launcher", layout: .ignore)
+        XCTAssertTrue(rule.hasEffect)
+        XCTAssertEqual(rule.effectiveLayoutAction, .ignore)
+
+        var export = SettingsExport.defaults()
+        export.appRules = [rule]
+        let data = try SettingsTOMLCodec.encode(export)
+        let toml = try XCTUnwrap(String(data: data, encoding: .utf8))
+        XCTAssertTrue(toml.contains("layout = \"ignore\""))
+        XCTAssertEqual(try SettingsTOMLCodec.decode(data).appRules, [rule])
+
+        let definition = IPCRuleProjection.definition(from: rule)
+        XCTAssertEqual(definition.layout, .ignore)
+        XCTAssertTrue(IPCRuleValidator.validate(definition).isValid)
+        XCTAssertEqual(IPCRuleProjection.appRule(from: definition, id: rule.id), rule)
+        XCTAssertEqual(
+            IPCRuleProjection.snapshot(from: rule, position: 1, invalidRegexMessagesByRuleId: [:]).layout,
+            .ignore
+        )
+        XCTAssertEqual(AppRuleDraft(rule: rule).makeRule().layout, .ignore)
     }
 
     @MainActor

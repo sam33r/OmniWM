@@ -29,7 +29,7 @@ omniwmctl rule <action> [arguments...] [options...]
 | `--title-regex` | `<pattern>` | Match window title against this regex |
 | `--ax-role` | `<role>` | Match accessibility role |
 | `--ax-subrole` | `<subrole>` | Match accessibility subrole |
-| `--layout` | `<auto\|tile\|float>` | Layout action (`auto` = default behavior) |
+| `--layout` | `<auto\|tile\|float\|ignore>` | Layout action (`auto` = default behavior; `ignore` leaves matching windows unmanaged) |
 | `--assign-to-workspace` | `<raw-name>` | Use this workspace as the initial default whenever the matching app currently has no tracked windows |
 | `--initial-container-primary-span` | `<proportion>` | Initial Niri container primary span for a resizable window, from `0.05` through `1.0` inclusive |
 | `--min-width` | `<points>` | Minimum window width in points |
@@ -52,8 +52,8 @@ closeable, parentless accessory-app `AXWindow` proceeds through normal classific
 Buttonless accessory roots, prohibited-app roots, non-`AXWindow` roles, and otherwise unsupported AX subroles
 need a precise inclusion rule: an ordinary app/window identifier, both `--ax-role` and `--ax-subrole`, and
 `--layout tile` or `--layout float`. Parentless roots at status-window level or higher use the same precise
-shape, but only a user-authored rule can opt them in. A broad bundle/title rule or `--layout auto` does not cross
-either precise inclusion gate.
+shape, but only a user-authored rule can opt them in. A broad bundle/title rule, `--layout auto`, or
+`--layout ignore` does not cross either precise inclusion gate.
 
 `initialContainerPrimarySpan` is stored and returned over IPC as a proportion. `omniwmctl query rules` renders
 it as a percentage in human-readable table or text output. It applies only when a matching resizable window

@@ -289,6 +289,8 @@ struct AppRuleSidebarRow: View {
             RuleBadge(text: String(localized: "Float"), color: .blue, accessibilityLabel: String(localized: "Floating"))
         case .tile:
             RuleBadge(text: String(localized: "Tile"), color: .teal, accessibilityLabel: String(localized: "Tiled"))
+        case .ignore:
+            RuleBadge(text: String(localized: "Ignore"), color: .gray, accessibilityLabel: String(localized: "Ignored"))
         case .auto:
             EmptyView()
         }

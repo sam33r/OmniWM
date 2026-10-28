@@ -7,6 +7,7 @@ enum WindowRuleLayoutAction: String, Codable, CaseIterable, Identifiable {
     case auto
     case tile
     case float
+    case ignore
 
     var id: String {
         rawValue
@@ -17,6 +18,7 @@ enum WindowRuleLayoutAction: String, Codable, CaseIterable, Identifiable {
         case .auto: "Automatic"
         case .tile: "Tile"
         case .float: "Float"
+        case .ignore: "Ignore"
         }
     }
 }

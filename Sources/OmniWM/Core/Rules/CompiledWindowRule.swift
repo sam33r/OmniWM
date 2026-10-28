@@ -57,6 +57,7 @@ struct CompiledWindowRule {
 
     var explicitlyIncludesNonstandardSurface: Bool {
         rule.effectiveLayoutAction != .auto
+            && rule.effectiveLayoutAction != .ignore
             && nonEmpty(rule.axRole) != nil
             && nonEmpty(rule.axSubrole) != nil
     }

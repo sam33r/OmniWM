@@ -1207,7 +1207,7 @@ Scratchpad membership lasts for the lifetime of the OmniWM process; only the lab
 Open **App Rules** from OmniWM's status-bar menu to configure window-matching behavior. Rules can match by bundle ID,
 app-name substring, title substring or regex, and AX role/subrole. More-specific matches win; ties follow list order.
 
-- **Layout (Automatic / Tile / Float)** - Leave classification automatic, or force matching windows to tile or float
+- **Layout (Automatic / Tile / Float / Ignore)** - Leave classification automatic, force matching windows to tile or float, or ignore them so OmniWM never manages them (no tiling, floating, Overview, workspace bar, or borders)
 - **Assign to Workspace** - Use a valid workspace assignment as the initial default whenever the matching app currently has no tracked windows. Additional windows open on the workspace active when creation began. Automatic rule reevaluation leaves managed windows in place, while explicit rule application can move them. Readmission, structural replacements, and unique persisted boot-restore matches preserve their existing placement continuity.
 - **Initial Container Primary Span (Niri)** - Start matching resizable windows at 5–100% when they create or claim a new container; the container remains freely resizable afterward
 - **Minimum Size** - Prevent the layout engine from sizing windows below a threshold

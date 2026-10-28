@@ -381,7 +381,7 @@ extension SettingsSearchIndex {
         case .menuBar: ["status bar", "hidden bar", "menu bar", "icons"]
         case .layouts: ["spacing", "gaps", "margins", "niri", "dwindle", "columns", "tiling"]
         case .monitors: ["monitors", "displays", "screens", "routing"]
-        case .appRules: ["app rules", "float", "tile", "bundle", "match"]
+        case .appRules: ["app rules", "float", "tile", "ignore", "bundle", "match"]
         case .windowSwitcher: ["alt-tab", "command-tab", "option-tab", "app switcher", "previews"]
         case .hotkeys: ["hotkeys", "keyboard", "shortcuts", "hyper", "commands", "pause", "prefix", "mode key"]
         case .advanced: ["config", "toml", "luau", "ipc", "cli", "terminal"]

@@ -144,6 +144,82 @@ final class WindowRuleEngineTests: XCTestCase {
         XCTAssertNotEqual(main.source, .userRule(rule.id))
     }
 
+    func testIgnoreRuleLeavesMatchingWindowUnmanaged() {
+        let token = WindowToken(pid: 84_151, windowId: 84_152)
+        func launcherFacts(title: String) -> WindowRuleFacts {
+            WindowRuleFacts(
+                appName: "goosed",
+                ax: AXWindowFacts(
+                    role: kAXWindowRole as String,
+                    subrole: kAXStandardWindowSubrole as String,
+                    title: title,
+                    hasCloseButton: true,
+                    hasFullscreenButton: false,
+                    fullscreenButtonEnabled: false,
+                    hasZoomButton: false,
+                    hasMinimizeButton: false,
+                    appPolicy: .accessory,
+                    bundleId: nil,
+                    attributeFetchSucceeded: true
+                ),
+                sizeConstraints: nil,
+                windowServer: transientWindowServerInfo(token: token, level: 3, parentId: 0)
+            )
+        }
+        let unruled = evaluate(WindowRuleEngine(), launcherFacts(title: "Goose Launcher"), token: token)
+        XCTAssertEqual(unruled.trackedMode, .floating)
+
+        let engine = WindowRuleEngine()
+        let rule = AppRule(bundleId: "", appNameSubstring: "goosed", titleSubstring: "Goose Launcher", layout: .ignore)
+        engine.rebuild(rules: [rule])
+        let decision = evaluate(engine, launcherFacts(title: "Goose Launcher"), token: token)
+
+        XCTAssertEqual(decision.disposition, .unmanaged)
+        XCTAssertEqual(decision.source, .userRule(rule.id))
+        XCTAssertEqual(decision.layoutDecisionKind, .explicitLayout)
+        XCTAssertEqual(decision.ruleProvenance.layout, rule.id)
+        XCTAssertNil(decision.trackedMode)
+        XCTAssertEqual(decision.admissionOutcome, .ignored)
+        XCTAssertEqual(decision.admissionRejectionReason, .ignoredByRule)
+        for override in [ManualWindowOverride.forceTile, .forceFloat] {
+            XCTAssertEqual(WindowRuleEngine.applyingManualOverride(decision, manualOverride: override), decision)
+        }
+        XCTAssertEqual(evaluate(engine, launcherFacts(title: "Settings"), token: token).trackedMode, .floating)
+    }
+
+    func testMoreSpecificLayoutOutranksIgnoreAndIgnoreNeverIncludesSurfaces() {
+        let engine = WindowRuleEngine()
+        let ignore = AppRule(bundleId: "", appNameSubstring: "Test", layout: .ignore)
+        let float = AppRule(bundleId: "com.test.app", layout: .float)
+        engine.rebuild(rules: [ignore, float])
+
+        let floated = evaluate(engine, facts(appName: "Test", bundleId: "com.test.app"))
+        XCTAssertEqual(floated.disposition, .floating)
+        XCTAssertEqual(floated.source, .userRule(float.id))
+        let ignored = evaluate(engine, facts(appName: "Test", bundleId: "com.test.other"))
+        XCTAssertEqual(ignored.disposition, .unmanaged)
+        XCTAssertEqual(ignored.source, .userRule(ignore.id))
+
+        let token = WindowToken(pid: 84_161, windowId: 84_162)
+        let preciseEngine = WindowRuleEngine()
+        preciseEngine.rebuild(rules: [AppRule(
+            bundleId: "org.example.widget-host",
+            axRole: kAXWindowRole as String,
+            axSubrole: kAXUnknownSubrole as String,
+            layout: .ignore
+        )])
+        let surface = evaluate(
+            preciseEngine,
+            transientFacts(
+                bundleId: "org.example.widget-host",
+                windowServer: transientWindowServerInfo(token: token, parentId: 0)
+            ),
+            token: token
+        )
+        XCTAssertEqual(surface.disposition, .unmanaged)
+        XCTAssertEqual(surface.source, .builtInRule(WindowRuleEngine.externalSurfaceRuleName))
+    }
+
     func testBundledAxSubroleRefinesMatch() {
         let engine = WindowRuleEngine()
         let rule = AppRule(

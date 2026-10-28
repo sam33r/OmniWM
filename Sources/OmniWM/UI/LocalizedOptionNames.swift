@@ -50,6 +50,7 @@ extension WindowRuleLayoutAction {
         case .auto: String(localized: "Automatic")
         case .tile: String(localized: "Tile")
         case .float: String(localized: "Float")
+        case .ignore: String(localized: "Ignore")
         }
     }
 }

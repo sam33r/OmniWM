@@ -195,8 +195,8 @@ extension IPCAutomationManifest {
         ),
         .init(
             flag: "--layout",
-            summary: "Set the rule layout action.",
-            valuePlaceholder: "<auto|tile|float>"
+            summary: "Set the rule layout action; ignore leaves matching windows unmanaged.",
+            valuePlaceholder: "<auto|tile|float|ignore>"
         ),
         .init(
             flag: "--assign-to-workspace",

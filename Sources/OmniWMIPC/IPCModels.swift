@@ -176,6 +176,7 @@ public enum IPCRuleLayout: String, Codable, Equatable, Sendable {
     case auto
     case tile
     case float
+    case ignore
 }
 
 public enum IPCResizeOperation: String, Codable, Equatable, Sendable {

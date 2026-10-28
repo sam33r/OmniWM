@@ -20,6 +20,7 @@ enum WindowAdmissionRejectionReason: String, Equatable {
     case invalidIdentity = "invalid_identity"
     case ownedWindow = "owned_window"
     case externalSurface = "external_surface"
+    case ignoredByRule = "ignored_by_rule"
     case quarantined = "quarantined"
     case retryExhausted = "retry_exhausted"
     case terminalFrameRefusal = "terminal_frame_refusal"
@@ -40,7 +41,7 @@ extension WindowDecision {
 
     @MainActor
     var admissionRejectionReason: WindowAdmissionRejectionReason {
-        .externalSurface
+        ruleProvenance.layout == nil ? .externalSurface : .ignoredByRule
     }
 }
 
