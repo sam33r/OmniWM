@@ -2,8 +2,47 @@
 import Foundation
 import PackageDescription
 
-let packageDirectory = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
-let ghosttyMacOSLibraryDirectory = "\(packageDirectory)/Frameworks/GhosttyKit.xcframework/macos-arm64"
+// Fork: GhosttyKit is not linked, so the Quake terminal files that need it are
+// left out of the build, along with their tests.
+let ghosttyQuakeTerminalSources = [
+    "QuakeTerminal/GhosttyAppCallbackContext.swift",
+    "QuakeTerminal/GhosttyClipboard.swift",
+    "QuakeTerminal/GhosttySurfaceSizing.swift",
+    "QuakeTerminal/GhosttySurfaceTextInput.swift",
+    "QuakeTerminal/GhosttySurfaceView.swift",
+    "QuakeTerminal/QuakeClipboardAlert.swift",
+    "QuakeTerminal/QuakeClipboardPromptCoordinator.swift",
+    "QuakeTerminal/QuakeGhosttyConfig.swift",
+    "QuakeTerminal/QuakeGhosttyInputBridge.swift",
+    "QuakeTerminal/QuakeGhosttyRuntime.swift",
+    "QuakeTerminal/QuakeSplitContainer.swift",
+    "QuakeTerminal/QuakeTerminalAnimator.swift",
+    "QuakeTerminal/QuakeTerminalBackground.swift",
+    "QuakeTerminal/QuakeTerminalController.swift",
+    "QuakeTerminal/QuakeTerminalTab.swift",
+    "QuakeTerminal/QuakeTerminalTabs.swift",
+    "QuakeTerminal/QuakeTerminalURLHandler.swift",
+    "QuakeTerminal/QuakeWindowInteraction.swift",
+    "QuakeTerminal/SplitNode.swift",
+]
+
+let ghosttyQuakeTerminalTests = [
+    "GhosttyClipboardMIMERequestsTests.swift",
+    "GhosttyNumericLocaleTests.swift",
+    "GhosttySurfaceDisplayTests.swift",
+    "GhosttySurfaceOcclusionTests.swift",
+    "GhosttySurfaceSizingTests.swift",
+    "QuakeClipboardPromptTests.swift",
+    "QuakeGhosttyAppearanceTests.swift",
+    "QuakeGhosttyKeyEquivalentTests.swift",
+    "QuakeGhosttyRuntimeTests.swift",
+    "QuakeTerminalBackgroundTests.swift",
+    "QuakeTerminalKeyMappingTests.swift",
+    "QuakeTerminalScreenSelectionTests.swift",
+    "QuakeTerminalURLHandlerTests.swift",
+    "QuakeWindowInteractionTests.swift",
+    "SplitNodeGeometryTests.swift",
+]
 
 let package = Package(
     name: "OmniWM",
@@ -30,10 +69,6 @@ let package = Package(
         .package(url: "https://github.com/mattt/swift-toml.git", from: "2.0.0")
     ],
     targets: [
-        .binaryTarget(
-            name: "GhosttyKit",
-            path: "Frameworks/GhosttyKit.xcframework"
-        ),
         .target(
             name: "OmniWMIPC",
             path: "Sources/OmniWMIPC",
@@ -117,7 +152,6 @@ let package = Package(
         .target(
             name: "OmniWM",
             dependencies: [
-                "GhosttyKit",
                 "OmniWMIPC",
                 "OmniWMAudioTap",
                 "OmniWMLayerCorners",
@@ -128,6 +162,9 @@ let package = Package(
                 .product(name: "TOML", package: "swift-toml")
             ],
             path: "Sources/OmniWM",
+            // Fork: the Ghostty-backed Quake terminal is compiled out; see
+            // QuakeTerminal/QuakeTerminalDisabled.swift for the stand-in.
+            exclude: ghosttyQuakeTerminalSources,
             resources: [
                 .process("Resources"),
                 .copy("Core/IssueReporter/Prompts"),
@@ -153,7 +190,6 @@ let package = Package(
                 .linkedFramework("QuartzCore"),
                 .linkedLibrary("z"),
                 .linkedLibrary("c++"),
-                .unsafeFlags(["-L\(ghosttyMacOSLibraryDirectory)"]),
                 .unsafeFlags(["-F/System/Library/PrivateFrameworks", "-framework", "SkyLight"]),
                 .unsafeFlags(["-weak_framework", "FoundationModels"])
             ]
@@ -190,6 +226,7 @@ let package = Package(
                 "OmniWMShellCore"
             ],
             path: "Tests/OmniWMTests",
+            exclude: ghosttyQuakeTerminalTests,
             resources: [
                 .copy("Fixtures")
             ],

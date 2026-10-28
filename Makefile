@@ -6,7 +6,6 @@ NIX_BUILD := nix --extra-experimental-features "nix-command flakes" build
 GHOSTTYKIT := Frameworks/GhosttyKit.xcframework
 SWIFTFORMAT := $(CURDIR)/.cache/flake-tools/bin/swiftformat
 SWIFTLINT := $(CURDIR)/.cache/flake-tools/bin/swiftlint
-SWIFT_WITH_GHOSTTY = LIBRARY_PATH="$$(./Scripts/ghostty-preflight.sh print-library-dir)$${LIBRARY_PATH:+:$$LIBRARY_PATH}"
 SWIFT := $(or $(SWIFTLY_HOME_DIR),$(HOME)/.swiftly)/bin/swift
 
 setup: setup-tools
@@ -46,9 +45,10 @@ lint-fix: check-tool-versions
 	"$(SWIFTFORMAT)" .
 	"$(SWIFTLINT)" lint
 
+# Fork: GhosttyKit isn't linked (the Quake terminal is compiled out), so there is
+# nothing to preflight.
 build:
-	./Scripts/ghostty-preflight.sh verify
-	$(SWIFT_WITH_GHOSTTY) "$(SWIFT)" build --arch arm64
+	"$(SWIFT)" build --arch arm64
 
 localization-check: build
 	python3 Scripts/localization.py check
