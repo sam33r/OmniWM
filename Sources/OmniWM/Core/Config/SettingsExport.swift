@@ -78,6 +78,7 @@ struct SettingsExport: Equatable {
         var crossesMonitorAtEdge: Bool
         var moveCrossesMonitorAtEdge: Bool
         var moveToMonitorWrapsAround: Bool
+        var followsMouseMaxScrollPercent: Int?
     }
 
     struct MouseWarp: Codable, Equatable {
@@ -322,6 +323,10 @@ extension SettingsExport.Focus {
         moveCrossesMonitorAtEdge = try container.decode(Bool.self, forKey: .moveCrossesMonitorAtEdge)
         moveToMonitorWrapsAround = try container.decodeIfPresent(Bool.self, forKey: .moveToMonitorWrapsAround)
             ?? Self.defaults().moveToMonitorWrapsAround
+        followsMouseMaxScrollPercent = try container.decodeIfPresent(
+            Int.self,
+            forKey: .followsMouseMaxScrollPercent
+        )
     }
 
     static func defaults() -> Self {
@@ -334,7 +339,8 @@ extension SettingsExport.Focus {
             followsWindowToMonitor: false,
             crossesMonitorAtEdge: false,
             moveCrossesMonitorAtEdge: false,
-            moveToMonitorWrapsAround: false
+            moveToMonitorWrapsAround: false,
+            followsMouseMaxScrollPercent: nil
         )
     }
 }

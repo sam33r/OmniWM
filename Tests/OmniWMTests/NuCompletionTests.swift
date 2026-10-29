@@ -139,8 +139,9 @@ final class NuCompletionTests: XCTestCase {
             ("omniwmctl --for", ["--format"]),
             ("omniwmctl query windows --app ", []),
             ("omniwmctl rule add --title-substring ", []),
-            ("omniwmctl rule add --layout ", ["auto", "tile", "float"]),
+            ("omniwmctl rule add --layout ", ["auto", "tile", "float", "ignore"]),
             ("omniwmctl rule add --layout fl", ["float"]),
+            ("omniwmctl rule add --layout ig", ["ignore"]),
             ("omniwmctl rule apply --pid ", []),
             ("omniwmctl query windows --app 'Visual Studio Code' --fields ti", ["title"])
         ]

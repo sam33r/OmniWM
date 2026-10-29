@@ -260,6 +260,67 @@ extension NiriLayoutEngine {
         )
     }
 
+    /// How far `ensureSelectionVisible` would scroll to reveal `node`, measured on a copy of
+    /// `state` with the spans the last layout pass resolved; leaves the engine unchanged.
+    func selectionRevealDistance(
+        node: NiriNode,
+        context: NiriInteractionContext,
+        state: ViewportState
+    ) -> CGFloat {
+        guard let container = column(of: node) else { return 0 }
+        let settings = effectiveSettings(in: context.workspaceId)
+        let scale = displayScale(in: context.workspaceId)
+        let viewFrame = monitorForWorkspace(context.workspaceId)?.frame
+        var probe = state
+
+        guard !projectionExclusions(in: context.workspaceId).isEmpty else {
+            let containers = columns(in: context.workspaceId)
+            guard let targetIdx = columnIndex(of: container, in: context.workspaceId) else { return 0 }
+            probe.retargetColumn(
+                to: targetIdx,
+                columns: containers,
+                gap: context.gaps,
+                orientation: context.orientation
+            )
+            return probe.containerRevealDistance(
+                containerIndex: targetIdx,
+                containers: containers,
+                context: context,
+                centerMode: settings.centerFocusedColumn,
+                alwaysCenterSingleColumn: settings.alwaysCenterSingleColumn,
+                fromContainerIndex: state.activeColumnIndex,
+                scale: scale,
+                viewFrame: viewFrame
+            )
+        }
+
+        let projectedColumns = projectedColumns(in: context.workspaceId)
+        guard let targetIdx = projectedColumns.firstIndex(where: { $0.column === container }) else { return 0 }
+        return withResolvedProjectedPrimarySpans(projectedColumns, context: context) {
+            let containers = projectedColumns.map(\.column)
+            probe.activeColumnIndex = projectedActiveColumnIndex(
+                state: state,
+                columns: projectedColumns,
+                in: context.workspaceId
+            )
+            probe.retargetColumn(
+                to: targetIdx,
+                columns: containers,
+                gap: context.gaps,
+                orientation: context.orientation
+            )
+            return probe.containerRevealDistance(
+                containerIndex: targetIdx,
+                containers: containers,
+                context: context,
+                centerMode: settings.centerFocusedColumn,
+                alwaysCenterSingleColumn: settings.alwaysCenterSingleColumn,
+                scale: scale,
+                viewFrame: viewFrame
+            )
+        }
+    }
+
     func resolvePrimaryContainerSpans(
         in workspaceId: WorkspaceDescriptor.ID,
         workingFrame: CGRect,

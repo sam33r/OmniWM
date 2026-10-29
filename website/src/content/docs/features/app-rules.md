@@ -40,7 +40,7 @@ Use the target's actual bundle ID and AX values. This escape hatch does not admi
 
 ## Rule actions
 
-- **Layout (Automatic / Tile / Float)** — leave classification automatic, or force matching windows to tile or float.
+- **Layout (Automatic / Tile / Float / Ignore)** — leave classification automatic, force matching windows to tile or float, or ignore them: OmniWM leaves ignored windows unmanaged, so they are never tiled, floated, shown in Overview or the workspace bar, or given borders. A managed window that a new or edited Ignore rule matches is released.
 - **Assign to Workspace** — use a valid workspace assignment as the initial default whenever the matching app currently has no tracked windows. Additional windows open on the workspace active when creation began. Automatic rule reevaluation leaves managed windows in place, while explicit rule application can move them. Readmission, structural replacements, and unique persisted boot-restore matches preserve their existing placement continuity.
 - **Initial Container Primary Span (Niri)** — start matching resizable windows at 5–100% when they create or claim a new container; the container remains freely resizable afterward.
 - **Minimum Size** — prevent the layout engine from sizing windows below a threshold.

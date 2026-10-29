@@ -102,6 +102,8 @@ struct MatchedWindowRules {
             disposition = .floating
         case .tile:
             disposition = .managed
+        case .ignore:
+            disposition = .unmanaged
         case .auto:
             return nil
         }

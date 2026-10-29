@@ -90,22 +90,13 @@ extension ViewportState {
     ) {
         guard !containers.isEmpty, containerIndex >= 0, containerIndex < containers.count else { return }
 
-        let sizeKeyPath = context.orientation.settledSpanKeyPath
         let stationaryOffset = viewOffset
-        let activePos = containerPosition(
-            at: activeColumnIndex,
-            containers: containers,
-            gap: context.gaps,
-            sizeKeyPath: sizeKeyPath
-        )
-        let stationaryViewStart = activePos + stationaryOffset
         let pixelEpsilon: CGFloat = 1.0 / max(scale, 1.0)
 
-        let targetOffset = computeVisibleOffset(
+        let targetOffset = revealOffset(
             containerIndex: containerIndex,
             containers: containers,
             context: context,
-            currentViewStart: stationaryViewStart,
             centerMode: centerMode,
             alwaysCenterSingleColumn: alwaysCenterSingleColumn,
             fromContainerIndex: fromContainerIndex,
@@ -127,6 +118,60 @@ extension ViewportState {
         } else {
             jumpOffset(to: targetOffset)
         }
+    }
+
+    func containerRevealDistance(
+        containerIndex: Int,
+        containers: [NiriContainer],
+        context: NiriInteractionContext,
+        centerMode: CenterFocusedColumn = .never,
+        alwaysCenterSingleColumn: Bool = false,
+        fromContainerIndex: Int? = nil,
+        scale: CGFloat = 2.0,
+        viewFrame: CGRect? = nil
+    ) -> CGFloat {
+        guard !containers.isEmpty, containerIndex >= 0, containerIndex < containers.count else { return 0 }
+
+        let distance = abs(revealOffset(
+            containerIndex: containerIndex,
+            containers: containers,
+            context: context,
+            centerMode: centerMode,
+            alwaysCenterSingleColumn: alwaysCenterSingleColumn,
+            fromContainerIndex: fromContainerIndex,
+            scale: scale,
+            viewFrame: viewFrame
+        ) - viewOffset)
+        return distance <= 1.0 / max(scale, 1.0) ? 0 : distance
+    }
+
+    private func revealOffset(
+        containerIndex: Int,
+        containers: [NiriContainer],
+        context: NiriInteractionContext,
+        centerMode: CenterFocusedColumn,
+        alwaysCenterSingleColumn: Bool,
+        fromContainerIndex: Int?,
+        scale: CGFloat,
+        viewFrame: CGRect?
+    ) -> CGFloat {
+        let activePos = containerPosition(
+            at: activeColumnIndex,
+            containers: containers,
+            gap: context.gaps,
+            sizeKeyPath: context.orientation.settledSpanKeyPath
+        )
+        return computeVisibleOffset(
+            containerIndex: containerIndex,
+            containers: containers,
+            context: context,
+            currentViewStart: activePos + viewOffset,
+            centerMode: centerMode,
+            alwaysCenterSingleColumn: alwaysCenterSingleColumn,
+            fromContainerIndex: fromContainerIndex,
+            scale: scale,
+            viewFrame: viewFrame
+        )
     }
 }
 

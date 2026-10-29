@@ -236,6 +236,18 @@ enum SettingsSearchIndex {
             tab: "mouse",
             anchor: "Raise Window When Focus Follows Mouse"
         ),
+        setting(
+            "Limit Scrolling for Mouse Focus",
+            section: .mouseTrackpad,
+            tab: "mouse",
+            anchor: "Limit Scrolling for Mouse Focus"
+        ),
+        setting(
+            "Maximum Mouse Focus Scroll",
+            section: .mouseTrackpad,
+            tab: "mouse",
+            anchor: "Maximum Mouse Focus Scroll"
+        ),
         setting("Focus Lock Modifier", section: .mouseTrackpad, tab: "mouse", anchor: "Focus Lock Modifier"),
         setting("Edge navigation interval", section: .mouseTrackpad, tab: "mouse", anchor: "Edge navigation interval"),
         setting("Quake Terminal", section: .quakeTerminal, anchor: "Quake Terminal"),
@@ -376,7 +388,7 @@ extension SettingsSearchIndex {
         case .menuBar: ["status bar", "hidden bar", "menu bar", "icons"]
         case .layouts: ["spacing", "gaps", "margins", "niri", "dwindle", "columns", "tiling"]
         case .monitors: ["monitors", "displays", "screens", "routing"]
-        case .appRules: ["app rules", "float", "tile", "bundle", "match"]
+        case .appRules: ["app rules", "float", "tile", "ignore", "bundle", "match"]
         case .windowSwitcher: ["alt-tab", "command-tab", "option-tab", "app switcher", "previews"]
         case .hotkeys: ["hotkeys", "keyboard", "shortcuts", "hyper", "commands", "pause", "prefix", "mode key"]
         case .advanced: ["config", "toml", "luau", "ipc", "cli", "terminal"]

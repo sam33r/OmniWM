@@ -199,6 +199,12 @@ struct RuleWindowBehaviorSection: View {
             }
             .pickerStyle(.segmented)
 
+            if draft.layoutAction == .ignore {
+                SettingsCaption(
+                    localized: "Ignore leaves matching windows unmanaged: OmniWM won't tile, float, focus-track, or show them in Overview or the workspace bar."
+                )
+            }
+
             SettingsCaption(
                 localized: "Settings left on Automatic or off can come from other rules that match the same window."
             )
