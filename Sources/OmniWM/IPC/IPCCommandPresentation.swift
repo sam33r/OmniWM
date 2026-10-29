@@ -67,15 +67,24 @@ enum IPCCommandPresentation {
         if titles.count == 1 {
             return titles[0]
         }
-        // Per-argument actions ("Focus Left", "Focus Right", …) share their leading words.
-        if let first = titles.first {
-            var common = first.split(separator: " ")
-            for title in titles.dropFirst() {
-                let words = title.split(separator: " ")
-                common = Array(zip(common, words).prefix { $0 == $1 }.map(\.0))
+        // Per-argument actions ("Focus Left", "Toggle Scratchpad 2 Assignment for Focused
+        // Window", "Command Palette: Windows") share their words around the argument.
+        let wordLists = titles.map { $0.split(separator: " ").map(String.init) }
+        if let first = wordLists.first {
+            var prefix = first
+            for words in wordLists.dropFirst() {
+                prefix = Array(zip(prefix, words).prefix { $0 == $1 }.map(\.0))
             }
-            if !common.isEmpty {
-                return common.joined(separator: " ")
+            let remainders = wordLists.map { Array($0.dropFirst(prefix.count).reversed()) }
+            var suffix = remainders[0]
+            for words in remainders.dropFirst() {
+                suffix = Array(zip(suffix, words).prefix { $0 == $1 }.map(\.0))
+            }
+            suffix = Array(suffix.prefix(remainders.map(\.count).min() ?? 0))
+            let shared = (prefix + suffix.reversed()).joined(separator: " ")
+                .trimmingCharacters(in: CharacterSet(charactersIn: ":,;-–—").union(.whitespaces))
+            if !shared.isEmpty {
+                return shared
             }
         }
         let words = descriptor.commandWords.joined(separator: " ").replacingOccurrences(of: "-", with: " ")

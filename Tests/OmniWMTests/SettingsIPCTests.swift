@@ -473,6 +473,14 @@ final class SettingsIPCTests: XCTestCase {
         XCTAssertEqual(focus.argumentHotkeys?["left"], ["⌥←"])
         XCTAssertEqual(focus.hotkeys, [])
 
+        let titles = Dictionary(uniqueKeysWithValues: descriptors.map { ($0.name.rawValue, $0.title ?? "") })
+        XCTAssertEqual(titles["switch-workspace"], "Switch to Workspace")
+        XCTAssertEqual(titles["scratchpad-toggle"], "Toggle Scratchpad")
+        XCTAssertEqual(titles["scratchpad-assign"], "Toggle Scratchpad Assignment for Focused Window")
+        XCTAssertEqual(titles["open-command-palette-mode"], "Command Palette")
+        let duplicates = Dictionary(grouping: titles.keys.sorted()) { titles[$0] ?? "" }.filter { $0.value.count > 1 }
+        XCTAssertEqual(duplicates, [:])
+
         let switchWorkspace = try XCTUnwrap(descriptors.first { $0.name == .workspace(.switchTo) })
         XCTAssertEqual(switchWorkspace.argumentHotkeys?["1"], ["⌥1"])
         XCTAssertEqual(switchWorkspace.argumentHotkeys?["9"], ["⌥9"])
