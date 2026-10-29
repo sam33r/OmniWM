@@ -66,12 +66,19 @@ extension WorkspaceNavigationHandler {
         let monitorId: Monitor.ID
         let currentWorkspace: WorkspaceDescriptor
         let targetWorkspace: WorkspaceDescriptor
+        let createdTarget: Bool
     }
 
+    /// Resolves the workspace `switch-workspace next|prev` (and `move-to-workspace next|prev`)
+    /// lands on. `edgeBehavior` defaults to `[focus] relativeWorkspaceEdgeBehavior`; with
+    /// `onePast` the target may be a workspace created for the call (`createdTarget`), which
+    /// the caller removes again if it can't use it. `leavingToken` is the window being moved,
+    /// so its source workspace counts as empty when that window is its only one.
     func relativeWorkspaceTarget(
         isNext: Bool,
-        wrapAround: Bool = true,
-        monitorId explicitMonitorId: Monitor.ID? = nil
+        edgeBehavior explicitEdgeBehavior: WorkspaceSwipeEdgeBehavior? = nil,
+        monitorId explicitMonitorId: Monitor.ID? = nil,
+        leavingToken: WindowToken? = nil
     ) -> RelativeWorkspaceTarget? {
         guard let controller else { return nil }
         guard let currentMonitorId = explicitMonitorId ?? interactionMonitorId(for: controller)
@@ -80,40 +87,48 @@ extension WorkspaceNavigationHandler {
             ? controller.activeWorkspace()
             : controller.workspaceManager.activeWorkspaceOrFirst(on: currentMonitorId)
         guard let currentWorkspace = resolvedWorkspace else { return nil }
-        let skipEmpty = skipsEmptyWorkspaces(on: currentMonitorId)
-
-        let targetWorkspace: WorkspaceDescriptor? = if isNext {
-            controller.workspaceManager.nextWorkspaceInOrder(
-                on: currentMonitorId,
-                from: currentWorkspace.id,
-                wrapAround: wrapAround,
-                skipEmpty: skipEmpty
-            )
-        } else {
-            controller.workspaceManager.previousWorkspaceInOrder(
-                on: currentMonitorId,
-                from: currentWorkspace.id,
-                wrapAround: wrapAround,
-                skipEmpty: skipEmpty
-            )
+        let target = edgeAwareWorkspaceTarget(
+            isNext: isNext,
+            from: currentWorkspace.id,
+            on: currentMonitorId,
+            edgeBehavior: explicitEdgeBehavior ?? controller.settings.focus.relativeWorkspaceEdgeBehavior,
+            leavingToken: leavingToken
+        )
+        let targetWorkspace: WorkspaceDescriptor
+        switch target {
+        case let .existing(workspace):
+            targetWorkspace = workspace
+        case .new:
+            guard let created = createNewWorkspace(on: currentMonitorId) else { return nil }
+            targetWorkspace = created
+        case nil:
+            return nil
         }
-
-        guard let targetWorkspace else { return nil }
         return RelativeWorkspaceTarget(
             monitorId: currentMonitorId,
             currentWorkspace: currentWorkspace,
-            targetWorkspace: targetWorkspace
+            targetWorkspace: targetWorkspace,
+            createdTarget: target == .new
         )
     }
 
     func switchWorkspaceRelative(
         isNext: Bool,
-        wrapAround: Bool = true,
+        edgeBehavior: WorkspaceSwipeEdgeBehavior? = nil,
         monitorId explicitMonitorId: Monitor.ID? = nil
     ) {
-        guard let target = relativeWorkspaceTarget(isNext: isNext, wrapAround: wrapAround, monitorId: explicitMonitorId)
+        guard let controller,
+              let target = relativeWorkspaceTarget(
+                  isNext: isNext,
+                  edgeBehavior: edgeBehavior,
+                  monitorId: explicitMonitorId
+              )
         else { return }
-        activateWorkspaceInOrder(target.targetWorkspace, from: target.currentWorkspace.id, on: target.monitorId)
+        if !activateWorkspaceInOrder(target.targetWorkspace, from: target.currentWorkspace.id, on: target.monitorId),
+           target.createdTarget
+        {
+            controller.workspaceManager.removeWorkspaces([target.targetWorkspace.id])
+        }
     }
 
     @discardableResult
@@ -147,8 +162,36 @@ extension WorkspaceNavigationHandler {
         createIfNeeded: Bool
     ) -> WorkspaceDescriptor? {
         guard let controller else { return nil }
+        switch edgeAwareWorkspaceTarget(
+            isNext: isNext,
+            from: workspaceId,
+            on: monitorId,
+            edgeBehavior: controller.settings.gestures.workspaceSwipeEdgeBehavior
+        ) {
+        case let .existing(workspace):
+            return workspace
+        case .new:
+            return createIfNeeded ? createNewWorkspace(on: monitorId) : nil
+        case nil:
+            return nil
+        }
+    }
+
+    private enum EdgeAwareWorkspaceTarget: Equatable {
+        case existing(WorkspaceDescriptor)
+        /// `onePast` past the last workspace with nothing empty after it: create one.
+        case new
+    }
+
+    private func edgeAwareWorkspaceTarget(
+        isNext: Bool,
+        from workspaceId: WorkspaceDescriptor.ID,
+        on monitorId: Monitor.ID,
+        edgeBehavior: WorkspaceSwipeEdgeBehavior,
+        leavingToken: WindowToken? = nil
+    ) -> EdgeAwareWorkspaceTarget? {
+        guard let controller else { return nil }
         let manager = controller.workspaceManager
-        let edgeBehavior = controller.settings.gestures.workspaceSwipeEdgeBehavior
         let skipEmpty = skipsEmptyWorkspaces(on: monitorId)
         let wrapAround = edgeBehavior == .cycle
         let adjacent = isNext
@@ -161,16 +204,21 @@ extension WorkspaceNavigationHandler {
             : manager.previousWorkspaceInOrder(
                 on: monitorId, from: workspaceId, wrapAround: wrapAround, skipEmpty: skipEmpty
             )
-        guard adjacent == nil, edgeBehavior == .onePast, isNext, manager.isOccupied(workspaceId) else {
-            return adjacent
+        if let adjacent { return .existing(adjacent) }
+        let sourceKeepsWindows = if let leavingToken {
+            manager.barVisibleEntries(in: workspaceId, showFloatingWindows: true)
+                .contains { $0.token != leavingToken }
+        } else {
+            manager.isOccupied(workspaceId)
         }
+        guard edgeBehavior == .onePast, isNext, sourceKeepsWindows else { return nil }
         let ordered = manager.workspaces(on: monitorId)
         if let index = ordered.firstIndex(where: { $0.id == workspaceId }),
            let empty = ordered[(index + 1)...].first(where: { !manager.isOccupied($0.id) })
         {
-            return empty
+            return .existing(empty)
         }
-        return createIfNeeded ? createNewWorkspace(on: monitorId) : nil
+        return .new
     }
 
     func skipsEmptyWorkspaces(on monitorId: Monitor.ID) -> Bool {

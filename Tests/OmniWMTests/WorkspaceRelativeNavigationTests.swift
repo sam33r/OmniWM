@@ -312,6 +312,71 @@ final class WorkspaceRelativeNavigationTests: XCTestCase {
         XCTAssertEqual(manager.workspace(for: lone), fixture.workspace2)
     }
 
+    func testOnePastSwitchNextOpensAnEmptyWorkspacePastTheLastOccupiedOne() throws {
+        let fixture = try makeFixture()
+        let manager = fixture.manager
+        fixture.controller.settings.focus.relativeWorkspaceEdgeBehavior = .onePast
+        defer { fixture.controller.layoutRefreshController.resetState() }
+        _ = addWindow(to: fixture.workspace5, in: fixture)
+        XCTAssertTrue(manager.setActiveWorkspace(fixture.workspace5, on: fixture.monitorA.id))
+
+        fixture.navigation.switchWorkspaceRelative(isNext: true)
+
+        let created = try XCTUnwrap(manager.workspaceId(named: "6"))
+        XCTAssertEqual(manager.monitorId(for: created), fixture.monitorA.id)
+        XCTAssertEqual(manager.activeWorkspace(on: fixture.monitorA.id)?.id, created)
+        XCTAssertTrue(manager.entries(in: created).isEmpty)
+
+        fixture.navigation.switchWorkspaceRelative(isNext: true)
+        XCTAssertEqual(manager.activeWorkspace(on: fixture.monitorA.id)?.id, created)
+        XCTAssertNil(manager.workspaceId(named: "7"))
+
+        fixture.navigation.switchWorkspaceRelative(isNext: false)
+        XCTAssertEqual(manager.activeWorkspace(on: fixture.monitorA.id)?.id, fixture.workspace5)
+
+        XCTAssertTrue(manager.setActiveWorkspace(fixture.workspace1, on: fixture.monitorA.id))
+        fixture.navigation.switchWorkspaceRelative(isNext: false)
+        XCTAssertEqual(manager.activeWorkspace(on: fixture.monitorA.id)?.id, fixture.workspace1)
+    }
+
+    func testOnePastMoveNextCarriesTheWindowIntoANewWorkspaceUnlessItIsAlone() throws {
+        let fixture = try makeFixture()
+        let manager = fixture.manager
+        fixture.controller.settings.focus.relativeWorkspaceEdgeBehavior = .onePast
+        defer { fixture.controller.layoutRefreshController.resetState() }
+        XCTAssertTrue(manager.setActiveWorkspace(fixture.workspace5, on: fixture.monitorA.id))
+        let lone = addWindow(to: fixture.workspace5, in: fixture)
+
+        XCTAssertFalse(fixture.navigation.moveFocusedWindowRelative(isNext: true))
+        XCTAssertEqual(manager.workspace(for: lone), fixture.workspace5)
+        XCTAssertNil(manager.workspaceId(named: "6"))
+
+        let moved = addWindow(to: fixture.workspace5, in: fixture, windowId: 12)
+        XCTAssertTrue(fixture.navigation.moveFocusedWindowRelative(isNext: true))
+
+        let created = try XCTUnwrap(manager.workspaceId(named: "6"))
+        XCTAssertEqual(manager.monitorId(for: created), fixture.monitorA.id)
+        XCTAssertEqual(manager.workspace(for: moved), created)
+        XCTAssertEqual(manager.workspace(for: lone), fixture.workspace5)
+        XCTAssertEqual(manager.activeWorkspace(on: fixture.monitorA.id)?.id, created)
+    }
+
+    func testNoneStopsRelativeSwitchesAndMovesAtTheEnds() throws {
+        let fixture = try makeFixture()
+        let manager = fixture.manager
+        fixture.controller.settings.focus.relativeWorkspaceEdgeBehavior = .none
+        defer { fixture.controller.layoutRefreshController.resetState() }
+        XCTAssertTrue(manager.setActiveWorkspace(fixture.workspace5, on: fixture.monitorA.id))
+        let token = addWindow(to: fixture.workspace5, in: fixture)
+        _ = addWindow(to: fixture.workspace5, in: fixture, windowId: 12, focus: false)
+
+        fixture.navigation.switchWorkspaceRelative(isNext: true)
+        XCTAssertEqual(manager.activeWorkspace(on: fixture.monitorA.id)?.id, fixture.workspace5)
+        XCTAssertFalse(fixture.navigation.moveFocusedWindowRelative(isNext: true))
+        XCTAssertEqual(manager.workspace(for: token), fixture.workspace5)
+        XCTAssertNil(manager.workspaceId(named: "6"))
+    }
+
     private struct CycleFixture {
         let fixture: Fixture
         let window: WindowToken

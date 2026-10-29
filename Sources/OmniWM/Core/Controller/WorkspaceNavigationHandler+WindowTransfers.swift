@@ -112,15 +112,29 @@ extension WorkspaceNavigationHandler {
         guard let controller,
               let token = controller.workspaceManager.selectedManagedToken,
               let sourceWorkspaceId = controller.workspaceManager.workspace(for: token),
-              let target = relativeWorkspaceTarget(isNext: isNext),
-              target.targetWorkspace.id != sourceWorkspaceId
+              let target = relativeWorkspaceTarget(isNext: isNext, leavingToken: token)
         else { return false }
+        guard target.targetWorkspace.id != sourceWorkspaceId else { return false }
 
         saveNiriViewportState(for: sourceWorkspaceId)
-        if case .changed = commitWindowMove(handle: WindowHandle(id: token), toWorkspaceId: target.targetWorkspace.id) {
-            return true
+        guard target.createdTarget else {
+            if case .changed = commitWindowMove(
+                handle: WindowHandle(id: token),
+                toWorkspaceId: target.targetWorkspace.id
+            ) {
+                return true
+            }
+            return false
         }
-        return false
+        guard case let .changed(mutation) = moveWindow(
+            handle: WindowHandle(id: token),
+            toWorkspaceId: target.targetWorkspace.id
+        ) else {
+            controller.workspaceManager.removeWorkspaces([target.targetWorkspace.id])
+            return false
+        }
+        finishWorkspaceMove(mutation, focusPolicy: .alwaysFollow)
+        return true
     }
 
     @discardableResult

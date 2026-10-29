@@ -68,6 +68,7 @@ Pointer-driven focus and monitor-edge focus/move behavior.
 | `crossesMonitorAtEdge` | boolean | `false` | Directional focus continues onto the neighboring monitor at the screen edge. |
 | `moveCrossesMonitorAtEdge` | boolean | `false` | Directional window move continues onto the neighboring monitor at the workspace edge and always follows the moved window. |
 | `moveToMonitorWrapsAround` *(optional)* | boolean | `false` | When **Move Focused Window to Monitor** (`omniwmctl command move-to-monitor`) finds no monitor in the requested direction, it moves the window to the farthest monitor in the opposite direction along the same row or column of the routing arrangement. Follows `followsWindowToMonitor`. Edge-crossing moves never wrap. |
+| `relativeWorkspaceEdgeBehavior` *(optional)* | string | `"cycle"` | What `switch-workspace next`/`prev` and `move-to-workspace next`/`prev` (and their hotkeys) do past the first or last workspace on the monitor: `cycle` wraps around, `none` stops, and `onePast` works like niri: next from the last occupied workspace opens an empty one after it, creating it if needed (a move carries the window there and follows it), while next from an empty last workspace, a move of a window that is alone on the last workspace, and previous from the first do nothing. Uses the same order and empty-workspace skipping as before. |
 
 ## mouseWarp
 
@@ -329,7 +330,7 @@ The seven optional `overviewGesture…` and `window…` keys below configure Ove
 | `workspaceSwipeEnabled` | boolean | `false` | Trackpad swipe switches to the next/previous workspace. |
 | `workspaceSwipeFingerCount` | integer | `3` | Workspace-swipe finger count: `2`, `3`, or `4`. |
 | `workspaceSwipeAxis` | string | `"vertical"` | Workspace-swipe axis: `horizontal` or `vertical`. |
-| `workspaceSwipeEdgeBehavior` *(optional)* | string | `"cycle"` | What a workspace swipe does past the first or last workspace: `cycle` wraps around, `none` ignores the swipe, and `onePast` moves from the last occupied workspace to an empty one, creating it if needed, while ignoring swipes past an empty last workspace or before the first. Applies to trackpad swipes only; next/previous workspace hotkeys always wrap. |
+| `workspaceSwipeEdgeBehavior` *(optional)* | string | `"cycle"` | What a workspace swipe does past the first or last workspace: `cycle` wraps around, `none` ignores the swipe, and `onePast` moves from the last occupied workspace to an empty one, creating it if needed, while ignoring swipes past an empty last workspace or before the first. Applies to trackpad swipes only; `focus.relativeWorkspaceEdgeBehavior` sets the same for next/previous workspace hotkeys and commands. |
 | `overviewGestureEnabled` *(optional)* | boolean | `false` | Enable the trackpad gesture that opens Overview with an upward swipe and closes it with a downward swipe. |
 | `overviewGestureFingerCount` *(optional)* | integer | `4` | Overview gesture finger count: `3` or `4`. |
 | `windowMoveEnabled` *(optional)* | boolean | `false` | Drag without clicking to swap the tiled window under the cursor in either layout. |

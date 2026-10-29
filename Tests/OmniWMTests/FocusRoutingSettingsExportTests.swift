@@ -21,7 +21,8 @@ final class FocusRoutingSettingsExportTests: XCTestCase {
             "followsWindowToMonitor": .boolean(false),
             "crossesMonitorAtEdge": .boolean(false),
             "moveCrossesMonitorAtEdge": .boolean(false),
-            "moveToMonitorWrapsAround": .boolean(false)
+            "moveToMonitorWrapsAround": .boolean(false),
+            "relativeWorkspaceEdgeBehavior": .string("cycle")
         ]))
         XCTAssertEqual(tree["mouseWarp"], .table([
             "margin": .integer(1),
@@ -159,6 +160,32 @@ final class FocusRoutingSettingsExportTests: XCTestCase {
             }
             XCTAssertEqual(context.codingPath.map(\.stringValue), ["focus", "followsMouseMaxScrollPercent"])
         }
+    }
+
+    func testRelativeWorkspaceEdgeBehaviorIsOptionalAndRoundTrips() throws {
+        XCTAssertEqual(SettingsExport.defaults().focus.relativeWorkspaceEdgeBehavior, .cycle)
+        for behavior in WorkspaceSwipeEdgeBehavior.allCases {
+            var export = SettingsExport.defaults()
+            export.focus.relativeWorkspaceEdgeBehavior = behavior
+            let data = try SettingsTOMLCodec.encode(export)
+            let result = try SettingsTOMLCodec.decodeForLoad(data)
+            XCTAssertEqual(result.export, export)
+            XCTAssertNil(result.migration)
+            XCTAssertTrue(SettingsTOMLCodec.unknownKeyPaths(in: data).isEmpty)
+        }
+
+        let source = String(decoding: try SettingsTOMLCodec.encode(.defaults()), as: UTF8.self)
+        let missing = try removing(key: "relativeWorkspaceEdgeBehavior", from: "focus", in: source)
+        let result = try SettingsTOMLCodec.decodeForLoad(Data(missing.utf8))
+        XCTAssertEqual(result.export.focus.relativeWorkspaceEdgeBehavior, .cycle)
+        XCTAssertNil(result.migration)
+        XCTAssertNil(result.migratedData)
+
+        let malformed = source.replacingOccurrences(
+            of: "relativeWorkspaceEdgeBehavior = \"cycle\"",
+            with: "relativeWorkspaceEdgeBehavior = \"sideways\""
+        )
+        XCTAssertThrowsError(try SettingsTOMLCodec.decode(Data(malformed.utf8)))
     }
 
     func testExistingSectionFieldsRemainRequired() throws {

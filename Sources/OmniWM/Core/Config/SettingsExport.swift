@@ -78,6 +78,7 @@ struct SettingsExport: Equatable {
         var crossesMonitorAtEdge: Bool
         var moveCrossesMonitorAtEdge: Bool
         var moveToMonitorWrapsAround: Bool
+        var relativeWorkspaceEdgeBehavior: WorkspaceSwipeEdgeBehavior
         var followsMouseMaxScrollPercent: Int?
     }
 
@@ -323,6 +324,10 @@ extension SettingsExport.Focus {
         moveCrossesMonitorAtEdge = try container.decode(Bool.self, forKey: .moveCrossesMonitorAtEdge)
         moveToMonitorWrapsAround = try container.decodeIfPresent(Bool.self, forKey: .moveToMonitorWrapsAround)
             ?? Self.defaults().moveToMonitorWrapsAround
+        relativeWorkspaceEdgeBehavior = try container.decodeIfPresent(
+            WorkspaceSwipeEdgeBehavior.self,
+            forKey: .relativeWorkspaceEdgeBehavior
+        ) ?? Self.defaults().relativeWorkspaceEdgeBehavior
         followsMouseMaxScrollPercent = try container.decodeIfPresent(
             Int.self,
             forKey: .followsMouseMaxScrollPercent
@@ -340,6 +345,7 @@ extension SettingsExport.Focus {
             crossesMonitorAtEdge: false,
             moveCrossesMonitorAtEdge: false,
             moveToMonitorWrapsAround: false,
+            relativeWorkspaceEdgeBehavior: .cycle,
             followsMouseMaxScrollPercent: nil
         )
     }

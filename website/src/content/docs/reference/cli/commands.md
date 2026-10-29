@@ -130,7 +130,7 @@ Workspace IDs are positive numeric strings. Direct hotkeys for `1-9` have defaul
 
 Workspace IDs are global, so `switch-workspace 3` targets workspace `3` wherever it lives. The `slot` variants address a position in the interaction monitor's ordered workspace list instead, the same order the workspace bar shows, so `switch-workspace slot 2` opens whichever workspace comes second on the monitor you are using. A slot beyond that monitor's list reports `not_found`; the native actions `Switch to Workspace Slot 1-9` and `Move Focused Window to Workspace Slot 1-9` are unassigned by default.
 
-`move-to-workspace next` and `prev` use the same order, wrapping and empty-workspace skipping as `switch-workspace next` and `prev`, while `up` and `down` keep creating adjacent numbered workspaces at the edges. The `new` variants create the next free numbered workspace, which is removed again once it is empty and no longer shown. Without a focused managed window, the `move-to-workspace` variants report `not_found`. Unreleased: available when building from `main`.
+`move-to-workspace next` and `prev` use the same order, edge behavior (`focus.relativeWorkspaceEdgeBehavior`: wrap by default, or stop, or open a new workspace past the last one) and empty-workspace skipping as `switch-workspace next` and `prev`, while `up` and `down` keep creating adjacent numbered workspaces at the edges. The `new` variants create the next free numbered workspace, which is removed again once it is empty and no longer shown. Without a focused managed window, the `move-to-workspace` variants report `not_found`. Unreleased: available when building from `main`.
 
 ### Monitor Focus
 

@@ -30,6 +30,10 @@ live on this fork's **`main`** branch, on top of upstream `main`. Run it as
   global default under per-monitor `monitorOrientationOverrides`.
 - **`[focus] moveToMonitorWrapsAround`**: move-to-monitor wraps to the far
   monitor at the edge.
+- **`[focus] relativeWorkspaceEdgeBehavior`** (`cycle` | `none` | `onePast`):
+  what next/prev workspace switches and moves do at the ends. `onePast` is
+  niri-style: next past the last occupied workspace opens a new one (a move
+  carries the window into it), so no separate new-workspace key is needed.
 
 ## Set up Dev on a new Mac
 

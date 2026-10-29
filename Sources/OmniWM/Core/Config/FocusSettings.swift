@@ -82,6 +82,10 @@ final class FocusSettings {
         didSet { onChange?() }
     }
 
+    var relativeWorkspaceEdgeBehavior = FocusSettings.defaults.relativeWorkspaceEdgeBehavior {
+        didSet { onChange?() }
+    }
+
     func export() -> SettingsExport.Focus {
         SettingsExport.Focus(
             followsMouse: followsMouse,
@@ -93,6 +97,7 @@ final class FocusSettings {
             crossesMonitorAtEdge: crossesMonitorAtEdge,
             moveCrossesMonitorAtEdge: moveCrossesMonitorAtEdge,
             moveToMonitorWrapsAround: moveToMonitorWrapsAround,
+            relativeWorkspaceEdgeBehavior: relativeWorkspaceEdgeBehavior,
             followsMouseMaxScrollPercent: followsMouseMaxScrollPercent
         )
     }
@@ -107,6 +112,7 @@ final class FocusSettings {
         crossesMonitorAtEdge = focus.crossesMonitorAtEdge
         moveCrossesMonitorAtEdge = focus.moveCrossesMonitorAtEdge
         moveToMonitorWrapsAround = focus.moveToMonitorWrapsAround
+        relativeWorkspaceEdgeBehavior = focus.relativeWorkspaceEdgeBehavior
         followsMouseMaxScrollPercent = focus.followsMouseMaxScrollPercent
     }
 }

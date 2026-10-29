@@ -81,7 +81,7 @@ extension NiriLayoutHandler {
         executeCombinedNavigation(onNoTarget: { [weak self] in
             self?.controller?.workspaceNavigationHandler.switchWorkspaceRelative(
                 isNext: direction == .down,
-                wrapAround: false
+                edgeBehavior: WorkspaceSwipeEdgeBehavior.none
             )
         }, { engine, currentNode, context, state in
             engine.focusTarget(
