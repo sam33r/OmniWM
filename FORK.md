@@ -14,6 +14,21 @@ live on this fork's **`main`** branch, on top of upstream `main`. Run it as
   release checks.
 - **Scripts:** `Scripts/fork-dev-cert.sh` (signing identity) and
   `Scripts/fork-dev-install.sh` (build, sign, install without launching).
+- **Workspaces from the keyboard:** `move-to-workspace new` (new workspace on
+  the window's monitor, move the window, follow it), `switch-workspace new`,
+  and `move-to-workspace next|prev` (same order as `switch-workspace next|prev`).
+  Hotkey ids `moveToWorkspace.new`, `switchWorkspace.new`, `moveToWorkspace.next`,
+  `moveToWorkspace.previous` (unassigned by default). Pull more windows into the
+  new workspace with the command palette's Shift-Enter (summon right).
+- **`[focus] followsMouseMaxScrollPercent`** (0–100, unset = unlimited): mouse
+  focus skips Niri windows that would scroll the view more than this, like
+  niri's `max-scroll-amount`.
+- **`ignore` rule layout** (`layout = "ignore"`, `omniwmctl rule add ... --layout ignore`):
+  matching windows are never managed (no tiling, floating, overview or bar).
+- **`[monitors] defaultOrientation`** (`auto` | `horizontal` | `vertical`):
+  global default under per-monitor `monitorOrientationOverrides`.
+- **`[focus] moveToMonitorWrapsAround`**: move-to-monitor wraps to the far
+  monitor at the edge.
 
 ## Set up Dev on a new Mac
 
