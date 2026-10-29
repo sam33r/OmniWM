@@ -60,6 +60,13 @@ struct IPCJSONWriter: ~Copyable {
         raw(prettyPrinted ? "\" : " : "\":")
     }
 
+    /// An object key that isn't known at compile time, such as a dictionary key.
+    mutating func dynamicKey(_ value: borrowing String, _ first: inout Bool) throws {
+        item(&first)
+        try self.value(value)
+        raw(prettyPrinted ? " : " : ":")
+    }
+
     private mutating func indent() {
         for _ in 0 ..< depth { raw("  ") }
     }

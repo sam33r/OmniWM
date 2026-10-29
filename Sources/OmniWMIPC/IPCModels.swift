@@ -4,7 +4,7 @@
 import Foundation
 
 public enum OmniWMIPCProtocol {
-    public static let version = 22
+    public static let version = 23
 }
 
 public struct IPCNoPayload: Codable, Equatable, Sendable {
@@ -24,6 +24,7 @@ public enum IPCRequestKind: String, Codable, Equatable, Sendable {
     case windowGather = "window-gather"
     case shell
     case subscribe
+    case settings
 }
 
 public enum IPCResponseKind: String, Codable, Equatable, Sendable {
@@ -39,6 +40,7 @@ public enum IPCResponseKind: String, Codable, Equatable, Sendable {
     case windowGather = "window-gather"
     case shell
     case subscribe
+    case settings
     case error
 
     public init(requestKind: IPCRequestKind) {
@@ -67,6 +69,8 @@ public enum IPCResponseKind: String, Codable, Equatable, Sendable {
             self = .shell
         case .subscribe:
             self = .subscribe
+        case .settings:
+            self = .settings
         }
     }
 }
@@ -104,17 +108,20 @@ public enum IPCErrorCode: String, Codable, Equatable, Sendable, Error {
     case invalidMark = "invalid_mark"
     case ineligibleWindow = "ineligible_window"
     case doesNotFit = "does_not_fit"
+    case unknownSetting = "unknown_setting"
+    case invalidValue = "invalid_value"
+    case notSettable = "not_settable"
     case internalError = "internal_error"
 }
 
-public enum IPCDirection: String, Codable, Equatable, Sendable {
+public enum IPCDirection: String, Codable, CaseIterable, Equatable, Sendable {
     case left
     case right
     case up
     case down
 }
 
-public enum IPCResizeAxis: String, Codable, Equatable, Sendable {
+public enum IPCResizeAxis: String, Codable, CaseIterable, Equatable, Sendable {
     case horizontal
     case vertical
 }
@@ -124,7 +131,7 @@ public enum IPCWindowMode: String, Codable, Equatable, Sendable {
     case floating
 }
 
-public enum IPCWorkspaceLayout: String, Codable, Equatable, Sendable {
+public enum IPCWorkspaceLayout: String, Codable, CaseIterable, Equatable, Sendable {
     case defaultLayout = "default"
     case niri
     case dwindle
@@ -179,7 +186,7 @@ public enum IPCRuleLayout: String, Codable, Equatable, Sendable {
     case ignore
 }
 
-public enum IPCResizeOperation: String, Codable, Equatable, Sendable {
+public enum IPCResizeOperation: String, Codable, CaseIterable, Equatable, Sendable {
     case grow
     case shrink
 }

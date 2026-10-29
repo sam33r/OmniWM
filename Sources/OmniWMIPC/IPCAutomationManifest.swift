@@ -21,6 +21,7 @@ public enum IPCQuerySelectorName: String, Codable, CaseIterable, Equatable, Hash
     case bundleId = "bundle-id"
     case current
     case main
+    case key
 
     public var flag: String {
         "--\(rawValue)"
@@ -32,7 +33,8 @@ public enum IPCQuerySelectorName: String, Codable, CaseIterable, Equatable, Hash
              .workspace,
              .display,
              .app,
-             .bundleId:
+             .bundleId,
+             .key:
             true
         case .focused,
              .visible,
@@ -78,6 +80,28 @@ public enum IPCCommandArgumentKind: String, Codable, CaseIterable, Equatable, Se
             "<size-change>"
         }
     }
+
+    /// Every value the argument accepts, when it's a closed set.
+    public var choices: [String]? {
+        switch self {
+        case .direction:
+            IPCDirection.allCases.map(\.rawValue)
+        case .layout:
+            IPCWorkspaceLayout.allCases.map(\.rawValue)
+        case .paletteMode:
+            IPCCommandPaletteMode.allCases.map(\.rawValue)
+        case .resizeAxis:
+            IPCResizeAxis.allCases.map(\.rawValue)
+        case .resizeOperation:
+            IPCResizeOperation.allCases.map(\.rawValue)
+        case .workspaceNumber,
+             .columnIndex,
+             .windowIndex,
+             .scratchpadIndex,
+             .sizeChange:
+            nil
+        }
+    }
 }
 
 public struct IPCQuerySelectorDescriptor: Codable, Equatable, Sendable {
@@ -112,6 +136,7 @@ public struct IPCQueryDescriptor: Codable, Equatable, Sendable {
 public struct IPCCommandArgumentDescriptor: Codable, Equatable, Sendable {
     public let kind: IPCCommandArgumentKind
     public let summary: String
+    public let choices: [String]?
 
     static let direction = Self(
         kind: .direction,
@@ -161,6 +186,7 @@ public struct IPCCommandArgumentDescriptor: Codable, Equatable, Sendable {
     public init(kind: IPCCommandArgumentKind, summary: String) {
         self.kind = kind
         self.summary = summary
+        choices = kind.choices
     }
 }
 
@@ -171,6 +197,13 @@ public struct IPCCommandDescriptor: Codable, Equatable, Sendable {
     public let summary: String
     public let arguments: [IPCCommandArgumentDescriptor]
     public let layoutCompatibility: IPCAutomationLayoutCompatibility
+    /// The action's title as the command palette shows it. Set by `query commands`.
+    public private(set) var title: String?
+    /// The user's hotkeys for the command as a whole, as display strings. Set by `query commands`.
+    public private(set) var hotkeys: [String]?
+    /// Hotkeys bound to particular argument values, keyed by the arguments as typed
+    /// for `omniwmctl` (joined by spaces). Set by `query commands`.
+    public private(set) var argumentHotkeys: [String: [String]]?
 
     public init(
         commandWords: [String],
@@ -185,6 +218,18 @@ public struct IPCCommandDescriptor: Codable, Equatable, Sendable {
         self.summary = summary
         self.arguments = arguments
         self.layoutCompatibility = layoutCompatibility
+    }
+
+    public func withPresentation(
+        title: String,
+        hotkeys: [String],
+        argumentHotkeys: [String: [String]]
+    ) -> IPCCommandDescriptor {
+        var descriptor = self
+        descriptor.title = title
+        descriptor.hotkeys = hotkeys
+        descriptor.argumentHotkeys = argumentHotkeys
+        return descriptor
     }
 
     init(

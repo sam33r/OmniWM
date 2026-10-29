@@ -158,6 +158,16 @@ extension IPCAutomationManifest {
         IPCQueryDescriptor(
             name: .shellWidgets,
             summary: "Return the Luau shell's widgets with their state, placement and any error."
+        ),
+        IPCQueryDescriptor(
+            name: .settings,
+            summary: "Return the scalar settings IPC may change, with values, defaults and allowed values.",
+            selectors: [
+                .init(
+                    name: .key,
+                    summary: "Return only the setting with this settings.toml key, such as focus.followsMouse."
+                )
+            ]
         )
     ]
 

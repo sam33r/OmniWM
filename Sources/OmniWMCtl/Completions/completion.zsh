@@ -133,6 +133,11 @@ _omniwmctl() {
         suggestions="#{{shellActionNames}}"
       fi
       ;;
+    settings)
+      if (( CURRENT == 3 )); then
+        suggestions="#{{settingsActionNames}}"
+      fi
+      ;;
     completion)
       suggestions="#{{shellNames}}"
       ;;

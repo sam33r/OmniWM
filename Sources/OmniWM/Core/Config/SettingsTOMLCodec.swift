@@ -71,6 +71,20 @@ enum SettingsTOMLCodec {
         try decodeForLoad(data).export
     }
 
+    /// The canonical `settings.toml` tree for `export`, as `encode` would write it
+    /// before merging unknown keys.
+    static func canonicalTree(_ export: SettingsExport) throws -> [String: TOMLNode] {
+        try TOMLDecoder().decode([String: TOMLNode].self, from: encodeCanonical(export))
+    }
+
+    /// Decodes a tree as if it were the contents of `settings.toml`, with every
+    /// validation a load applies.
+    static func decode(tree: [String: TOMLNode]) throws -> SettingsExport {
+        let encoder = TOMLEncoder()
+        encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+        return try decode(encoder.encode(tree))
+    }
+
     static func decodeForLoad(_ data: Data) throws -> SettingsTOMLDecodeResult {
         let activeHyperKeyModifiers = HyperKeyModifiers(carbonMask: KeySymbolMapper.hyperModifiers) ?? .default
         defer { KeySymbolMapper.setHyperKeyModifiers(activeHyperKeyModifiers) }

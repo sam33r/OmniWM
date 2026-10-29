@@ -24,6 +24,7 @@ omniwmctl <command> [arguments...] [--format json|ndjson|table|tsv|text] [--json
 | `workspace` | remote | Perform workspace actions such as focusing, moving, or renaming by workspace name |
 | `window` | remote | Perform window actions using session-scoped opaque IDs; it also supports [window marks](/reference/cli/actions/#window-marks) and [window gather](/reference/cli/actions/#window-gather) |
 | `shell` | remote | Set [values for Luau bar widgets](/reference/cli/actions/#shell-widgets) or open their popouts. Unreleased: available when building from `main`. |
+| `settings` | remote | [Change a setting](/reference/cli/actions/#settings) live and save it to `settings.toml`. Fork: available in the sam33r/OmniWM fork. |
 | `subscribe` | remote | Stream the subscribe handshake plus live event envelopes as JSON |
 | `watch` | remote | Consume subscription events and run a child command once per event |
 | `help`, `--help`, `-h` | local | Print CLI usage text without connecting to IPC |

@@ -24,6 +24,7 @@ const omniwmctl_catalog = {
     windowMarkListFlags: #{{windowMarkListFlags}}
     windowGatherReachFlag: #{{windowGatherReachFlag}}
     shellActionNames: #{{shellActionNames}}
+    settingsActionNames: #{{settingsActionNames}}
     shellNames: #{{shellNames}}
     valueFlags: #{{valueFlags}}
     flagValuesByName: #{{flagValuesByName}}
@@ -83,6 +84,7 @@ def omniwmctl_choices [words: list<string>] {
             if $count == 2 { $catalog.windowMarkActionNames } else if $count == 3 and $mark_action == "list" { $catalog.windowMarkListFlags } else { [] }
         }
         shell => { if $count == 1 { $catalog.shellActionNames } else { [] } }
+        settings => { if $count == 1 { $catalog.settingsActionNames } else { [] } }
         subscribe => { $catalog.subscribeTokens }
         watch => { $catalog.watchTokens }
         _ => { [] }

@@ -24,6 +24,7 @@ Selectors filter query results. Value selectors take an argument; boolean select
 | `--display <name>` | Filter by display name or display ID |
 | `--app <name>` | Filter by application display name |
 | `--bundle-id <id>` | Filter by application bundle identifier |
+| `--key <key>` | `settings` only: return just the setting with this `settings.toml` key |
 
 **Boolean selectors:**
 
@@ -103,12 +104,34 @@ The three workspace flags answer different questions. `is-focused` marks the wor
 | `rules` | — | — | Persisted user window rules |
 | `rule-actions` | — | — | Rule action registry |
 | `queries` | — | — | Query registry |
-| `commands` | — | — | Automation action registry for `command`, `workspace`, `window`, `window mark`, `window gather`, and `shell` surfaces |
+| `commands` | — | — | Automation action registry for `command`, `workspace`, `window`, `window mark`, `window gather`, `shell`, and `settings` surfaces. Each `commands` entry also has the `title` the command palette shows, the user's `hotkeys` for the command as a whole, and `argumentHotkeys` for hotkeys that bind particular argument values; arguments with a closed set of values list them as `choices` |
 | `subscriptions` | — | — | Subscription registry |
 | `capabilities` | — | — | Full protocol capabilities, including `windowMarkActions`, `windowGatherActions`, and `shellActions` |
 | `shell-widgets` | — | — | Luau shell widgets with their `state` (`loading`, `loaded`, `failed` or `fallback`), `placements`, `source` file and any `error`, plus `problems` found in `shell.toml` and theme files. Unreleased: available when building from `main` |
+| `settings` | `--key` | — | The scalar settings IPC may change, in Settings window order. See [Settings](#settings) |
 
 `window mark` descriptors in `commands` and `capabilities` are available. List live marks with [`omniwmctl window mark list`](/reference/cli/actions/#window-marks).
+
+### Hotkeys in `commands`
+
+`hotkeys` and `argumentHotkeys` use the glyph style the Settings window shows, such as `⌃⌥⌘H`, and are empty when unbound. `argumentHotkeys` keys are the arguments as typed for `omniwmctl` (joined by spaces for several), for example `{"1": ["⌥1"], "2": ["⌥2"]}` on `switch-workspace` and `{"left": ["⌥←"]}` on `focus`. A hotkey for a command whose arguments it doesn't fix, such as one that asks for a size, is listed in `hotkeys`.
+
+### Settings
+
+`omniwmctl query settings` returns `result.kind: "settings"` with a `settings` array. Fork: available in the sam33r/OmniWM fork. Each entry has:
+
+| Field | Description |
+|-------|-------------|
+| `key` | The `settings.toml` path, `<section>.<key>`; pass it to [`omniwmctl settings`](/reference/cli/actions/#settings) |
+| `section`, `sectionTitle` | The `settings.toml` table and a readable name for it |
+| `title` | What the Settings window calls the setting |
+| `description` | One or two plain sentences on what it does |
+| `type` | `bool`, `int`, `number`, `enum`, or `string` |
+| `value`, `default` | JSON of the setting's type; `null` while an optional setting is unset (for example an unlimited `focus.followsMouseMaxScrollPercent`) |
+| `choices` | `enum` only: every allowed `value` with a `title`, in Settings window order |
+| `min`, `max`, `step` | `int` and `number`, when the setting has a range or step |
+
+Only scalar settings are listed: lists, tables of colours, per-monitor and per-workspace entries, and `general.ipcEnabled` are left out. Sections and the settings in each come in the order the Settings window shows them; settings the window doesn't show come last in their section. An unknown `--key` returns `unknown_setting`, and a key that's left out returns `not_settable`, both with a `detail` sentence. The query works while OmniWM is disabled.
 
 **Examples:**
 

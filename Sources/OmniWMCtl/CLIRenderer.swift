@@ -76,6 +76,9 @@ enum CLIRenderer {
              .invalidMark,
              .ineligibleWindow,
              .doesNotFit,
+             .unknownSetting,
+             .invalidValue,
+             .notSettable,
              .invalidArguments,
              .invalidRequest,
              .none:
@@ -218,6 +221,10 @@ enum CLIRenderer {
             return formattedWindowGather(payload, format: format)
         case let .shellWidgets(payload):
             return formattedShellWidgets(payload, format: format)
+        case let .settings(payload):
+            return formattedSettings(payload, format: format)
+        case let .settingChange(payload):
+            return "\(payload.key): \(settingText(payload.previous)) -> \(settingText(payload.value))"
         }
     }
 
@@ -234,6 +241,9 @@ enum CLIRenderer {
         }
 
         if let code = response.code {
+            if let detail = response.detail {
+                return "\(response.status.rawValue): \(code.rawValue): \(detail)"
+            }
             return "\(response.status.rawValue): \(code.rawValue)"
         }
 
@@ -309,10 +319,12 @@ extension CLIRenderer {
         let windowMarkRows = payload.windowMarkActions.map { [$0.path, $0.summary, "window-mark"] }
         let windowGatherRows = payload.windowGatherActions.map { [$0.path, $0.summary, "window-gather"] }
         let shellRows = payload.shellActions.map { [$0.path, $0.summary, "shell"] }
+        let settingsRows = payload.settingsActions.map { [$0.path, $0.summary, "settings"] }
 
         return CLITableRenderer.formatRows(
             headers: ["PATH", "SUMMARY", "SURFACE"],
-            rows: commandRows + workspaceRows + windowRows + windowMarkRows + windowGatherRows + shellRows,
+            rows: commandRows + workspaceRows + windowRows + windowMarkRows + windowGatherRows + shellRows
+                + settingsRows,
             format: format
         )
     }
@@ -345,6 +357,7 @@ extension CLIRenderer {
             ["window-mark-actions", String(payload.windowMarkActions.count)],
             ["window-gather-actions", String(payload.windowGatherActions.count)],
             ["shell-actions", String(payload.shellActions.count)],
+            ["settings-actions", String(payload.settingsActions.count)],
             ["subscriptions", String(payload.subscriptions.count)]
         ]
 
@@ -405,6 +418,42 @@ extension CLIRenderer {
         )
         guard format == .table || format == .text, !payload.problems.isEmpty else { return table }
         return ([table, "", "Problems:"] + payload.problems.map { "  \($0)" }).joined(separator: "\n")
+    }
+
+    private static func formattedSettings(_ payload: IPCSettingsQueryResult, format: CLIOutputFormat) -> String {
+        let rows = payload.settings.map { setting in
+            [
+                setting.key,
+                settingText(setting.value),
+                settingText(setting.defaultValue),
+                setting.choices.map { $0.map(\.value).joined(separator: "|") } ?? setting.type.rawValue,
+                setting.title
+            ]
+        }
+        return CLITableRenderer.formatRows(
+            headers: ["KEY", "VALUE", "DEFAULT", "TYPE", "TITLE"],
+            rows: rows,
+            format: format
+        )
+    }
+
+    private static func settingText(_ value: IPCSettingValue) -> String {
+        switch value {
+        case let .bool(value):
+            value ? "true" : "false"
+        case let .int(value):
+            String(value)
+        case let .number(value):
+            if value == value.rounded(), abs(value) < 1e15 {
+                String(Int(value))
+            } else {
+                String(value)
+            }
+        case let .string(value):
+            value
+        case .null:
+            "-"
+        }
     }
 
     private static func dashIfEmpty(_ value: String) -> String {

@@ -23,6 +23,7 @@ extension CLICompletionGenerator {
             "windowMarkActionNames": Catalog.windowMarkActionNames,
             "windowMarkListFlags": Catalog.windowMarkListFlags,
             "shellActionNames": Catalog.shellActionNames,
+            "settingsActionNames": Catalog.settingsActionNames,
             "shellNames": CLIShell.allCases.map(\.rawValue),
             "valueFlags": Catalog.valueFlags
         ]

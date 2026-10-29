@@ -41,6 +41,15 @@ live on this fork's **`main`** branch, on top of upstream `main`. Run it as
 - **`[overview] fitWorkspaceRows`** (2–6, unset = fixed size): overview rows
   shrink so up to this many workspaces fit on screen; fewer workspaces get
   bigger rows (never fewer than two).
+- **Settings over IPC** (protocol 23): `omniwmctl query settings [--key <key>]`
+  lists every scalar setting with its title, description, type, value, default,
+  and range or choices; `omniwmctl settings set|toggle|reset <key> [value]`
+  changes one live and saves it; `omniwmctl subscribe settings-changed` streams
+  snapshots after any change (hotkey edits included). `query commands` entries
+  gain `title`, `hotkeys` and `argumentHotkeys`, and arguments gain `choices`.
+  Failures carry a top-level `detail` sentence. Built for goose's OmniWM plugin.
+  The catalog of titles and descriptions is `IPC/IPCSettingsCatalog+Sections.swift`;
+  a test fails when a new scalar setting is missing from it.
 
 ## Set up Dev on a new Mac
 
@@ -75,7 +84,7 @@ quitting/launching apps. An agent can do the rest.
    Homebrew OmniWM and opens Dev. On first launch, grant **OmniWM Dev**
    Accessibility and Input Monitoring (Screen Recording is optional), follow
    any restart prompt, then click **Start OmniWM**.
-6. **Verify:** `omniwmctl version` should report `protocol 22` and `debug` with
+6. **Verify:** `omniwmctl version` should report `protocol 23` and `debug` with
    the fork's `main` commit. `~/bin/omniwmctl` picks the CLI of whichever OmniWM is
    running; the fork's IPC protocol differs from the 0.7.6 release, which
    would reject a mismatched client and break the skhd bindings.

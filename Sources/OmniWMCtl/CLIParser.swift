@@ -94,6 +94,8 @@ enum CLIParser {
             return try parseWindowRequest(id: id, arguments: arguments)
         case "shell":
             return try parseShellRequest(id: id, arguments: arguments)
+        case "settings":
+            return try parseSettingsRequest(id: id, arguments: arguments)
         default:
             throw CLIParseError.usage(usageText)
         }
@@ -271,6 +273,7 @@ enum CLIParser {
         let windowMarkLines = IPCAutomationManifest.windowMarkActionDescriptors.map(\.path)
         let windowGatherLines = IPCAutomationManifest.windowGatherActionDescriptors.map(\.path)
         let shellLines = IPCAutomationManifest.shellActionDescriptors.map(\.path)
+        let settingsLines = IPCAutomationManifest.settingsActionDescriptors.map(\.path)
         let captureLines = IPCAutomationManifest.captureActionDescriptors.map(\.path)
 
         var lines = [
@@ -292,6 +295,7 @@ enum CLIParser {
         lines += windowMarkLines.map { "  omniwmctl \($0)" }
         lines += windowGatherLines.map { "  omniwmctl \($0)" }
         lines += shellLines.map { "  omniwmctl \($0)" }
+        lines += settingsLines.map { "  omniwmctl \($0)" }
         lines += [
             "  omniwmctl subscribe <\(subscriptionNames)> [--no-send-initial] [--reconnect] [--format json|ndjson]",
             "  omniwmctl subscribe --all [--no-send-initial] [--reconnect] [--format json|ndjson]",

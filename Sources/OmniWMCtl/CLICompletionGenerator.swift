@@ -48,7 +48,8 @@ enum CLICompletionGenerator {
             "windowMarkListFlags": shellWords(Catalog.windowMarkListFlags),
             "windowGatherReachFlag": Catalog.windowGatherReachFlag,
             "windowGatherReaches": shellWords(Catalog.windowGatherReaches),
-            "shellActionNames": shellWords(Catalog.shellActionNames)
+            "shellActionNames": shellWords(Catalog.shellActionNames),
+            "settingsActionNames": shellWords(Catalog.settingsActionNames)
         ])
     }
 
@@ -81,7 +82,8 @@ enum CLICompletionGenerator {
             "windowMarkListFlags": shellWords(Catalog.windowMarkListFlags),
             "windowGatherReachFlag": Catalog.windowGatherReachFlag,
             "windowGatherReaches": shellWords(Catalog.windowGatherReaches),
-            "shellActionNames": shellWords(Catalog.shellActionNames)
+            "shellActionNames": shellWords(Catalog.shellActionNames),
+            "settingsActionNames": shellWords(Catalog.settingsActionNames)
         ])
     }
 
@@ -146,6 +148,10 @@ enum CLICompletionGenerator {
             "shellLines": fishCompletions(
                 CLIShell.allCases.map(\.rawValue),
                 when: "__fish_seen_subcommand_from completion"
+            ),
+            "settingsActionLines": fishChoiceCompletions(
+                Catalog.settingsActionNames,
+                when: "__fish_seen_subcommand_from settings"
             )
         ]
     }

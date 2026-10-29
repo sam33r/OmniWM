@@ -40,6 +40,9 @@ final class SettingsStore {
     var onTrackpadGestureAvailabilityChanged: (@MainActor (Bool) -> Void)?
     var onPointerSettingsChanged: (@MainActor () -> Void)?
     var onDynamicHotkeysChanged: (@MainActor () -> Void)?
+    /// Any settings change, from any source: the Settings window, IPC, or a
+    /// reload of an edited settings.toml.
+    var onSettingsChanged: (@MainActor () -> Void)?
     var liveWorkspaceNamesForHotkeys: (@MainActor () -> [String])?
     var liveShellNamesForHotkeys: (@MainActor () -> [String])?
     private(set) var configNotice: SettingsConfigNotice?
@@ -345,17 +348,13 @@ final class SettingsStore {
         guard let export = outcome.export else { return }
         applyExport(export)
         onExternalSettingsReloaded?()
+        onSettingsChanged?()
     }
 
     private func transitionConfigNotice(to notice: SettingsConfigNotice?) {
         guard notice != configNotice else { return }
         configNotice = notice
         onConfigNoticeChanged?()
-    }
-
-    func scheduleSave() {
-        guard autosaveEnabled, !isApplyingExport else { return }
-        persistence.scheduleSave(toExport())
     }
 
     func scratchpadLabel(for index: Int) -> String? {
@@ -381,6 +380,13 @@ extension SettingsStore {
 }
 
 extension SettingsStore {
+    func scheduleSave() {
+        guard !isApplyingExport else { return }
+        onSettingsChanged?()
+        guard autosaveEnabled else { return }
+        persistence.scheduleSave(toExport())
+    }
+
     private func layoutConfigurationDidChange() {
         layoutConfigurationRevision &+= 1
         scheduleSave()

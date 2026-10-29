@@ -17,14 +17,15 @@ final class CLIInvocationParsingTests: XCTestCase {
             (["capture", "status"], .capture),
             (["workspace", "focus-name", "1"], .workspace),
             (["window", "focus", "window-id"], .window),
-            (["window", "mark", "list"], .windowMark)
+            (["window", "mark", "list"], .windowMark),
+            (["settings", "toggle", "focus.dimUnfocused"], .settings)
         ]
         for testCase in cases {
             for formatArguments in [[], ["--format", "json"]] {
                 let parsed = try CLIParser.parse(arguments: ["omniwmctl"] + formatArguments + testCase.arguments)
 
                 XCTAssertEqual(parsed.request.kind, testCase.kind)
-                XCTAssertEqual(parsed.request.version, 22)
+                XCTAssertEqual(parsed.request.version, 23)
                 XCTAssertNotNil(UUID(uuidString: parsed.request.id))
                 XCTAssertEqual(parsed.outputFormat, !formatArguments.isEmpty || testCase.kind == .query ? .json : .text)
                 XCTAssertFalse(parsed.expectsEventStream)
@@ -127,6 +128,33 @@ final class CLIInvocationParsingTests: XCTestCase {
             XCTAssertThrowsError(try CLIParser.parse(arguments: ["omniwmctl", "rule", "apply"] + arguments)) { error in
                 XCTAssertEqual(error as? CLIParseError, .usage(CLIParser.usageText))
             }
+        }
+    }
+
+    func testSettingsRequestsKeepKeyAndValueText() throws {
+        let set = try CLIParser.parse(arguments: ["omniwmctl", "settings", "set", "general.language", "sr", "Latn"])
+        XCTAssertEqual(set.request.payload, .settings(.set(key: "general.language", value: "sr Latn")))
+        let toggle = try CLIParser.parse(arguments: ["omniwmctl", "--json", "settings", "toggle", "focus.dimUnfocused"])
+        XCTAssertEqual(toggle.request.payload, .settings(.toggle(key: "focus.dimUnfocused")))
+        XCTAssertEqual(toggle.outputFormat, .json)
+        let reset = try CLIParser.parse(arguments: ["omniwmctl", "settings", "reset", "focus.dimUnfocusedOpacity"])
+        XCTAssertEqual(reset.request.payload, .settings(.reset(key: "focus.dimUnfocusedOpacity")))
+        let query = try CLIParser.parse(arguments: ["omniwmctl", "query", "settings", "--key", "focus.followsMouse"])
+        XCTAssertEqual(query.request.payload, .query(IPCQueryRequest(
+            name: .settings,
+            selectors: IPCQuerySelectors(key: "focus.followsMouse")
+        )))
+
+        for arguments in [
+            ["settings"],
+            ["settings", "set", "focus.dimUnfocused"],
+            ["settings", "toggle"],
+            ["settings", "toggle", "a", "b"],
+            ["settings", "reset", "a", "b"],
+            ["settings", "flip", "a"],
+            ["query", "windows", "--key", "a"]
+        ] {
+            XCTAssertThrowsError(try CLIParser.parse(arguments: ["omniwmctl"] + arguments), "\(arguments)")
         }
     }
 }

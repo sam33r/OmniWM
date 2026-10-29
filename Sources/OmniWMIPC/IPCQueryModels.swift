@@ -20,6 +20,7 @@ public enum IPCQueryName: String, Codable, CaseIterable, Equatable, Sendable {
     case capabilities
     case metrics
     case shellWidgets = "shell-widgets"
+    case settings
 }
 
 public struct IPCQuerySelectors: Codable, Equatable, Sendable {
@@ -34,6 +35,7 @@ public struct IPCQuerySelectors: Codable, Equatable, Sendable {
     public private(set) var bundleId: String?
     public private(set) var current: Bool?
     public private(set) var main: Bool?
+    public private(set) var key: String?
 
     public init(
         window: String? = nil,
@@ -46,7 +48,8 @@ public struct IPCQuerySelectors: Codable, Equatable, Sendable {
         app: String? = nil,
         bundleId: String? = nil,
         current: Bool? = nil,
-        main: Bool? = nil
+        main: Bool? = nil,
+        key: String? = nil
     ) {
         self.window = window
         self.workspace = workspace
@@ -59,6 +62,7 @@ public struct IPCQuerySelectors: Codable, Equatable, Sendable {
         self.bundleId = bundleId
         self.current = current
         self.main = main
+        self.key = key
     }
 
     public var providedSelectorNames: [IPCQuerySelectorName] {
@@ -74,6 +78,7 @@ public struct IPCQuerySelectors: Codable, Equatable, Sendable {
         if bundleId != nil { names.append(.bundleId) }
         if current != nil { names.append(.current) }
         if main != nil { names.append(.main) }
+        if key != nil { names.append(.key) }
         return names
     }
 
@@ -102,6 +107,8 @@ public struct IPCQuerySelectors: Codable, Equatable, Sendable {
             selectors.current = true
         case .main:
             selectors.main = true
+        case .key:
+            selectors.key = value
         }
         return selectors
     }

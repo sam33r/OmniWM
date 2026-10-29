@@ -29,6 +29,7 @@ enum CLICompletionCatalog {
             "workspace",
             "window",
             "shell",
+            "settings",
             "subscribe",
             "watch"
         ]
@@ -102,6 +103,10 @@ enum CLICompletionCatalog {
 
     static var shellActionNames: [String] {
         IPCAutomationManifest.shellActionDescriptors.map(\.name.rawValue)
+    }
+
+    static var settingsActionNames: [String] {
+        IPCAutomationManifest.settingsActionDescriptors.map(\.name.rawValue)
     }
 
     static var commandFirstWords: [String] {

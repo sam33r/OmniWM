@@ -120,6 +120,16 @@ extension IPCJSONWriter {
         end(125)
     }
 
+    mutating func value(_ value: borrowing [String: [String]]) throws {
+        begin(123)
+        var first = true
+        for entry in value.sorted(by: { $0.key < $1.key }) {
+            try dynamicKey(entry.key, &first)
+            try self.value(entry.value)
+        }
+        end(125)
+    }
+
     mutating func value(_ value: borrowing IPCCommandArgumentKind) throws {
         try self.value(value.rawValue)
     }
@@ -127,6 +137,10 @@ extension IPCJSONWriter {
     mutating func value(_ value: borrowing IPCCommandArgumentDescriptor) throws {
         begin(123)
         var first = true
+        if let fieldValue = value.choices {
+            self.key("choices", &first)
+            try self.value(fieldValue)
+        }
         self.key("kind", &first)
         try self.value(value.kind)
         self.key("summary", &first)
@@ -158,12 +172,55 @@ extension IPCJSONWriter {
     mutating func value(_ value: borrowing IPCCommandDescriptor) throws {
         begin(123)
         var first = true
+        if let fieldValue = value.argumentHotkeys {
+            self.key("argumentHotkeys", &first)
+            try self.value(fieldValue)
+        }
         self.key("arguments", &first)
         try self.value(value.arguments)
         self.key("commandWords", &first)
         try self.value(value.commandWords)
+        if let fieldValue = value.hotkeys {
+            self.key("hotkeys", &first)
+            try self.value(fieldValue)
+        }
         self.key("layoutCompatibility", &first)
         try self.value(value.layoutCompatibility)
+        self.key("name", &first)
+        try self.value(value.name)
+        self.key("path", &first)
+        try self.value(value.path)
+        self.key("summary", &first)
+        try self.value(value.summary)
+        if let fieldValue = value.title {
+            self.key("title", &first)
+            try self.value(fieldValue)
+        }
+        end(125)
+    }
+
+    mutating func value(_ value: borrowing [IPCCommandDescriptor]) throws {
+        begin(91)
+        var first = true
+        let span = value.span
+        var index = 0
+        while index < span.count {
+            item(&first)
+            try self.value(span[index])
+            index += 1
+        }
+        end(93)
+    }
+
+    mutating func value(_ value: borrowing IPCSettingsActionName) throws {
+        try self.value(value.rawValue)
+    }
+
+    mutating func value(_ value: borrowing IPCSettingsActionDescriptor) throws {
+        begin(123)
+        var first = true
+        self.key("arguments", &first)
+        try self.value(value.arguments)
         self.key("name", &first)
         try self.value(value.name)
         self.key("path", &first)
@@ -173,7 +230,7 @@ extension IPCJSONWriter {
         end(125)
     }
 
-    mutating func value(_ value: borrowing [IPCCommandDescriptor]) throws {
+    mutating func value(_ value: borrowing [IPCSettingsActionDescriptor]) throws {
         begin(91)
         var first = true
         let span = value.span
@@ -197,62 +254,6 @@ extension IPCJSONWriter {
         try self.value(value.arguments)
         self.key("name", &first)
         try self.value(value.name)
-        self.key("path", &first)
-        try self.value(value.path)
-        self.key("summary", &first)
-        try self.value(value.summary)
-        end(125)
-    }
-
-    mutating func value(_ value: borrowing [IPCShellActionDescriptor]) throws {
-        begin(91)
-        var first = true
-        let span = value.span
-        var index = 0
-        while index < span.count {
-            item(&first)
-            try self.value(span[index])
-            index += 1
-        }
-        end(93)
-    }
-
-    mutating func value(_ value: borrowing IPCWindowActionName) throws {
-        try self.value(value.rawValue)
-    }
-
-    mutating func value(_ value: borrowing IPCWindowActionDescriptor) throws {
-        begin(123)
-        var first = true
-        self.key("arguments", &first)
-        try self.value(value.arguments)
-        self.key("name", &first)
-        try self.value(value.name)
-        self.key("path", &first)
-        try self.value(value.path)
-        self.key("summary", &first)
-        try self.value(value.summary)
-        end(125)
-    }
-
-    mutating func value(_ value: borrowing [IPCWindowActionDescriptor]) throws {
-        begin(91)
-        var first = true
-        let span = value.span
-        var index = 0
-        while index < span.count {
-            item(&first)
-            try self.value(span[index])
-            index += 1
-        }
-        end(93)
-    }
-
-    mutating func value(_ value: borrowing IPCWindowGatherActionDescriptor) throws {
-        begin(123)
-        var first = true
-        self.key("arguments", &first)
-        try self.value(value.arguments)
         self.key("path", &first)
         try self.value(value.path)
         self.key("summary", &first)

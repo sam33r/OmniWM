@@ -154,3 +154,27 @@ omniwmctl shell trigger <widget> <name> [value...]
 | `shell trigger <widget> <name> [value...]` | Call the widget's `trigger(ctx, event)` with `event.name` and `event.value` on each instance it shows, then redraw it. A widget without a `trigger` function returns `not_found` |
 
 Keys use ASCII letters, digits, `_`, `-` and `.`, up to 64 bytes. Values are limited to 4096 bytes and 64 keys; anything else returns `invalid_arguments`.
+
+## Settings
+
+Change a setting live and save it to `settings.toml`, the way the Settings window does. Keys are `settings.toml` paths such as `focus.followsMouse` or `gaps.outer.left`; [`query settings`](/reference/cli/queries/#settings) lists every key IPC may change, with its type, current value, default, and allowed values. Fork: available in the sam33r/OmniWM fork.
+
+```
+omniwmctl settings set <key> <value>
+omniwmctl settings toggle <key>
+omniwmctl settings reset <key>
+```
+
+| Action | Description |
+|--------|-------------|
+| `settings set <key> <value>` | Parse `<value>` by the setting's type (`true`/`false`, a number, one of an enum's values, or text; extra words are joined with spaces), check its range or choices, apply it, and save it |
+| `settings toggle <key>` | Flip a `true`/`false` setting |
+| `settings reset <key>` | Return a setting to its default; an optional setting whose default is unset becomes unset again |
+
+A change is validated like an edit of `settings.toml`: it must decode, and cross-setting checks such as conflicting trackpad gesture finger counts apply. OmniWM replies once the change is in effect, so a `query settings` straight after returns the new value. The response has `kind: "settings"`, `status: "executed"`, and a `setting-change` result whose payload holds the `key`, the `value` now in effect (after any clamping or rounding), and the `previous` value. Setting the value a setting already has, or resetting a setting already at its default, also succeeds, with `value` equal to `previous`.
+
+Failures return `unknown_setting` (no such key), `not_settable` (a key `query settings` leaves out: lists, colour tables, per-monitor and per-workspace entries, and `general.ipcEnabled`), or `invalid_value`, each with a top-level `detail` sentence such as `must be between 0.1 and 0.95` or `must be one of cycle, none, onePast`.
+
+Settings aren't commands: `settings` actions and `query settings` work while OmniWM is disabled and never return `ignored_disabled`. Every settings change, from IPC, the Settings window, or a reloaded `settings.toml`, sends a [`settings-changed`](/reference/cli/events/#channels) event.
+
+Setting a key inside an optional table that's missing, such as `borders.glow.enabled`, creates the table from its defaults. Workspace bar settings that the active style profile in `shell.toml` overrides keep the profile's value on screen.

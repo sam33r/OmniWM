@@ -11,9 +11,9 @@ sidebar:
 
 ```json
 {
-  "version": 22,
+  "version": 23,
   "id": "<uuid>",
-  "kind": "<ping|version|command|capture|query|rule|workspace|window|window-mark|window-gather|shell|subscribe>",
+  "kind": "<ping|version|command|capture|query|rule|workspace|window|window-mark|window-gather|shell|subscribe|settings>",
   "authorizationToken": "<token>",
   "payload": { ... }
 }
@@ -199,23 +199,39 @@ Both fields are required. `from` is `workspace`, `monitor`, or `all`; `omniwmctl
 
 `unset` sends only `name` and `key`; a `value` field on `unset` is rejected. `toggle` sends `name` and `widget`. All three return `status: "executed"` without a result payload. `eject` and `init` also send `name` and `widget`, `profile` and `theme` send the profile or theme name as `key`, and `trigger` sends `widget`, the event name as `key` and an optional `value`; their statuses are listed under [Shell Widgets](/reference/cli/actions/#shell-widgets). Unreleased: available when building from `main`.
 
+**Settings:**
+
+```json
+{
+  "name": "set",
+  "key": "focus.dimUnfocusedOpacity",
+  "value": "0.8"
+}
+```
+
+`value` is the text as typed; OmniWM parses it by the setting's type. `toggle` and `reset` send only `name` and `key`; a `value` field on them is rejected. See [Settings](/reference/cli/actions/#settings). Fork: available in the sam33r/OmniWM fork.
+
 ### Response Format
 
 ```json
 {
-  "version": 22,
+  "version": 23,
   "id": "<request-id>",
   "ok": true,
-  "kind": "<ping|version|command|capture|query|rule|workspace|window|window-mark|window-gather|shell|subscribe>",
+  "kind": "<ping|version|command|capture|query|rule|workspace|window|window-mark|window-gather|shell|subscribe|settings>",
   "status": "<success|executed|ignored|error|subscribed>",
   "result": {
-    "kind": "<pong|version|capture|workspace-bar|active-workspace|focused-monitor|apps|metrics|focused-window|windows|workspaces|displays|rules|rule-actions|queries|commands|subscriptions|capabilities|subscribed|window-marks|window-gather|shell-widgets>",
+    "kind": "<pong|version|capture|workspace-bar|active-workspace|focused-monitor|apps|metrics|focused-window|windows|workspaces|displays|rules|rule-actions|queries|commands|subscriptions|capabilities|subscribed|window-marks|window-gather|shell-widgets|settings|setting-change>",
     "payload": { ... }
   }
 }
 ```
 
 Optional response fields are omitted when unavailable. For example, a successful response has no `code` key; it does not send `"code": null`.
+
+A failure may carry a top-level `detail` string next to `code`: a sentence saying what's wrong, such as `must be between 0.1 and 0.95`. Settings failures always have one. It's separate from the CLI's own `message` (see [CLI-Local JSON Errors](#cli-local-json-errors)).
+
+A `settings` response has `kind: "settings"` and `result.kind: "setting-change"`, with `key`, `value` (in effect after the change), and `previous` in `result.payload`. `query settings` and `settings-changed` events have `result.kind: "settings"`; see [Settings](/reference/cli/queries/#settings).
 
 A `window mark list` response has `kind: "window-mark"` and `result.kind: "window-marks"`. Its `result.payload.marks` array contains each mark's `name`, `id` (session-scoped opaque window id), `workspace` (`id`, `rawName`, `displayName`, optional `number`), `app` (`name`, optional `bundleId`), and optional window `title`. Other mark actions return `status: "executed"` without a result payload.
 
@@ -232,7 +248,7 @@ Authorization, protocol, validation, and routing failures keep the originating r
 
 ```json
 {
-  "version": 22,
+  "version": 23,
   "id": "<request-id>",
   "ok": false,
   "kind": "query",
@@ -249,7 +265,7 @@ Events are sent on subscription connections after the initial response.
 
 ```json
 {
-  "version": 22,
+  "version": 23,
   "id": "<event-id>",
   "kind": "event",
   "channel": "focus",
@@ -311,6 +327,9 @@ This envelope is produced locally by the CLI, so it does not include IPC fields 
 | `invalid_mark` | The mark name is empty or contains control characters |
 | `ineligible_window` | A gathered window is outside the requested reach, hidden, minimized, withdrawn, in the scratchpad, fullscreen, or floating |
 | `does_not_fit` | The gathered windows' minimum sizes do not fit one destination column |
+| `unknown_setting` | No setting has this key |
+| `invalid_value` | The new setting value has the wrong type, is out of range, isn't one of the setting's choices, or conflicts with other settings |
+| `not_settable` | The key names a setting IPC doesn't change: a list, colour table, per-monitor or per-workspace entry, or `general.ipcEnabled` |
 | `internal_error` | Unexpected server-side error |
 
 Malformed opaque window IDs return `invalid_arguments`. For window actions, a valid current-session ID whose window is no longer managed returns `not_found`.

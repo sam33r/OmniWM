@@ -26,6 +26,7 @@ public struct IPCCommandsQueryResult: Codable, Equatable, Sendable {
     public let windowMarkActions: [IPCWindowMarkActionDescriptor]
     public let windowGatherActions: [IPCWindowGatherActionDescriptor]
     public let shellActions: [IPCShellActionDescriptor]
+    public let settingsActions: [IPCSettingsActionDescriptor]
 
     public init(
         commands: [IPCCommandDescriptor],
@@ -33,7 +34,8 @@ public struct IPCCommandsQueryResult: Codable, Equatable, Sendable {
         windowActions: [IPCWindowActionDescriptor],
         windowMarkActions: [IPCWindowMarkActionDescriptor],
         windowGatherActions: [IPCWindowGatherActionDescriptor],
-        shellActions: [IPCShellActionDescriptor]
+        shellActions: [IPCShellActionDescriptor],
+        settingsActions: [IPCSettingsActionDescriptor] = IPCAutomationManifest.settingsActionDescriptors
     ) {
         self.commands = commands
         self.workspaceActions = workspaceActions
@@ -41,6 +43,34 @@ public struct IPCCommandsQueryResult: Codable, Equatable, Sendable {
         self.windowMarkActions = windowMarkActions
         self.windowGatherActions = windowGatherActions
         self.shellActions = shellActions
+        self.settingsActions = settingsActions
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case commands
+        case workspaceActions
+        case windowActions
+        case windowMarkActions
+        case windowGatherActions
+        case shellActions
+        case settingsActions
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        commands = try container.decode([IPCCommandDescriptor].self, forKey: .commands)
+        workspaceActions = try container.decode([IPCWorkspaceActionDescriptor].self, forKey: .workspaceActions)
+        windowActions = try container.decode([IPCWindowActionDescriptor].self, forKey: .windowActions)
+        windowMarkActions = try container.decode([IPCWindowMarkActionDescriptor].self, forKey: .windowMarkActions)
+        windowGatherActions = try container.decode(
+            [IPCWindowGatherActionDescriptor].self,
+            forKey: .windowGatherActions
+        )
+        shellActions = try container.decode([IPCShellActionDescriptor].self, forKey: .shellActions)
+        settingsActions = try container.decodeIfPresent(
+            [IPCSettingsActionDescriptor].self,
+            forKey: .settingsActions
+        ) ?? []
     }
 }
 
@@ -66,6 +96,7 @@ public struct IPCCapabilitiesQueryResult: Codable, Equatable, Sendable {
     public let windowMarkActions: [IPCWindowMarkActionDescriptor]
     public let windowGatherActions: [IPCWindowGatherActionDescriptor]
     public let shellActions: [IPCShellActionDescriptor]
+    public let settingsActions: [IPCSettingsActionDescriptor]
     public let subscriptions: [IPCSubscriptionDescriptor]
 
     public init(
@@ -82,6 +113,7 @@ public struct IPCCapabilitiesQueryResult: Codable, Equatable, Sendable {
         windowMarkActions: [IPCWindowMarkActionDescriptor],
         windowGatherActions: [IPCWindowGatherActionDescriptor],
         shellActions: [IPCShellActionDescriptor],
+        settingsActions: [IPCSettingsActionDescriptor] = IPCAutomationManifest.settingsActionDescriptors,
         subscriptions: [IPCSubscriptionDescriptor]
     ) {
         self.protocolVersion = protocolVersion
@@ -97,6 +129,50 @@ public struct IPCCapabilitiesQueryResult: Codable, Equatable, Sendable {
         self.windowMarkActions = windowMarkActions
         self.windowGatherActions = windowGatherActions
         self.shellActions = shellActions
+        self.settingsActions = settingsActions
         self.subscriptions = subscriptions
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case protocolVersion
+        case appVersion
+        case authorizationRequired
+        case windowIdScope
+        case queries
+        case commands
+        case captureActions
+        case ruleActions
+        case workspaceActions
+        case windowActions
+        case windowMarkActions
+        case windowGatherActions
+        case shellActions
+        case settingsActions
+        case subscriptions
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        protocolVersion = try container.decode(Int.self, forKey: .protocolVersion)
+        appVersion = try container.decodeIfPresent(String.self, forKey: .appVersion)
+        authorizationRequired = try container.decode(Bool.self, forKey: .authorizationRequired)
+        windowIdScope = try container.decode(String.self, forKey: .windowIdScope)
+        queries = try container.decode([IPCQueryDescriptor].self, forKey: .queries)
+        commands = try container.decode([IPCCommandDescriptor].self, forKey: .commands)
+        captureActions = try container.decode([IPCCaptureActionDescriptor].self, forKey: .captureActions)
+        ruleActions = try container.decode([IPCRuleActionDescriptor].self, forKey: .ruleActions)
+        workspaceActions = try container.decode([IPCWorkspaceActionDescriptor].self, forKey: .workspaceActions)
+        windowActions = try container.decode([IPCWindowActionDescriptor].self, forKey: .windowActions)
+        windowMarkActions = try container.decode([IPCWindowMarkActionDescriptor].self, forKey: .windowMarkActions)
+        windowGatherActions = try container.decode(
+            [IPCWindowGatherActionDescriptor].self,
+            forKey: .windowGatherActions
+        )
+        shellActions = try container.decode([IPCShellActionDescriptor].self, forKey: .shellActions)
+        settingsActions = try container.decodeIfPresent(
+            [IPCSettingsActionDescriptor].self,
+            forKey: .settingsActions
+        ) ?? []
+        subscriptions = try container.decode([IPCSubscriptionDescriptor].self, forKey: .subscriptions)
     }
 }

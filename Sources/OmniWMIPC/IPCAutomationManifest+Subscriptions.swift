@@ -40,6 +40,11 @@ extension IPCAutomationManifest {
             channel: .shellWidgets,
             summary: "Luau shell widget load and failure updates.",
             resultKind: .shellWidgets
+        ),
+        .init(
+            channel: .settingsChanged,
+            summary: "Settings snapshots, sent whenever any setting changes (including hotkeys).",
+            resultKind: .settings
         )
     ]
 

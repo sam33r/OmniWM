@@ -11,6 +11,7 @@ actor IPCApplicationBridge {
     private let sessionToken: String
     private let authorizationToken: String
     private var lastPublishedDisplays: IPCResult?
+    private var coalescingChannels: Set<IPCSubscriptionChannel> = []
 
     @MainActor
     init(
@@ -110,6 +111,10 @@ actor IPCApplicationBridge {
             return await Self.shellResponse(for: shell, id: request.id, controller: controller)
         case let .subscribe(subscribe):
             return await MainActor.run { Self.subscribeResponse(for: subscribe, id: request.id) }
+        case let .settings(settings):
+            return await MainActor.run {
+                IPCSettingsRequestExecutor(controller: controller).response(for: settings, id: request.id)
+            }
         }
     }
 
@@ -145,7 +150,8 @@ actor IPCApplicationBridge {
              .windowMark,
              .windowGather,
              .shell,
-             .subscribe:
+             .subscribe,
+             .settings:
             return IPCResponse(failing: request, code: .invalidRequest)
         }
     }
@@ -207,6 +213,16 @@ actor IPCApplicationBridge {
         return events
     }
 
+    /// Publishes one snapshot for a burst of changes: calls made while one is
+    /// already waiting for the main actor are dropped, since that snapshot will
+    /// include their change.
+    func publishCoalescedEvent(_ channel: IPCSubscriptionChannel) async {
+        guard hasSubscribers(for: channel), coalescingChannels.insert(channel).inserted else { return }
+        await Task.yield()
+        coalescingChannels.remove(channel)
+        await publishEvent(channel)
+    }
+
     func publishEvent(_ channel: IPCSubscriptionChannel) async {
         guard hasSubscribers(for: channel) else { return }
         guard let event = await eventEnvelope(for: channel) else { return }
@@ -229,6 +245,11 @@ actor IPCApplicationBridge {
     private func response(for query: IPCQueryRequest, id: String, queryRouter: IPCQueryRouter) -> IPCResponse {
         if let validationFailure = IPCQuerySelection.validate(query, sessionToken: sessionToken) {
             return .failure(id: id, kind: .query, code: validationFailure)
+        }
+        if query.name == .settings, let key = query.selectors.key,
+           let failure = IPCSettingsCatalog.lookupFailure(for: key, in: controller.settings.toExport())
+        {
+            return .failure(id: id, kind: .query, code: failure.code, detail: failure.detail)
         }
         return .success(id: id, kind: .query, result: IPCResult(query: query, queryRouter: queryRouter))
     }

@@ -45,6 +45,9 @@ extension WMController {
             guard let self else { return }
             updateHotkeyBindings(settings.hotkeyBindings)
         }
+        settings.onSettingsChanged = { [weak self] in
+            self?.publishSettingsChanged()
+        }
         settings.gestures.onWorkspaceSwipeEnabledChange = { [weak self] in
             self?.layoutRefreshController.workspaceSwipe.syncAvailability()
         }

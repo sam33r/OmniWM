@@ -160,6 +160,12 @@ _omniwmctl()
       fi
       return 0
       ;;
+    settings)
+      if [[ ${COMP_CWORD} -eq 2 ]]; then
+        __omniwmctl_compgen "#{{settingsActionNames}}"
+      fi
+      return 0
+      ;;
     completion)
       __omniwmctl_compgen "#{{shellNames}}"
       return 0

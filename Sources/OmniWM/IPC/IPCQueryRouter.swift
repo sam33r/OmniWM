@@ -39,6 +39,10 @@ final class IPCQueryRouter {
         )
     }
 
+    func settingsResult(key: String? = nil) -> IPCSettingsQueryResult {
+        IPCSettingsCatalog.snapshot(of: controller.settings.toExport(), key: key)
+    }
+
     func shellWidgetsResult() -> IPCShellWidgetsQueryResult {
         controller.workspaceBarManager.shellHost?.widgetReport
             ?? IPCShellWidgetsQueryResult(profile: ShellDefaults.profile, widgets: [])
@@ -206,7 +210,7 @@ final class IPCQueryRouter {
 
     func commandsResult() -> IPCCommandsQueryResult {
         IPCCommandsQueryResult(
-            commands: IPCAutomationManifest.commandDescriptors,
+            commands: IPCCommandPresentation.commandDescriptors(hotkeyBindings: controller.settings.hotkeyBindings),
             workspaceActions: IPCAutomationManifest.workspaceActionDescriptors,
             windowActions: IPCAutomationManifest.windowActionDescriptors,
             windowMarkActions: IPCAutomationManifest.windowMarkActionDescriptors,

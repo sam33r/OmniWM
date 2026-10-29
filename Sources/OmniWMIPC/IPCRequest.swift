@@ -23,6 +23,7 @@ public struct IPCRequest: Codable, Equatable, Sendable {
         case windowGather(IPCWindowGatherRequest)
         case shell(IPCShellRequest)
         case subscribe(IPCSubscribeRequest)
+        case settings(IPCSettingsRequest)
     }
 
     public let version: Int
@@ -90,6 +91,10 @@ public struct IPCRequest: Codable, Equatable, Sendable {
         self.init(id: id, kind: .subscribe, authorizationToken: authorizationToken, payload: .subscribe(subscribe))
     }
 
+    public init(id: String, settings: IPCSettingsRequest, authorizationToken: String? = nil) {
+        self.init(id: id, kind: .settings, authorizationToken: authorizationToken, payload: .settings(settings))
+    }
+
     public init(id: String, kind: IPCRequestKind, authorizationToken: String? = nil) {
         self.init(id: id, kind: kind, authorizationToken: authorizationToken, payload: .none(.init()))
     }
@@ -143,6 +148,8 @@ public struct IPCRequest: Codable, Equatable, Sendable {
             payload = .shell(try container.decode(IPCShellRequest.self, forKey: .payload))
         case .subscribe:
             payload = .subscribe(try container.decode(IPCSubscribeRequest.self, forKey: .payload))
+        case .settings:
+            payload = .settings(try container.decode(IPCSettingsRequest.self, forKey: .payload))
         }
     }
 
@@ -175,6 +182,8 @@ public struct IPCRequest: Codable, Equatable, Sendable {
         case let .shell(payload):
             try container.encode(payload, forKey: .payload)
         case let .subscribe(payload):
+            try container.encode(payload, forKey: .payload)
+        case let .settings(payload):
             try container.encode(payload, forKey: .payload)
         }
     }

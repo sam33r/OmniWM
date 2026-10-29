@@ -26,6 +26,8 @@ public enum IPCResultKind: String, Codable, Equatable, Sendable {
     case windowGather = "window-gather"
     case metrics
     case shellWidgets = "shell-widgets"
+    case settings
+    case settingChange = "setting-change"
 }
 
 public struct IPCPingResult: Codable, Equatable, Sendable {
@@ -82,6 +84,8 @@ public struct IPCResult: Codable, Equatable, Sendable {
         case windowGather(IPCWindowGatherResult)
         case metrics(IPCMetricsQueryResult)
         case shellWidgets(IPCShellWidgetsQueryResult)
+        case settings(IPCSettingsQueryResult)
+        case settingChange(IPCSettingChangeResult)
     }
 
     public let kind: IPCResultKind
@@ -180,6 +184,14 @@ public struct IPCResult: Codable, Equatable, Sendable {
         self.init(kind: .metrics, payload: .metrics(metrics))
     }
 
+    public init(settings: IPCSettingsQueryResult) {
+        self.init(kind: .settings, payload: .settings(settings))
+    }
+
+    public init(settingChange: IPCSettingChangeResult) {
+        self.init(kind: .settingChange, payload: .settingChange(settingChange))
+    }
+
     private enum CodingKeys: String, CodingKey {
         case kind
         case payload
@@ -234,6 +246,10 @@ public struct IPCResult: Codable, Equatable, Sendable {
             payload = .windowGather(try container.decode(IPCWindowGatherResult.self, forKey: .payload))
         case .metrics:
             payload = .metrics(try container.decode(IPCMetricsQueryResult.self, forKey: .payload))
+        case .settings:
+            payload = .settings(try container.decode(IPCSettingsQueryResult.self, forKey: .payload))
+        case .settingChange:
+            payload = .settingChange(try container.decode(IPCSettingChangeResult.self, forKey: .payload))
         }
     }
 
@@ -286,6 +302,10 @@ public struct IPCResult: Codable, Equatable, Sendable {
             try container.encode(payload, forKey: .payload)
         case let .metrics(payload):
             try container.encode(payload, forKey: .payload)
+        case let .settings(payload):
+            try container.encode(payload, forKey: .payload)
+        case let .settingChange(payload):
+            try container.encode(payload, forKey: .payload)
         }
     }
 }
@@ -297,6 +317,9 @@ public struct IPCResponse: Codable, Equatable, Sendable {
     public let ok: Bool
     public let status: IPCResponseStatus
     public let code: IPCErrorCode?
+    /// A sentence saying what's wrong, for failures where `code` alone isn't enough
+    /// (e.g. "must be between 0.1 and 0.95").
+    public let detail: String?
     public let result: IPCResult?
 
     public init(
@@ -306,6 +329,7 @@ public struct IPCResponse: Codable, Equatable, Sendable {
         ok: Bool,
         status: IPCResponseStatus,
         code: IPCErrorCode? = nil,
+        detail: String? = nil,
         result: IPCResult? = nil
     ) {
         self.version = version
@@ -314,6 +338,7 @@ public struct IPCResponse: Codable, Equatable, Sendable {
         self.ok = ok
         self.status = status
         self.code = code
+        self.detail = detail
         self.result = result
     }
 
@@ -331,8 +356,9 @@ public struct IPCResponse: Codable, Equatable, Sendable {
         kind: IPCResponseKind,
         status: IPCResponseStatus = .error,
         code: IPCErrorCode,
+        detail: String? = nil,
         result: IPCResult? = nil
     ) -> IPCResponse {
-        IPCResponse(id: id, kind: kind, ok: false, status: status, code: code, result: result)
+        IPCResponse(id: id, kind: kind, ok: false, status: status, code: code, detail: detail, result: result)
     }
 }
