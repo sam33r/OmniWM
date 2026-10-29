@@ -12,8 +12,9 @@ live on this fork's **`main`** branch, on top of upstream `main`. Run it as
 - **Agent-friendly builds.** SwiftPM runs with `--disable-sandbox` (its sandbox
   can't nest inside an agent's sandboxed shell), and dev packaging skips the
   release checks.
-- **Scripts:** `Scripts/fork-dev-cert.sh` (signing identity) and
-  `Scripts/fork-dev-install.sh` (build, sign, install without launching).
+- **Scripts:** `Scripts/fork-dev-cert.sh` (signing identity),
+  `Scripts/fork-dev-install.sh` (build, sign, install without launching) and
+  `Scripts/fork-dev-restart.sh` (quit and reopen a running Dev).
 - **Workspaces from the keyboard:** `move-to-workspace new` (new workspace on
   the window's monitor, move the window, follow it), `switch-workspace new`,
   and `move-to-workspace next|prev` (same order as `switch-workspace next|prev`).
@@ -73,7 +74,8 @@ In the user's own terminal, `make -C ~/src/OmniWM run` does steps 4 and 5 in one
 ## Everyday use
 
 - **Rebuild after a code change:** `Scripts/fork-dev-install.sh`, then
-  **(user)** `make use-dev` to restart Dev.
+  **(user)** `Scripts/fork-dev-restart.sh` to quit and reopen Dev. (`make use-dev`
+  only switches from the release app; it won't restart a running Dev.)
 - **Back to the Homebrew release:** **(user)** `make -C ~/src/OmniWM use-release`.
 - **Tests:** `. ~/.swiftly/env.sh && swift test --arch arm64 --disable-sandbox`.
 - **Settings:** Dev reads `~/.config/omniwm-dev/settings.toml`, not

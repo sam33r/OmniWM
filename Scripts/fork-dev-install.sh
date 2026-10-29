@@ -2,7 +2,8 @@
 # Fork: build, sign and install ~/Applications/OmniWM Dev.app WITHOUT quitting or
 # launching anything. This is the part of `make run` an agent can do from its
 # own shell; quitting the release app and opening Dev need the user's GUI
-# session, so finish with `make use-dev` in your own terminal.
+# session, so finish in your own terminal: `make use-dev` to switch from the
+# release app, or Scripts/fork-dev-restart.sh if Dev is already running.
 #
 # Usage: Scripts/fork-dev-install.sh
 
@@ -34,4 +35,5 @@ mkdir -p "$INSTALL_DIR"
 rm -rf "${INSTALL_DIR:?}/$APP_NAME.app"
 mv "dist/$APP_NAME.app" "$INSTALL_DIR/$APP_NAME.app"
 echo "fork-dev-install: installed $INSTALL_DIR/$APP_NAME.app"
-echo "Next, in your own terminal: make -C \"$ROOT_DIR\" use-dev"
+echo "Next, in your own terminal: make -C \"$ROOT_DIR\" use-dev (switch from the release app)"
+echo "  or $ROOT_DIR/Scripts/fork-dev-restart.sh (if Dev is already running)"
