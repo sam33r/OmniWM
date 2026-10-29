@@ -111,6 +111,7 @@ In Dwindle, `focus left/right` remains spatial. `focus up/down` traverses a grou
 | `command switch-workspace back-and-forth` | — | shared | Switch to the previously active workspace |
 | `command switch-workspace anywhere` | `<number>` | shared | Focus a workspace by numeric workspace ID across all monitors |
 | `command switch-workspace slot` | `<number>` | shared | Switch to the workspace at a one-based position in the interaction monitor's ordered workspace list |
+| `command switch-workspace new` | — | shared | Create a new empty workspace on the interaction monitor and switch to it |
 
 ### Move to Workspace
 
@@ -121,10 +122,15 @@ In Dwindle, `focus left/right` remains spatial. `focus up/down` traverses a grou
 | `command move-to-workspace down` | — | shared | Move focused window to the adjacent workspace below |
 | `command move-to-workspace on-monitor` | `<number> <left\|right\|up\|down>` | shared | Move focused window to a workspace already assigned to the requested adjacent monitor |
 | `command move-to-workspace slot` | `<number>` | shared | Move focused window to the workspace at a one-based position in the interaction monitor's ordered workspace list |
+| `command move-to-workspace next` | — | shared | Move focused window to the workspace `switch-workspace next` would show |
+| `command move-to-workspace prev` | — | shared | Move focused window to the workspace `switch-workspace prev` would show |
+| `command move-to-workspace new` | — | shared | Move focused window to a new workspace on its monitor and follow it there |
 
 Workspace IDs are positive numeric strings. Direct hotkeys for `1-9` have default bindings. Creating workspace `10+` adds unassigned direct hotkey actions. The workspace UI and IPC/CLI both support `10+`.
 
 Workspace IDs are global, so `switch-workspace 3` targets workspace `3` wherever it lives. The `slot` variants address a position in the interaction monitor's ordered workspace list instead, the same order the workspace bar shows, so `switch-workspace slot 2` opens whichever workspace comes second on the monitor you are using. A slot beyond that monitor's list reports `not_found`; the native actions `Switch to Workspace Slot 1-9` and `Move Focused Window to Workspace Slot 1-9` are unassigned by default.
+
+`move-to-workspace next` and `prev` use the same order, wrapping and empty-workspace skipping as `switch-workspace next` and `prev`, while `up` and `down` keep creating adjacent numbered workspaces at the edges. The `new` variants create the next free numbered workspace, which is removed again once it is empty and no longer shown. Without a focused managed window, the `move-to-workspace` variants report `not_found`. Unreleased: available when building from `main`.
 
 ### Monitor Focus
 
