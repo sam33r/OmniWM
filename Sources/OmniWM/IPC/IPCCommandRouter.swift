@@ -67,50 +67,6 @@ final class IPCCommandRouter {
         }
     }
 
-    private func handle(_ command: IPCWorkspaceCommand) -> ExternalCommandResult {
-        switch command {
-        case let .switchTo(workspaceNumber):
-            guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
-                return .invalidArguments
-            }
-            return switchWorkspace(to: target)
-        case .next:
-            return switchWorkspace(using: .workspace(.next))
-        case .previous:
-            return switchWorkspace(using: .workspace(.previous))
-        case .backAndForth:
-            return switchWorkspace(using: .workspace(.backAndForth))
-        case let .switchAnywhere(workspaceNumber):
-            guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
-                return .invalidArguments
-            }
-            return switchWorkspaceAnywhere(to: target)
-        case let .switchSlot(slotNumber):
-            return switchWorkspaceSlot(slotNumber)
-        case let .moveTo(workspaceNumber):
-            guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
-                return .invalidArguments
-            }
-            return moveFocusedWindow(to: target)
-        case .moveUp:
-            return moveFocusedWindow(using: .workspace(.moveUp))
-        case .moveDown:
-            return moveFocusedWindow(using: .workspace(.moveDown))
-        case let .moveToOnMonitor(workspaceNumber, ipcDirection):
-            guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
-                return .invalidArguments
-            }
-            return moveFocusedWindow(
-                to: target,
-                onMonitor: Direction(ipc: ipcDirection)
-            )
-        case let .moveToSlot(slotNumber):
-            return moveFocusedWindow(toWorkspaceSlot: slotNumber)
-        case let .moveToMonitor(ipcDirection):
-            return moveFocusedWindowToMonitor(Direction(ipc: ipcDirection))
-        }
-    }
-
     private func handle(_ command: IPCMonitorFocusCommand) -> ExternalCommandResult {
         switch command {
         case .previous:
@@ -328,5 +284,51 @@ final class IPCCommandRouter {
             monitorDirection: monitorDirection
         )
         return controller.workspaceManager.workspace(for: token) == previousWorkspaceId ? .notFound : .executed
+    }
+}
+
+extension IPCCommandRouter {
+    private func handle(_ command: IPCWorkspaceCommand) -> ExternalCommandResult {
+        switch command {
+        case let .switchTo(workspaceNumber):
+            guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
+                return .invalidArguments
+            }
+            return switchWorkspace(to: target)
+        case .next:
+            return switchWorkspace(using: .workspace(.next))
+        case .previous:
+            return switchWorkspace(using: .workspace(.previous))
+        case .backAndForth:
+            return switchWorkspace(using: .workspace(.backAndForth))
+        case let .switchAnywhere(workspaceNumber):
+            guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
+                return .invalidArguments
+            }
+            return switchWorkspaceAnywhere(to: target)
+        case let .switchSlot(slotNumber):
+            return switchWorkspaceSlot(slotNumber)
+        case let .moveTo(workspaceNumber):
+            guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
+                return .invalidArguments
+            }
+            return moveFocusedWindow(to: target)
+        case .moveUp:
+            return moveFocusedWindow(using: .workspace(.moveUp))
+        case .moveDown:
+            return moveFocusedWindow(using: .workspace(.moveDown))
+        case let .moveToOnMonitor(workspaceNumber, ipcDirection):
+            guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
+                return .invalidArguments
+            }
+            return moveFocusedWindow(
+                to: target,
+                onMonitor: Direction(ipc: ipcDirection)
+            )
+        case let .moveToSlot(slotNumber):
+            return moveFocusedWindow(toWorkspaceSlot: slotNumber)
+        case let .moveToMonitor(ipcDirection):
+            return moveFocusedWindowToMonitor(Direction(ipc: ipcDirection))
+        }
     }
 }

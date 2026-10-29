@@ -62,18 +62,24 @@ extension WorkspaceNavigationHandler {
         return true
     }
 
-    func switchWorkspaceRelative(
+    struct RelativeWorkspaceTarget {
+        let monitorId: Monitor.ID
+        let currentWorkspace: WorkspaceDescriptor
+        let targetWorkspace: WorkspaceDescriptor
+    }
+
+    func relativeWorkspaceTarget(
         isNext: Bool,
         wrapAround: Bool = true,
         monitorId explicitMonitorId: Monitor.ID? = nil
-    ) {
-        guard let controller else { return }
+    ) -> RelativeWorkspaceTarget? {
+        guard let controller else { return nil }
         guard let currentMonitorId = explicitMonitorId ?? interactionMonitorId(for: controller)
-        else { return }
+        else { return nil }
         let resolvedWorkspace = explicitMonitorId == nil
             ? controller.activeWorkspace()
             : controller.workspaceManager.activeWorkspaceOrFirst(on: currentMonitorId)
-        guard let currentWorkspace = resolvedWorkspace else { return }
+        guard let currentWorkspace = resolvedWorkspace else { return nil }
         let skipEmpty = skipsEmptyWorkspaces(on: currentMonitorId)
 
         let targetWorkspace: WorkspaceDescriptor? = if isNext {
@@ -92,8 +98,22 @@ extension WorkspaceNavigationHandler {
             )
         }
 
-        guard let targetWorkspace else { return }
-        activateWorkspaceInOrder(targetWorkspace, from: currentWorkspace.id, on: currentMonitorId)
+        guard let targetWorkspace else { return nil }
+        return RelativeWorkspaceTarget(
+            monitorId: currentMonitorId,
+            currentWorkspace: currentWorkspace,
+            targetWorkspace: targetWorkspace
+        )
+    }
+
+    func switchWorkspaceRelative(
+        isNext: Bool,
+        wrapAround: Bool = true,
+        monitorId explicitMonitorId: Monitor.ID? = nil
+    ) {
+        guard let target = relativeWorkspaceTarget(isNext: isNext, wrapAround: wrapAround, monitorId: explicitMonitorId)
+        else { return }
+        activateWorkspaceInOrder(target.targetWorkspace, from: target.currentWorkspace.id, on: target.monitorId)
     }
 
     func switchWorkspaceBySwipe(isNext: Bool, monitorId: Monitor.ID) {
@@ -136,7 +156,7 @@ extension WorkspaceNavigationHandler {
         {
             return empty
         }
-        return createIfNeeded ? createOverviewWorkspace(on: monitorId) : nil
+        return createIfNeeded ? createNewWorkspace(on: monitorId) : nil
     }
 
     func skipsEmptyWorkspaces(on monitorId: Monitor.ID) -> Bool {

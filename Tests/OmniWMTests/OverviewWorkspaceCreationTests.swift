@@ -15,10 +15,10 @@ final class OverviewWorkspaceCreationTests: XCTestCase {
         let visible = manager.activeVisibleWorkspaceMap()
 
         let first = try XCTUnwrap(
-            fixture.controller.workspaceNavigationHandler.createOverviewWorkspace(on: fixture.monitors[0].id)
+            fixture.controller.workspaceNavigationHandler.createNewWorkspace(on: fixture.monitors[0].id)
         )
         let second = try XCTUnwrap(
-            fixture.controller.workspaceNavigationHandler.createOverviewWorkspace(on: fixture.monitors[1].id)
+            fixture.controller.workspaceNavigationHandler.createNewWorkspace(on: fixture.monitors[1].id)
         )
 
         XCTAssertEqual(first.name, "5")
@@ -39,7 +39,7 @@ final class OverviewWorkspaceCreationTests: XCTestCase {
         let fixture = makeFixture(workspaceNames: ["1", "2", "7"])
 
         let created = try XCTUnwrap(
-            fixture.controller.workspaceNavigationHandler.createOverviewWorkspace(on: fixture.monitors[1].id)
+            fixture.controller.workspaceNavigationHandler.createNewWorkspace(on: fixture.monitors[1].id)
         )
 
         XCTAssertEqual(created.name, "3")
@@ -53,7 +53,7 @@ final class OverviewWorkspaceCreationTests: XCTestCase {
         XCTAssertTrue(manager.workspaces.isEmpty)
 
         let created = try XCTUnwrap(
-            fixture.controller.workspaceNavigationHandler.createOverviewWorkspace(on: fixture.monitors[1].id)
+            fixture.controller.workspaceNavigationHandler.createNewWorkspace(on: fixture.monitors[1].id)
         )
 
         XCTAssertEqual(created.name, "1")
@@ -65,9 +65,9 @@ final class OverviewWorkspaceCreationTests: XCTestCase {
         let fixture = makeFixture(workspaceNames: [String(Int.max)])
         let before = fixture.controller.workspaceManager.workspaces
 
-        XCTAssertNil(fixture.controller.workspaceNavigationHandler.createOverviewWorkspace(on: .init(displayId: 99)))
+        XCTAssertNil(fixture.controller.workspaceNavigationHandler.createNewWorkspace(on: .init(displayId: 99)))
         XCTAssertNil(
-            fixture.controller.workspaceNavigationHandler.createOverviewWorkspace(on: fixture.monitors[0].id)
+            fixture.controller.workspaceNavigationHandler.createNewWorkspace(on: fixture.monitors[0].id)
         )
         XCTAssertEqual(fixture.controller.workspaceManager.workspaces, before)
     }
