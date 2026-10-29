@@ -116,6 +116,20 @@ extension WorkspaceNavigationHandler {
         activateWorkspaceInOrder(target.targetWorkspace, from: target.currentWorkspace.id, on: target.monitorId)
     }
 
+    @discardableResult
+    func switchToNewWorkspace() -> Bool {
+        guard let controller,
+              let monitorId = interactionMonitorId(for: controller),
+              let currentWorkspace = controller.workspaceManager.activeWorkspaceOrFirst(on: monitorId),
+              let workspace = createNewWorkspace(on: monitorId)
+        else { return false }
+        guard activateWorkspaceInOrder(workspace, from: currentWorkspace.id, on: monitorId) else {
+            controller.workspaceManager.removeWorkspaces([workspace.id])
+            return false
+        }
+        return true
+    }
+
     func switchWorkspaceBySwipe(isNext: Bool, monitorId: Monitor.ID) {
         guard let controller,
               let currentWorkspace = controller.workspaceManager.activeWorkspaceOrFirst(on: monitorId),

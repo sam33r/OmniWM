@@ -308,6 +308,8 @@ extension IPCCommandRouter {
             return switchWorkspaceAnywhere(to: target)
         case let .switchSlot(slotNumber):
             return switchWorkspaceSlot(slotNumber)
+        case .switchToNew:
+            return switchWorkspace(using: .workspace(.switchToNew))
         case let .moveTo(workspaceNumber):
             guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
                 return .invalidArguments
@@ -317,6 +319,10 @@ extension IPCCommandRouter {
             return moveFocusedWindow(using: .workspace(.moveUp))
         case .moveDown:
             return moveFocusedWindow(using: .workspace(.moveDown))
+        case .moveNext:
+            return moveFocusedWindow(using: .workspace(.moveNext))
+        case .movePrevious:
+            return moveFocusedWindow(using: .workspace(.movePrevious))
         case let .moveToOnMonitor(workspaceNumber, ipcDirection):
             guard let target = WorkspaceTarget(workspaceNumber: workspaceNumber) else {
                 return .invalidArguments
@@ -327,6 +333,8 @@ extension IPCCommandRouter {
             )
         case let .moveToSlot(slotNumber):
             return moveFocusedWindow(toWorkspaceSlot: slotNumber)
+        case .moveToNew:
+            return moveFocusedWindow(using: .workspace(.moveToNew))
         case let .moveToMonitor(ipcDirection):
             return moveFocusedWindowToMonitor(Direction(ipc: ipcDirection))
         }

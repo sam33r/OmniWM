@@ -55,6 +55,12 @@ extension CommandHandler {
             controller.workspaceNavigationHandler.moveWindowToAdjacentWorkspace(direction: .up)
         case .moveDown:
             controller.workspaceNavigationHandler.moveWindowToAdjacentWorkspace(direction: .down)
+        case .moveNext:
+            controller.workspaceNavigationHandler.moveFocusedWindowRelative(isNext: true)
+        case .movePrevious:
+            controller.workspaceNavigationHandler.moveFocusedWindowRelative(isNext: false)
+        case .moveToNew:
+            controller.workspaceNavigationHandler.moveFocusedWindowToNewWorkspace()
         case let .switchTo(index):
             controller.workspaceNavigationHandler.switchWorkspace(
                 index: index,
@@ -71,6 +77,8 @@ extension CommandHandler {
             controller.workspaceNavigationHandler.switchWorkspaceRelative(isNext: true)
         case .previous:
             controller.workspaceNavigationHandler.switchWorkspaceRelative(isNext: false)
+        case .switchToNew:
+            controller.workspaceNavigationHandler.switchToNewWorkspace()
         case let .moveWorkspaceToMonitor(direction):
             if let workspaceId = controller.activeWorkspace()?.id {
                 _ = controller.workspaceNavigationHandler.moveWorkspaceToMonitor(
