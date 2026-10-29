@@ -19,7 +19,10 @@ struct OverviewLayoutGeometry {
     let contentTopPadding: CGFloat
     let contentBottomPadding: CGFloat
 
-    init(screenFrame: CGRect, scale: CGFloat, topSafeAreaInset: CGFloat = 0) {
+    /// `visibleRows` (fork) sizes workspace strips so that many rows, with their labels,
+    /// fit between the search bar and the bottom of the screen; nil keeps the fixed
+    /// strip height (about two rows). Either way the strip scales with `scale`.
+    init(screenFrame: CGRect, scale: CGFloat, topSafeAreaInset: CGFloat = 0, visibleRows: Int? = nil) {
         let metricsScale = OverviewLayoutCalculator.clampedScale(scale)
         let scaledSearchBarHeight = OverviewLayoutMetrics.searchBarHeight * metricsScale
         let scaledSearchBarPadding = OverviewLayoutMetrics.searchBarPadding * metricsScale
@@ -42,8 +45,19 @@ struct OverviewLayoutGeometry {
         self.scaledWorkspaceLabelHeight = OverviewLayoutMetrics.workspaceLabelHeight * metricsScale
         self.scaledWorkspaceSectionPadding = OverviewLayoutMetrics.workspaceSectionPadding * metricsScale
         self.scaledWindowSpacing = OverviewLayoutMetrics.windowSpacing * metricsScale
-        stripScale = max(1, (searchBarY - screenFrame.minY - 56) * 0.5 * metricsScale) / max(screenFrame.height, 1)
-        self.initialContentY = searchBarY - OverviewLayoutMetrics.contentTopPadding * metricsScale
+        let initialContentY = searchBarY - OverviewLayoutMetrics.contentTopPadding * metricsScale
+        let stripHeight: CGFloat
+        if let visibleRows {
+            let rows = CGFloat(max(1, visibleRows))
+            let padding = OverviewLayoutMetrics.workspaceSectionPadding * metricsScale
+            let rowChrome = OverviewLayoutMetrics.workspaceLabelHeight * metricsScale + padding
+            let available = initialContentY - screenFrame.minY - rows * rowChrome - (rows - 1) * padding
+            stripHeight = available / rows * metricsScale
+        } else {
+            stripHeight = (searchBarY - screenFrame.minY - 56) * 0.5 * metricsScale
+        }
+        stripScale = max(1, stripHeight) / max(screenFrame.height, 1)
+        self.initialContentY = initialContentY
         self.contentTopPadding = OverviewLayoutMetrics.contentTopPadding * metricsScale
         self.contentBottomPadding = OverviewLayoutMetrics.contentBottomPadding * metricsScale
     }

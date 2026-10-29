@@ -224,6 +224,7 @@ Overview visibility, zoom, input and colors.
 | --- | --- | --- | --- |
 | `enabled` *(optional)* | boolean | `true` | Enables Overview. When off, its shortcuts, mouse button, trackpad gesture, and direct commands cannot open it; saved input assignments remain available when re-enabled. |
 | `zoom` | float | `1.0` | Overview zoom factor, clamped to `0.5`–`1.5`. Zoom changes made in Overview are saved when it closes. |
+| `fitWorkspaceRows` *(optional)* | integer | unset | Sizes workspace rows so each monitor's workspaces fit on screen at once: at least two rows and at most this many (clamped to `2`–`6`), so a monitor with three workspaces shows three larger rows and one with eight shows this many and scrolls. `zoom` still scales the result. Unset keeps the fixed row size (about two rows). Unreleased: available when building from `main`. |
 | `backdrop` | color table | `0.05, 0.05, 0.08, 0.0` | Backdrop behind the zoomed-out workspaces; transparent by default. |
 | `windowBorders.normal` | color table | `0.3, 0.3, 0.35, 0.5` | Border for windows at rest. |
 | `windowBorders.hovered` | color table | `0.4, 0.6, 1.0, 1.0` | Border for the hovered window. |

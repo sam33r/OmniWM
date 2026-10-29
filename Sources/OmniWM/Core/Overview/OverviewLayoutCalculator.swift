@@ -45,10 +45,20 @@ enum OverviewLayoutMetrics {
 struct OverviewLayoutCalculator {
     private let geometry: OverviewLayoutGeometry
     private let scale: CGFloat
+    private let topSafeAreaInset: CGFloat
+    private let fitWorkspaceRows: Int?
 
-    init(screenFrame: CGRect, scale: CGFloat, topSafeAreaInset: CGFloat = 0) {
+    /// `fitWorkspaceRows` (fork, `[overview] fitWorkspaceRows`): size rows so the
+    /// monitor's workspaces fit, at least two and at most this many at once.
+    init(screenFrame: CGRect, scale: CGFloat, topSafeAreaInset: CGFloat = 0, fitWorkspaceRows: Int? = nil) {
         geometry = OverviewLayoutGeometry(screenFrame: screenFrame, scale: scale, topSafeAreaInset: topSafeAreaInset)
         self.scale = scale
+        self.topSafeAreaInset = topSafeAreaInset
+        self.fitWorkspaceRows = fitWorkspaceRows
+    }
+
+    nonisolated static func fittedRowCount(workspaceCount: Int, maxRows: Int) -> Int {
+        min(max(workspaceCount, 2), max(maxRows, 2))
     }
 
     nonisolated static func clampedScale(_ scale: CGFloat) -> CGFloat {
@@ -72,7 +82,14 @@ struct OverviewLayoutCalculator {
         stripPans: [WorkspaceDescriptor.ID: CGFloat] = [:],
         monitorId: Monitor.ID? = nil
     ) -> OverviewLayout {
-        let context = geometry
+        let context = fitWorkspaceRows.map {
+            OverviewLayoutGeometry(
+                screenFrame: geometry.screenFrame,
+                scale: scale,
+                topSafeAreaInset: topSafeAreaInset,
+                visibleRows: Self.fittedRowCount(workspaceCount: workspaces.count, maxRows: $0)
+            )
+        } ?? geometry
         var layout = OverviewLayout()
         layout.scale = scale
         layout.searchBarFrame = context.searchBarFrame

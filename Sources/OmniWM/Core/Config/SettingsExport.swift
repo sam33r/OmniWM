@@ -139,6 +139,7 @@ struct SettingsExport: Equatable {
         var invertScrollDirection: Bool?
         var mouseScrollSpeed: Double?
         var mouseButton: Int64?
+        var fitWorkspaceRows: Int?
     }
 
     struct OverviewWindowBorders: Codable, Equatable {

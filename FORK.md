@@ -38,6 +38,9 @@ live on this fork's **`main`** branch, on top of upstream `main`. Run it as
   everything but the focused window on every display, like HazeOver. Toggle
   with `omniwmctl command toggle-dim-unfocused` or the `toggleDimUnfocused`
   hotkey (unassigned).
+- **`[overview] fitWorkspaceRows`** (2–6, unset = fixed size): overview rows
+  shrink so up to this many workspaces fit on screen; fewer workspaces get
+  bigger rows (never fewer than two).
 
 ## Set up Dev on a new Mac
 

@@ -28,6 +28,11 @@ final class OverviewSettings {
         didSet { onChange?() }
     }
 
+    /// Fork: size workspace rows so up to this many fit on screen; nil keeps the fixed size.
+    var fitWorkspaceRows: Int? {
+        didSet { onChange?() }
+    }
+
     var backdropColor = OverviewSettings.defaults.backdrop {
         didSet { onChange?() }
     }
@@ -61,7 +66,8 @@ final class OverviewSettings {
             matchFocusBorder: matchFocusBorder,
             invertScrollDirection: invertScrollDirection,
             mouseScrollSpeed: mouseScrollSpeed,
-            mouseButton: mouseButton
+            mouseButton: mouseButton,
+            fitWorkspaceRows: fitWorkspaceRows
         )
     }
 
@@ -71,6 +77,7 @@ final class OverviewSettings {
         invertScrollDirection = values.invertScrollDirection ?? false
         mouseScrollSpeed = Self.validatedMouseScrollSpeed(values.mouseScrollSpeed ?? 1)
         mouseButton = values.mouseButton
+        fitWorkspaceRows = Self.validatedFitWorkspaceRows(values.fitWorkspaceRows)
         backdropColor = Self.validatedColor(values.backdrop, default: baseline.backdrop)
         normalBorderColor = Self.validatedColor(
             values.windowBorders.normal,
@@ -90,6 +97,12 @@ final class OverviewSettings {
     private static func validatedZoom(_ value: Double) -> Double {
         guard value.isFinite else { return defaults.zoom }
         return min(1.5, max(0.5, value))
+    }
+
+    nonisolated static let fitWorkspaceRowsRange = 2 ... 6
+
+    nonisolated static func validatedFitWorkspaceRows(_ value: Int?) -> Int? {
+        value.map { min(max($0, fitWorkspaceRowsRange.lowerBound), fitWorkspaceRowsRange.upperBound) }
     }
 
     nonisolated static func validatedMouseScrollSpeed(_ value: Double) -> Double {

@@ -147,7 +147,8 @@ final class OverviewViewportProjection {
         let layout = OverviewLayoutCalculator(
             screenFrame: viewportFrame,
             scale: scale,
-            topSafeAreaInset: monitor.notchHeight
+            topSafeAreaInset: monitor.notchHeight,
+            fitWorkspaceRows: wmController?.settings.overview.fitWorkspaceRows
         ).calculateLayout(
             workspaces: workspaces,
             windows: localizedWindowData,
