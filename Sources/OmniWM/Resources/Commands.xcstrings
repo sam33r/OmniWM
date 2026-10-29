@@ -9171,6 +9171,17 @@
         }
       }
     },
+    "command.presentation.dimUnfocused" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Toggle Dim Unfocused Windows"
+          }
+        }
+      }
+    },
     "command.presentation.hiddenBar" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {

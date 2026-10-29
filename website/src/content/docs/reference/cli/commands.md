@@ -219,6 +219,7 @@ Workspace IDs are global, so `switch-workspace 3` targets workspace `3` wherever
 | `command toggle-quake-terminal` | — | shared | Toggle the configured Quake terminal |
 | `command toggle-overview` | — | shared | Open Overview when it is closed, or dismiss it onto the current selection when it is open |
 | `command toggle-system-stats` | — | shared | Toggle the system stats popup when a workspace-bar System Stats button is available |
+| `command toggle-dim-unfocused` | — | shared | Toggle dimming everything except the focused window on every display (`focus.dimUnfocused`). Unreleased: available when building from `main` |
 
 For example, run `omniwmctl command hidden-bar panel` to show or dismiss the Hidden Bar panel.
 

@@ -88,6 +88,7 @@ Turn on **Settings > Workspaces > Go Back When Switching to the Current Workspac
 | Toggle Quake Terminal | `` Option + ` `` | `Shared` |
 | Toggle Overview | `Option + Shift + O` | `Shared` |
 | Toggle System Stats | `Unassigned` | `Shared` |
+| Toggle Dim Unfocused Windows | `Unassigned` | `Shared` |
 | Volume Up | `Unassigned` | `Shared` |
 | Volume Down | `Unassigned` | `Shared` |
 | Mute or Unmute Volume | `Unassigned` | `Shared` |

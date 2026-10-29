@@ -79,6 +79,8 @@ struct SettingsExport: Equatable {
         var moveCrossesMonitorAtEdge: Bool
         var moveToMonitorWrapsAround: Bool
         var relativeWorkspaceEdgeBehavior: WorkspaceSwipeEdgeBehavior
+        var dimUnfocused: Bool
+        var dimUnfocusedOpacity: Double
         var followsMouseMaxScrollPercent: Int?
     }
 
@@ -328,6 +330,10 @@ extension SettingsExport.Focus {
             WorkspaceSwipeEdgeBehavior.self,
             forKey: .relativeWorkspaceEdgeBehavior
         ) ?? Self.defaults().relativeWorkspaceEdgeBehavior
+        dimUnfocused = try container.decodeIfPresent(Bool.self, forKey: .dimUnfocused)
+            ?? Self.defaults().dimUnfocused
+        dimUnfocusedOpacity = try container.decodeIfPresent(Double.self, forKey: .dimUnfocusedOpacity)
+            ?? Self.defaults().dimUnfocusedOpacity
         followsMouseMaxScrollPercent = try container.decodeIfPresent(
             Int.self,
             forKey: .followsMouseMaxScrollPercent
@@ -346,6 +352,8 @@ extension SettingsExport.Focus {
             moveCrossesMonitorAtEdge: false,
             moveToMonitorWrapsAround: false,
             relativeWorkspaceEdgeBehavior: .cycle,
+            dimUnfocused: false,
+            dimUnfocusedOpacity: 0.6,
             followsMouseMaxScrollPercent: nil
         )
     }

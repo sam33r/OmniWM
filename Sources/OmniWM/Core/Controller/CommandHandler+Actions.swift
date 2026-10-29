@@ -271,6 +271,8 @@ extension CommandHandler {
             controller.toggleOverview()
         case .systemStats:
             controller.toggleSystemStats()
+        case .dimUnfocused:
+            controller.toggleDimUnfocused()
         }
         return .executed
     }

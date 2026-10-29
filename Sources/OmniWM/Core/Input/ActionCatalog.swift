@@ -191,6 +191,8 @@ enum ActionCatalog {
         specs.append(contentsOf: IPCKeyboardModeCommand.allCases.map { $0.actionSpec() })
         appendPresentationBindings(&specs)
         appendRelativeWorkspaceBindings(&specs)
+        // Fork: after every existing action, like the relative workspace ones above.
+        specs.append(IPCPresentationCommand.dimUnfocused.actionSpec())
 
         return specs
     }

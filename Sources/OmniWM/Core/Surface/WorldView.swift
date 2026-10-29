@@ -62,6 +62,18 @@ struct WorldView {
         controller.resolvedBorderConfig()
     }
 
+    var nativeManagedFocusToken: WindowToken? {
+        controller.workspaceManager.nativeManagedFocusToken
+    }
+
+    var focusDimSettings: (enabled: Bool, opacity: Double) {
+        (controller.settings.focus.dimUnfocused, controller.settings.focus.dimUnfocusedOpacity)
+    }
+
+    func monitor(forWorkspace workspaceId: WorkspaceDescriptor.ID) -> Monitor? {
+        controller.workspaceManager.monitor(for: workspaceId)
+    }
+
     func entry(for token: WindowToken) -> WindowState? {
         controller.workspaceManager.entry(for: token)
     }

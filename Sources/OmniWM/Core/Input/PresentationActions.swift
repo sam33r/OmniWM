@@ -27,6 +27,10 @@ extension IPCPresentationCommand {
                 "command.presentation.hiddenBar", defaultValue: "Toggle Hidden Icons Panel", table: "Commands",
                 bundle: .omniWM
             )
+        case .dimUnfocused: LocalizedStringResource(
+                "command.presentation.dimUnfocused", defaultValue: "Toggle Dim Unfocused Windows", table: "Commands",
+                bundle: .omniWM
+            )
         }
     }
 
@@ -54,6 +58,10 @@ extension IPCPresentationCommand {
         case .hiddenBar:
             id = "toggleHiddenBarPanel"
             keywords = ["hidden bar", "icons", "menu bar"]
+            binding = .unassigned
+        case .dimUnfocused:
+            id = "toggleDimUnfocused"
+            keywords = ["dim", "focus mode", "zen", "hazeover", "fade"]
             binding = .unassigned
         }
         return ActionCatalog.action(

@@ -460,6 +460,10 @@ extension IPCAutomationManifest {
             summary: "Toggle the system stats popup when a workspace-bar System Stats button is available."
         ),
         .init(
+            name: .presentation(.dimUnfocused),
+            summary: "Toggle dimming everything except the focused window on every display."
+        ),
+        .init(
             name: .media(.volumeUp),
             summary: "Raise the output volume by one step."
         ),

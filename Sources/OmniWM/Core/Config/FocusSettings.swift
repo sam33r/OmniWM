@@ -22,6 +22,13 @@ final class FocusSettings {
 
     nonisolated static let followsMouseMaxScrollPercentRange = 0 ... 100
 
+    nonisolated static let dimUnfocusedOpacityRange = 0.1 ... 0.95
+
+    nonisolated static func normalizedDimUnfocusedOpacity(_ value: Double) -> Double {
+        guard value.isFinite else { return defaults.dimUnfocusedOpacity }
+        return min(max(value, dimUnfocusedOpacityRange.lowerBound), dimUnfocusedOpacityRange.upperBound)
+    }
+
     nonisolated static func normalizedFollowsMouseMaxScrollPercent(_ value: Int?) -> Int? {
         value.map {
             min(max($0, followsMouseMaxScrollPercentRange.lowerBound), followsMouseMaxScrollPercentRange.upperBound)
@@ -86,6 +93,21 @@ final class FocusSettings {
         didSet { onChange?() }
     }
 
+    var dimUnfocused = FocusSettings.defaults.dimUnfocused {
+        didSet { onChange?() }
+    }
+
+    var dimUnfocusedOpacity = FocusSettings.defaults.dimUnfocusedOpacity {
+        didSet {
+            let normalized = FocusSettings.normalizedDimUnfocusedOpacity(dimUnfocusedOpacity)
+            guard normalized == dimUnfocusedOpacity else {
+                dimUnfocusedOpacity = normalized
+                return
+            }
+            onChange?()
+        }
+    }
+
     func export() -> SettingsExport.Focus {
         SettingsExport.Focus(
             followsMouse: followsMouse,
@@ -98,6 +120,8 @@ final class FocusSettings {
             moveCrossesMonitorAtEdge: moveCrossesMonitorAtEdge,
             moveToMonitorWrapsAround: moveToMonitorWrapsAround,
             relativeWorkspaceEdgeBehavior: relativeWorkspaceEdgeBehavior,
+            dimUnfocused: dimUnfocused,
+            dimUnfocusedOpacity: dimUnfocusedOpacity,
             followsMouseMaxScrollPercent: followsMouseMaxScrollPercent
         )
     }
@@ -113,6 +137,8 @@ final class FocusSettings {
         moveCrossesMonitorAtEdge = focus.moveCrossesMonitorAtEdge
         moveToMonitorWrapsAround = focus.moveToMonitorWrapsAround
         relativeWorkspaceEdgeBehavior = focus.relativeWorkspaceEdgeBehavior
+        dimUnfocused = focus.dimUnfocused
+        dimUnfocusedOpacity = focus.dimUnfocusedOpacity
         followsMouseMaxScrollPercent = focus.followsMouseMaxScrollPercent
     }
 }

@@ -76,6 +76,10 @@ final class SurfaceCoordinator {
         scene.contains(windowNumber: windowNumber)
     }
 
+    func isPassthrough(windowNumber: Int) -> Bool {
+        scene.isPassthrough(windowNumber: windowNumber)
+    }
+
     func containsInteractive(point: CGPoint, excluding kind: SurfaceKind? = nil) -> Bool {
         scene.containsInteractive(point: point, excluding: kind)
     }

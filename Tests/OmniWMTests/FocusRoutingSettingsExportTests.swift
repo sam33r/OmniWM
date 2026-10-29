@@ -22,7 +22,9 @@ final class FocusRoutingSettingsExportTests: XCTestCase {
             "crossesMonitorAtEdge": .boolean(false),
             "moveCrossesMonitorAtEdge": .boolean(false),
             "moveToMonitorWrapsAround": .boolean(false),
-            "relativeWorkspaceEdgeBehavior": .string("cycle")
+            "relativeWorkspaceEdgeBehavior": .string("cycle"),
+            "dimUnfocused": .boolean(false),
+            "dimUnfocusedOpacity": .float(0.6)
         ]))
         XCTAssertEqual(tree["mouseWarp"], .table([
             "margin": .integer(1),
@@ -186,6 +188,34 @@ final class FocusRoutingSettingsExportTests: XCTestCase {
             with: "relativeWorkspaceEdgeBehavior = \"sideways\""
         )
         XCTAssertThrowsError(try SettingsTOMLCodec.decode(Data(malformed.utf8)))
+    }
+
+    func testDimUnfocusedSettingsAreOptionalClampedAndRoundTrip() throws {
+        let defaults = SettingsExport.defaults().focus
+        XCTAssertFalse(defaults.dimUnfocused)
+        XCTAssertEqual(defaults.dimUnfocusedOpacity, 0.6)
+        var export = SettingsExport.defaults()
+        export.focus.dimUnfocused = true
+        export.focus.dimUnfocusedOpacity = 0.8
+        let data = try SettingsTOMLCodec.encode(export)
+        let result = try SettingsTOMLCodec.decodeForLoad(data)
+        XCTAssertEqual(result.export, export)
+        XCTAssertNil(result.migration)
+        XCTAssertTrue(SettingsTOMLCodec.unknownKeyPaths(in: data).isEmpty)
+
+        let source = String(decoding: try SettingsTOMLCodec.encode(.defaults()), as: UTF8.self)
+        var missing = try removing(key: "dimUnfocused", from: "focus", in: source)
+        missing = try removing(key: "dimUnfocusedOpacity", from: "focus", in: missing)
+        let loaded = try SettingsTOMLCodec.decodeForLoad(Data(missing.utf8))
+        XCTAssertFalse(loaded.export.focus.dimUnfocused)
+        XCTAssertEqual(loaded.export.focus.dimUnfocusedOpacity, 0.6)
+        XCTAssertNil(loaded.migration)
+        XCTAssertNil(loaded.migratedData)
+
+        let tooDark = source.replacingOccurrences(of: "dimUnfocusedOpacity = 0.6", with: "dimUnfocusedOpacity = 1.5")
+        XCTAssertEqual(try SettingsTOMLCodec.decodeForLoad(Data(tooDark.utf8)).export.focus.dimUnfocusedOpacity, 0.95)
+        XCTAssertEqual(FocusSettings.normalizedDimUnfocusedOpacity(0), 0.1)
+        XCTAssertEqual(FocusSettings.normalizedDimUnfocusedOpacity(.nan), 0.6)
     }
 
     func testExistingSectionFieldsRemainRequired() throws {

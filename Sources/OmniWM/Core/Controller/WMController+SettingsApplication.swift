@@ -33,6 +33,7 @@ extension WMController {
         updateAppRules()
 
         borderSettingsChanged()
+        focusDimSettingsChanged()
         setOverviewEnabled(settings.overview.enabled)
         updateOverviewSettings()
 

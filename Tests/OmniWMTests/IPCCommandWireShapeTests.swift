@@ -141,6 +141,7 @@ final class IPCCommandWireShapeTests: XCTestCase {
         #"{"name":"toggle-quake-terminal"}"#,
         #"{"name":"toggle-workspace-bar"}"#,
         #"{"name":"hidden-bar-panel"}"#,
+        #"{"name":"toggle-dim-unfocused"}"#,
         #"{"name":"volume-up"}"#,
         #"{"name":"volume-down"}"#,
         #"{"name":"volume-mute"}"#,

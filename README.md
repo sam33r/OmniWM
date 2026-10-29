@@ -879,6 +879,7 @@ When you create workspace 10 or higher, Settings > Keyboard Shortcuts adds its S
 | Toggle Quake Terminal | `` Option + ` `` | `Shared` |
 | Toggle Overview | `Option + Shift + O` | `Shared` |
 | Toggle System Stats | `Unassigned` | `Shared` |
+| Toggle Dim Unfocused Windows | `Unassigned` | `Shared` |
 | Volume Up | `Unassigned` | `Shared` |
 | Volume Down | `Unassigned` | `Shared` |
 | Mute or Unmute Volume | `Unassigned` | `Shared` |

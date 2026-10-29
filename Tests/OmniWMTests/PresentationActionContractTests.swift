@@ -143,6 +143,13 @@ private struct PresentationExpectation {
                 id: "toggleHiddenBarPanel",
                 title: "Toggle Hidden Icons Panel",
                 binding: .unassigned
+            ),
+            PresentationExpectation(
+                ipc: .dimUnfocused,
+                command: .presentation(.dimUnfocused),
+                id: "toggleDimUnfocused",
+                title: "Toggle Dim Unfocused Windows",
+                binding: .unassigned
             )
         ]
     }

@@ -85,6 +85,7 @@ toggle-system-stats
 toggle-quake-terminal
 toggle-workspace-bar
 hidden-bar-panel
+toggle-dim-unfocused
 volume-up
 volume-down
 volume-mute

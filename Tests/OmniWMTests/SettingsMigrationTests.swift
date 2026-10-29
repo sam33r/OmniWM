@@ -566,7 +566,7 @@ final class SettingsMigrationTests: XCTestCase {
             "openCommandPalette.clipboard", "openCommandPalette.commands", "openCommandPalette.applications",
             "openCommandPalette.files", "toggleShortcutPause", "beginPrefix", "toggleWindowMode",
             "exitKeyboardMode", "switchWorkspace.new", "moveToWorkspace.next", "moveToWorkspace.previous",
-            "moveToWorkspace.new"
+            "moveToWorkspace.new", "toggleDimUnfocused"
         ]
         XCTAssertEqual(
             hotkeyIDs(in: migratedData),

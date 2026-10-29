@@ -96,6 +96,10 @@ final class OwnedWindowRegistry {
         surfaceCoordinator.contains(windowNumber: windowNumber)
     }
 
+    func isPassthrough(windowNumber: Int) -> Bool {
+        surfaceCoordinator.isPassthrough(windowNumber: windowNumber)
+    }
+
     var hasFrontmostWindow: Bool {
         surfaceCoordinator.hasFrontmostSuppressingWindow
     }

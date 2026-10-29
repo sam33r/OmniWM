@@ -25,6 +25,7 @@ final class SurfaceReconciler {
     private(set) var forceOrderingOnNextReconcile = false
     private(set) var pendingReconcileScope: ReconcileScope?
     private let borderApplier: BorderSurfaceApplier
+    let focusDimApplier: FocusDimApplier
     private let parkingEdgeMaskManager = ParkingEdgeMaskManager()
     private let applyTabRails: TabRailApply
     private let applyNativeFullscreenPlaceholders: NativeFullscreenPlaceholderApply
@@ -38,6 +39,7 @@ final class SurfaceReconciler {
     init(
         controller: WMController,
         borderApplier: BorderSurfaceApplier = BorderSurfaceApplier(),
+        focusDimApplier: FocusDimApplier = FocusDimApplier(),
         applyTabRails: @escaping TabRailApply = { controller, infos, forceOrdering in
             controller.tabRailManager.updateRails(
                 infos, forceOrdering: forceOrdering, style: controller.tabRailStyle
@@ -55,6 +57,7 @@ final class SurfaceReconciler {
     ) {
         self.controller = controller
         self.borderApplier = borderApplier
+        self.focusDimApplier = focusDimApplier
         self.applyTabRails = applyTabRails
         self.applyNativeFullscreenPlaceholders = applyNativeFullscreenPlaceholders
         borderApplier.onWindowLevelResolved = { [weak self] in
@@ -113,8 +116,12 @@ final class SurfaceReconciler {
     }
 
     func reconcileAnimationTick() {
-        guard let controller, controller.settings.borders.enabled else { return }
+        guard let controller else { return }
         let world = WorldView(controller: controller)
+        if controller.settings.focus.dimUnfocused {
+            applyFocusDim(world: world)
+        }
+        guard controller.settings.borders.enabled else { return }
         let desiredBorder = world.hasStartedServices
             ? SurfaceDerivation.deriveAnimationBorder(world: world, previous: appliedScene.border)
             : nil
@@ -211,6 +218,7 @@ final class SurfaceReconciler {
         forceOrderingOnNextReconcile = false
         pendingReconcileScope = nil
         borderApplier.cleanup()
+        focusDimApplier.cleanup()
         parkingEdgeMaskManager.removeAll()
         nativeFullscreenState.cleanup()
         appliedScene = .empty
@@ -261,6 +269,7 @@ final class SurfaceReconciler {
             forceOrdering: forceOrdering,
             refreshCornerRadii: shouldRefreshCornerRadii(for: desired.border, controller: controller)
         )
+        applyFocusDim(world: world)
         if outcome.needsWindowLevelRetry {
             noteBorderChanged()
         }
@@ -283,9 +292,14 @@ final class SurfaceReconciler {
             applyNativeFullscreenPlaceholders(controller, appliedScene.placeholders, true)
         }
         appliedScene.border = outcome.didApply ? desiredBorder : nil
+        applyFocusDim(world: world)
         if outcome.needsWindowLevelRetry {
             noteBorderChanged()
         }
+    }
+
+    private func applyFocusDim(world: WorldView) {
+        focusDimApplier.apply(SurfaceDerivation.deriveFocusDim(world: world))
     }
 
     private func shouldRefreshCornerRadii(

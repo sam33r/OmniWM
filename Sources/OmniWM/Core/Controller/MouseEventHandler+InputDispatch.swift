@@ -40,11 +40,21 @@ extension MouseEventHandler {
         controller?.motionPolicy.animationsEnabled == true
     }
 
+    /// Drops a pointer window that is one of our click-through surfaces (border, dim
+    /// layer): the event goes to whatever is underneath, so treat it as unknown.
+    func pointerWindowIdIgnoringPassthroughSurfaces(_ windowId: Int?) -> Int? {
+        guard let windowId, controller?.ownedWindowRegistry.isPassthrough(windowNumber: windowId) == true else {
+            return windowId
+        }
+        return nil
+    }
+
     func dispatchMouseMoved(
         at location: CGPoint,
         modifiersRawValue: UInt64 = 0,
         windowIdUnderPointer: Int? = nil
     ) {
+        let windowIdUnderPointer = pointerWindowIdIgnoringPassthroughSurfaces(windowIdUnderPointer)
         state.latestFocusFollowsMouseSample = .init(
             location: location,
             modifiersRawValue: modifiersRawValue,
@@ -78,6 +88,7 @@ extension MouseEventHandler {
             return false
         }
         guard controller != nil else { return false }
+        let windowIdUnderPointer = pointerWindowIdIgnoringPassthroughSurfaces(windowIdUnderPointer)
         let blocked = shouldBlockOwnWindowInput(at: location)
         if MouseTrace.shared.isActive {
             let geometric = controller?.ownedWindowRegistry.containsGeometric(point: location) ?? false

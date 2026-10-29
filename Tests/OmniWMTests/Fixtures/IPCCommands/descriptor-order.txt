@@ -90,6 +90,7 @@ toggle-fullscreen
 toggle-native-fullscreen
 toggle-overview
 toggle-system-stats
+toggle-dim-unfocused
 volume-up
 volume-down
 volume-mute

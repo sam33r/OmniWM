@@ -22,6 +22,7 @@ enum SurfaceKind: String, CaseIterable, Hashable, Sendable {
     case secureInputIndicator
     case hiddenBarPanel
     case statusPanel
+    case focusDim
 }
 
 enum HitTestPolicy: Equatable {
@@ -166,6 +167,16 @@ final class SurfaceScene {
     func contains(window: NSWindow?) -> Bool {
         guard let window, let id = windowIDByObject[ObjectIdentifier(window)] else { return false }
         return nodesByID[id]?.window === window
+    }
+
+    /// True when `windowNumber` is one of our surfaces and every surface on it lets
+    /// the pointer through (border, dim layer), so pointer reports naming it should
+    /// be treated as naming whatever is underneath.
+    func isPassthrough(windowNumber: Int) -> Bool {
+        guard contains(windowNumber: windowNumber), let ids = surfaceIDsByWindowNumber[windowNumber] else {
+            return false
+        }
+        return ids.allSatisfy { nodesByID[$0]?.policy.hitTestPolicy == .passthrough }
     }
 
     func contains(windowNumber: Int) -> Bool {

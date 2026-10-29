@@ -34,6 +34,10 @@ live on this fork's **`main`** branch, on top of upstream `main`. Run it as
   what next/prev workspace switches and moves do at the ends. `onePast` is
   niri-style: next past the last occupied workspace opens a new one (a move
   carries the window into it), so no separate new-workspace key is needed.
+- **`[focus] dimUnfocused`** (+ `dimUnfocusedOpacity`, default 0.6): dims
+  everything but the focused window on every display, like HazeOver. Toggle
+  with `omniwmctl command toggle-dim-unfocused` or the `toggleDimUnfocused`
+  hotkey (unassigned).
 
 ## Set up Dev on a new Mac
 
