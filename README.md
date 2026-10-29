@@ -843,8 +843,11 @@ Settings > Keyboard Shortcuts lists all actions that can be assigned a shortcut,
 | Switch to Last Active Workspace (Back and Forth) | `Control + Option + Tab` | `Shared` |
 | Switch to Next Workspace | `Unassigned` | `Shared` |
 | Switch to Previous Workspace (Sequential) | `Unassigned` | `Shared` |
+| Switch to New Workspace | `Unassigned` | `Shared` |
 | Move Focused Window to Workspace Up | `Control + Option + Shift + Up Arrow` | `Shared` |
 | Move Focused Window to Workspace Down | `Control + Option + Shift + Down Arrow` | `Shared` |
+| Move Focused Window to Next / Previous Workspace | `Unassigned` | `Shared` |
+| Move Focused Window to New Workspace | `Unassigned` | `Shared` |
 | Move Focused Column to Workspace 1-9 | `Unassigned` | `Niri` |
 | Move Focused Column to Workspace Up | `Control + Option + Shift + Page Up` | `Niri` |
 | Move Focused Column to Workspace Down | `Control + Option + Shift + Page Down` | `Niri` |

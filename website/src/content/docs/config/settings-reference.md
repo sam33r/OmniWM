@@ -473,6 +473,7 @@ id = "toggleScratchpad.1"
 - `toggleShellWidget.<name>` toggles the shell drawer or widget popout named `<name>`. Settings lists one for every drawer and every widget with a popout, and a bound one stays while its drawer or widget is missing. Unreleased: available when building from `main`.
 - `modeKey` *(optional)* is the key that runs the action inside [Prefix or Window mode](/guides/keyboard-shortcuts/#keyboard-modes): a key name, optionally with `Shift` (for example `"H"` or `"Shift+H"`), never `Escape`. It is separate from `binding`, so an action can have both, either, or neither. Two actions with the same mode key, a mode key that is also a shortcut, or a mode key with other modifiers are reported and ignored without rejecting the file. Unreleased: available when building from `main`.
 - `openCommandPalette.<mode>` opens the command palette in `windows`, `menu`, `clipboard`, `commands`, `applications`, or `files` mode, switches to that mode if the palette is open in another one, and closes it if it is already open in that mode. These actions are unassigned by default. Unreleased: available when building from `main`.
+- `switchWorkspace.new`, `moveToWorkspace.new`, `moveToWorkspace.next`, and `moveToWorkspace.previous` back the `switch-workspace new` and `move-to-workspace new|next|prev` commands and are unassigned by default. Unreleased: available when building from `main`.
 
 The default bindings are listed in the [keyboard shortcuts guide](/guides/keyboard-shortcuts/); assignable actions appear in **Settings > Keyboard Shortcuts**.
 

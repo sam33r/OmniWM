@@ -11,7 +11,7 @@ extension WorkspaceNavigationHandler {
         return switchWorkspace(rawWorkspaceID: workspace.name, affectedWorkspaces: [workspaceId])
     }
 
-    func createOverviewWorkspace(on monitorId: Monitor.ID) -> WorkspaceDescriptor? {
+    func createNewWorkspace(on monitorId: Monitor.ID) -> WorkspaceDescriptor? {
         guard let controller,
               controller.workspaceManager.monitor(byId: monitorId) != nil
         else { return nil }

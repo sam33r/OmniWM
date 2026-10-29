@@ -29,11 +29,15 @@ switch-workspace-previous
 switch-workspace-back-and-forth
 switch-workspace-anywhere
 switch-workspace-slot
+switch-workspace-new
 move-to-workspace
 move-to-workspace-up
 move-to-workspace-down
+move-to-workspace-next
+move-to-workspace-previous
 move-to-workspace-on-monitor
 move-to-workspace-slot
+move-to-workspace-new
 move-to-monitor
 focus-monitor-previous
 focus-monitor-next

@@ -30,7 +30,7 @@ extension OverviewController {
 
     func createWorkspace(on monitorId: Monitor.ID) {
         guard case .open = state, !hasActiveDragSession,
-              let workspace = wmController?.workspaceNavigationHandler.createOverviewWorkspace(on: monitorId)
+              let workspace = wmController?.workspaceNavigationHandler.createNewWorkspace(on: monitorId)
         else { return }
         activateWorkspace(workspace.id)
     }

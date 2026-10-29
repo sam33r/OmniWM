@@ -17544,6 +17544,50 @@
           }
         }
       }
+    },
+    "command.workspace.moveWindowNext" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Focused Window to Next Workspace"
+          }
+        }
+      }
+    },
+    "command.workspace.moveWindowPrevious" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Focused Window to Previous Workspace"
+          }
+        }
+      }
+    },
+    "command.workspace.moveToNew" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Move Focused Window to New Workspace"
+          }
+        }
+      }
+    },
+    "command.workspace.switchToNew" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Switch to New Workspace"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -190,6 +190,7 @@ enum ActionCatalog {
         specs.append(contentsOf: IPCMediaCommand.allCases.map { $0.actionSpec() })
         specs.append(contentsOf: IPCKeyboardModeCommand.allCases.map { $0.actionSpec() })
         appendPresentationBindings(&specs)
+        appendRelativeWorkspaceBindings(&specs)
 
         return specs
     }

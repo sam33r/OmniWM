@@ -41,7 +41,7 @@ extension OverviewStructuralActions {
             return placeFloatingWindow(session: session, destination: destination, frame: frame)
 
         case let .newWorkspace(monitorId):
-            guard let workspace = wmController.workspaceNavigationHandler.createOverviewWorkspace(on: monitorId) else {
+            guard let workspace = wmController.workspaceNavigationHandler.createNewWorkspace(on: monitorId) else {
                 return .unchanged
             }
             let outcome = performDragAction(session: session, target: .workspaceMove(workspaceId: workspace.id))
@@ -78,7 +78,7 @@ extension OverviewStructuralActions {
         guard let wmController else { return .unchanged }
         switch destination {
         case let .newWorkspace(monitorId):
-            guard let workspace = wmController.workspaceNavigationHandler.createOverviewWorkspace(on: monitorId) else {
+            guard let workspace = wmController.workspaceNavigationHandler.createNewWorkspace(on: monitorId) else {
                 return .unchanged
             }
             let outcome = placeFloatingWindow(session: session, destination: .workspace(workspace.id), frame: frame)

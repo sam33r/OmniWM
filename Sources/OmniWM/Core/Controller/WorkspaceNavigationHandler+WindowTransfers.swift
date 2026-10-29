@@ -107,6 +107,41 @@ extension WorkspaceNavigationHandler {
         finishWorkspaceMove(mutation)
     }
 
+    @discardableResult
+    func moveFocusedWindowRelative(isNext: Bool) -> Bool {
+        guard let controller,
+              let token = controller.workspaceManager.selectedManagedToken,
+              let sourceWorkspaceId = controller.workspaceManager.workspace(for: token),
+              let target = relativeWorkspaceTarget(isNext: isNext),
+              target.targetWorkspace.id != sourceWorkspaceId
+        else { return false }
+
+        saveNiriViewportState(for: sourceWorkspaceId)
+        if case .changed = commitWindowMove(handle: WindowHandle(id: token), toWorkspaceId: target.targetWorkspace.id) {
+            return true
+        }
+        return false
+    }
+
+    @discardableResult
+    func moveFocusedWindowToNewWorkspace() -> Bool {
+        guard let controller,
+              let token = controller.workspaceManager.selectedManagedToken,
+              let sourceWorkspaceId = controller.workspaceManager.workspace(for: token),
+              let monitorId = controller.workspaceManager.monitorId(for: sourceWorkspaceId),
+              let workspace = createNewWorkspace(on: monitorId)
+        else { return false }
+
+        saveNiriViewportState(for: sourceWorkspaceId)
+        guard case let .changed(mutation) = moveWindow(handle: WindowHandle(id: token), toWorkspaceId: workspace.id)
+        else {
+            controller.workspaceManager.removeWorkspaces([workspace.id])
+            return false
+        }
+        finishWorkspaceMove(mutation, focusPolicy: .alwaysFollow)
+        return true
+    }
+
     func moveFocusedWindow(toWorkspaceIndex index: Int) {
         guard let rawWorkspaceID = WorkspaceIDPolicy.rawID(from: max(0, index) + 1) else { return }
         moveFocusedWindow(toRawWorkspaceID: rawWorkspaceID)

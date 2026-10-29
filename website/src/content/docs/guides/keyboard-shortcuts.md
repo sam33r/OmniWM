@@ -48,13 +48,18 @@ Confirm the binding and any registration warning in **Settings > Keyboard Shortc
 | Switch to Last Active Workspace (Back and Forth) | `Control + Option + Tab` | `Shared` |
 | Switch to Next Workspace | `Unassigned` | `Shared` |
 | Switch to Previous Workspace (Sequential) | `Unassigned` | `Shared` |
+| Switch to New Workspace | `Unassigned` | `Shared` |
 | Move Focused Window to Workspace Up | `Control + Option + Shift + Up Arrow` | `Shared` |
 | Move Focused Window to Workspace Down | `Control + Option + Shift + Down Arrow` | `Shared` |
+| Move Focused Window to Next / Previous Workspace | `Unassigned` | `Shared` |
+| Move Focused Window to New Workspace | `Unassigned` | `Shared` |
 | Move Focused Column to Workspace 1-9 | `Unassigned` | `Niri` |
 | Move Focused Column to Workspace Up | `Control + Option + Shift + Page Up` | `Niri` |
 | Move Focused Column to Workspace Down | `Control + Option + Shift + Page Down` | `Niri` |
 
 Creating workspace 10 or higher adds its Switch, Move, and Move Column actions to **Settings > Keyboard Shortcuts** as `Unassigned`. The rows disappear when the workspace is removed.
+
+**Move Focused Window to Next / Previous Workspace** targets the workspace that **Switch to Next / Previous Workspace** would show on the current monitor, so a matching pair of shortcuts always agrees. **Switch to New Workspace** opens a new empty workspace on the current monitor; **Move Focused Window to New Workspace** creates one on the focused window's monitor, moves the window there and follows it. New workspaces take the next free number and are removed once they are empty and no longer shown, like workspaces created from the overview. Unreleased: available when building from `main`.
 
 Turn on **Settings > Workspaces > Go Back When Switching to the Current Workspace** ([`workspaceAutoBackAndForth`](/config/settings-reference/#general)) to make pressing the shortcut of the workspace you are on return to the previous one, as i3 and AeroSpace do. Unreleased: available when building from `main`.
 

@@ -8,12 +8,16 @@ enum WorkspaceAction: Equatable, Hashable {
     case moveTo(Int)
     case moveUp
     case moveDown
+    case moveNext
+    case movePrevious
+    case moveToNew
     case moveToMonitor(Direction)
     case switchTo(Int)
     case switchSlot(Int)
     case moveToSlot(Int)
     case next
     case previous
+    case switchToNew
     case moveWorkspaceToMonitor(Direction)
     case swapWithMonitor(Direction)
     case backAndForth
@@ -35,6 +39,9 @@ extension WorkspaceAction {
                 "command.workspace.moveWindowDown", defaultValue: "Move Focused Window to Workspace Down",
                 table: "Commands", bundle: .omniWM
             )
+        case .moveNext: Self.moveRelativeTitle(isNext: true)
+        case .movePrevious: Self.moveRelativeTitle(isNext: false)
+        case .moveToNew: Self.newWorkspaceTitle(movesFocusedWindow: true)
         case let .switchTo(idx): LocalizedStringResource(
                 "command.workspace.switchTo", defaultValue: "Switch to Workspace \(idx + 1)", table: "Commands",
                 bundle: .omniWM
@@ -54,6 +61,7 @@ extension WorkspaceAction {
                 "command.workspace.previous", defaultValue: "Switch to Previous Workspace", table: "Commands",
                 bundle: .omniWM
             )
+        case .switchToNew: Self.newWorkspaceTitle(movesFocusedWindow: false)
         case let .moveToMonitor(direction): Self.moveToMonitorTitle(direction)
         case let .moveWorkspaceToMonitor(direction): Self.moveWorkspaceToMonitorTitle(direction)
         case let .swapWithMonitor(direction): Self.swapWithMonitorTitle(direction)
@@ -63,6 +71,34 @@ extension WorkspaceAction {
             )
         case .toggleLayout: LocalizedStringResource(
                 "command.workspace.toggleLayout", defaultValue: "Toggle Workspace Layout", table: "Commands",
+                bundle: .omniWM
+            )
+        }
+    }
+
+    private static func moveRelativeTitle(isNext: Bool) -> LocalizedStringResource {
+        if isNext {
+            LocalizedStringResource(
+                "command.workspace.moveWindowNext", defaultValue: "Move Focused Window to Next Workspace",
+                table: "Commands", bundle: .omniWM
+            )
+        } else {
+            LocalizedStringResource(
+                "command.workspace.moveWindowPrevious", defaultValue: "Move Focused Window to Previous Workspace",
+                table: "Commands", bundle: .omniWM
+            )
+        }
+    }
+
+    private static func newWorkspaceTitle(movesFocusedWindow: Bool) -> LocalizedStringResource {
+        if movesFocusedWindow {
+            LocalizedStringResource(
+                "command.workspace.moveToNew", defaultValue: "Move Focused Window to New Workspace",
+                table: "Commands", bundle: .omniWM
+            )
+        } else {
+            LocalizedStringResource(
+                "command.workspace.switchToNew", defaultValue: "Switch to New Workspace", table: "Commands",
                 bundle: .omniWM
             )
         }
@@ -143,6 +179,8 @@ extension WorkspaceAction {
             .workspace(.next)
         case .previous:
             .workspace(.previous)
+        case .switchToNew:
+            .workspace(.switchToNew)
         case .backAndForth:
             .workspace(.backAndForth)
         case .moveTo:
@@ -151,6 +189,12 @@ extension WorkspaceAction {
             .workspace(.moveUp)
         case .moveDown:
             .workspace(.moveDown)
+        case .moveNext:
+            .workspace(.moveNext)
+        case .movePrevious:
+            .workspace(.movePrevious)
+        case .moveToNew:
+            .workspace(.moveToNew)
         case .moveToMonitor:
             .workspace(.moveToMonitor)
         case .moveWorkspaceToMonitor:
@@ -167,12 +211,16 @@ extension WorkspaceAction {
         case .moveTo,
              .moveUp,
              .moveDown,
+             .moveNext,
+             .movePrevious,
+             .moveToNew,
              .moveToMonitor,
              .switchTo,
              .switchSlot,
              .moveToSlot,
              .next,
              .previous,
+             .switchToNew,
              .moveWorkspaceToMonitor,
              .swapWithMonitor,
              .backAndForth,

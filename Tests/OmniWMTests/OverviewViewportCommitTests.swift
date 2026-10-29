@@ -118,7 +118,7 @@ final class OverviewViewportCommitTests: XCTestCase {
             fixture.workspaces[0]: -1400,
             fixture.workspaces[1]: -1100
         ])
-        let destination = try XCTUnwrap(controller.workspaceNavigationHandler.createOverviewWorkspace(
+        let destination = try XCTUnwrap(controller.workspaceNavigationHandler.createNewWorkspace(
             on: fixture.primary.id
         ))
 
@@ -211,7 +211,7 @@ final class OverviewViewportCommitTests: XCTestCase {
         let controller = fixture.controller
         let manager = controller.workspaceManager
         let overview = makeOverview(fixture)
-        let destination = try XCTUnwrap(controller.workspaceNavigationHandler.createOverviewWorkspace(
+        let destination = try XCTUnwrap(controller.workspaceNavigationHandler.createNewWorkspace(
             on: fixture.primary.id
         ))
         overview.onActivateWorkspace = controller.workspaceNavigationHandler.activateOverviewWorkspace

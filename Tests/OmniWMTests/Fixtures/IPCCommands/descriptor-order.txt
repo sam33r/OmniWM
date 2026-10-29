@@ -35,6 +35,10 @@ move-to-workspace-down
 move-to-workspace-on-monitor
 move-to-workspace-slot
 move-to-monitor
+switch-workspace-new
+move-to-workspace-next
+move-to-workspace-previous
+move-to-workspace-new
 focus-monitor-previous
 focus-monitor-next
 focus-monitor-last

@@ -199,7 +199,8 @@ extension IPCAutomationManifest {
             name: .workspace(.moveToMonitor),
             summary: "Move the focused window to the active workspace on the adjacent monitor.",
             arguments: [.direction]
-        ),
+        )
+    ] + relativeWorkspaceCommandDescriptors + [
         .init(
             commandWords: ["focus-monitor", "prev"],
             name: .monitorFocus(.previous),

@@ -163,4 +163,35 @@ extension ActionCatalog {
             )
         ])
     }
+
+    static func appendRelativeWorkspaceBindings(_ specs: inout [ActionSpec]) {
+        specs.append(contentsOf: [
+            action(
+                id: "switchWorkspace.new",
+                command: .workspace(.switchToNew),
+                category: .workspace,
+                binding: .unassigned,
+                keywords: ["new workspace", "create", "empty"]
+            ),
+            action(
+                id: "moveToWorkspace.next",
+                command: .workspace(.moveNext),
+                category: .workspace,
+                binding: .unassigned
+            ),
+            action(
+                id: "moveToWorkspace.previous",
+                command: .workspace(.movePrevious),
+                category: .workspace,
+                binding: .unassigned
+            ),
+            action(
+                id: "moveToWorkspace.new",
+                command: .workspace(.moveToNew),
+                category: .workspace,
+                binding: .unassigned,
+                keywords: ["new workspace", "create", "send"]
+            )
+        ])
+    }
 }

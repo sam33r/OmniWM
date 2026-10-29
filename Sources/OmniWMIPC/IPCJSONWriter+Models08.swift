@@ -217,8 +217,12 @@ extension IPCJSONWriter {
         case .next,
              .previous,
              .backAndForth,
+             .switchToNew,
              .moveUp,
-             .moveDown:
+             .moveDown,
+             .moveNext,
+             .movePrevious,
+             .moveToNew:
             break
         }
     }
@@ -251,15 +255,6 @@ extension IPCJSONWriter {
         try self.value(value.kind)
         self.key("value", &first)
         try self.value(value.value)
-        end(125)
-    }
-
-    mutating func argument(_ name: StaticString, _ value: borrowing IPCSizeChange, _ first: inout Bool) throws {
-        self.key("arguments", &first)
-        begin(123)
-        var argumentFirst = true
-        self.key(name, &argumentFirst)
-        try self.value(value)
         end(125)
     }
 }
