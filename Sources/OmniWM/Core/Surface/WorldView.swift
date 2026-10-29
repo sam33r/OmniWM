@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM
 
+import AppKit
 import CoreGraphics
 import Foundation
 
@@ -8,18 +9,23 @@ import Foundation
 struct WorldView {
     private let controller: WMController
     private let liveBoundsProvider: ((Int) -> CGRect?)?
+    private let externalWindowLayerProvider: ((pid_t, Int?) -> Int?)?
 
     /// Creates a world view over the window-manager controller.
     /// - Parameters:
     ///   - controller: The window manager this view reads state from.
     ///   - liveBoundsProvider: Injectable source of live window bounds (defaults to
     ///     querying the WindowServer); lets tests supply synthetic bounds.
+    ///   - externalWindowLayerProvider: Injectable source of an unmanaged focused
+    ///     window's level (defaults to querying the WindowServer).
     init(
         controller: WMController,
-        liveBoundsProvider: ((Int) -> CGRect?)? = nil
+        liveBoundsProvider: ((Int) -> CGRect?)? = nil,
+        externalWindowLayerProvider: ((pid_t, Int?) -> Int?)? = nil
     ) {
         self.controller = controller
         self.liveBoundsProvider = liveBoundsProvider
+        self.externalWindowLayerProvider = externalWindowLayerProvider
     }
 
     var hasStartedServices: Bool {
@@ -60,18 +66,6 @@ struct WorldView {
 
     var borderConfig: BorderConfig {
         controller.resolvedBorderConfig()
-    }
-
-    var nativeManagedFocusToken: WindowToken? {
-        controller.workspaceManager.nativeManagedFocusToken
-    }
-
-    var focusDimSettings: (enabled: Bool, opacity: Double) {
-        (controller.settings.focus.dimUnfocused, controller.settings.focus.dimUnfocusedOpacity)
-    }
-
-    func monitor(forWorkspace workspaceId: WorkspaceDescriptor.ID) -> Monitor? {
-        controller.workspaceManager.monitor(for: workspaceId)
     }
 
     func entry(for token: WindowToken) -> WindowState? {
@@ -362,5 +356,46 @@ struct WorldView {
             return nil
         }
         return ScreenCoordinateSpace.toAppKit(rect: bounds)
+    }
+}
+
+// Fork: what `[focus] dimUnfocused` reads (FocusDim.swift).
+extension WorldView {
+    var nativeManagedFocusToken: WindowToken? {
+        controller.workspaceManager.nativeManagedFocusToken
+    }
+
+    var focusDimSettings: (enabled: Bool, opacity: Double) {
+        (controller.settings.focus.dimUnfocused, controller.settings.focus.dimUnfocusedOpacity)
+    }
+
+    var selectedManagedToken: WindowToken? {
+        controller.workspaceManager.selectedManagedToken
+    }
+
+    var motion: MotionSnapshot {
+        controller.motionPolicy.snapshot()
+    }
+
+    /// Whether the focused window isn't managed and sits above the focus-dim layer,
+    /// like a launcher or the command palette, so the dim can't cover it.
+    var focusedSurfaceIsAboveFocusDim: Bool {
+        let dimLevel = FocusDimPanel.dimLevel.rawValue
+        switch controller.workspaceManager.nativeFocusOwner {
+        case let .external(identity):
+            guard let pid = identity.pid else { return false }
+            let layer = externalWindowLayerProvider?(pid, identity.windowId)
+                ?? FocusDimExternalWindowLevel.layer(pid: pid, windowId: identity.windowId)
+            return layer.map { $0 > dimLevel } ?? false
+        case .ownedSurface:
+            return NSApp.keyWindow.map { $0.level.rawValue > dimLevel } ?? false
+        case .managed,
+             .none:
+            return false
+        }
+    }
+
+    func monitor(forWorkspace workspaceId: WorkspaceDescriptor.ID) -> Monitor? {
+        controller.workspaceManager.monitor(for: workspaceId)
     }
 }

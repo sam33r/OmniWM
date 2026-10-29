@@ -24,12 +24,19 @@ struct DesiredFocusDimSurface: Equatable {
     var displays: [Display]
     var holeCornerRadius: CGFloat
     var opacity: Double
+    /// Seconds to cross-fade when the bright window changes, and to fade the layer
+    /// in and out. Zero while animations are off.
+    var fadeDuration: Double = 0
 }
 
 extension SurfaceDerivation {
+    static let focusDimFadeDuration = 0.22
+
     /// Follows the border's notion of the focused window, but only while that window
-    /// itself has native focus: with nothing managed to keep bright (an unmanaged app,
-    /// the desktop, an OmniWM panel, a dialog outside its parent) nothing is dimmed.
+    /// itself has native focus. While a launcher-style window above the dim layer has
+    /// focus (goose, Spotlight, Raycast, the command palette), the managed window that
+    /// had focus stays bright; with nothing managed to keep bright (an unmanaged app's
+    /// normal window, the desktop, the Settings window) nothing is dimmed.
     /// The hole always uses the window's live bounds when available, also during
     /// animations: mixing in requested frames, which apps such as terminals round to
     /// their own size steps, made the hole's edges flicker between the two.
@@ -37,8 +44,7 @@ extension SurfaceDerivation {
     static func deriveFocusDim(world: WorldView) -> DesiredFocusDimSurface? {
         let settings = world.focusDimSettings
         guard settings.enabled, world.hasStartedServices,
-              let token = world.borderFocusToken,
-              world.nativeManagedFocusToken == token,
+              let token = focusDimToken(world: world),
               let entry = world.entry(for: token),
               !world.hasPendingNativeFullscreenTransition(for: token),
               !world.hasPendingNativeFullscreenTransition(in: entry.workspaceId),
@@ -62,90 +68,72 @@ extension SurfaceDerivation {
             .filter { world.spaceTopology.isDisplayShowingFullscreenSpace(on: $0) != true }
             .map { DesiredFocusDimSurface.Display(frame: $0.frame, hole: $0.frame.intersects(hole) ? hole : nil) }
         guard !displays.isEmpty else { return nil }
+        let motion = world.motion
         return DesiredFocusDimSurface(
             token: token,
             displays: displays,
             holeCornerRadius: radius,
-            opacity: settings.opacity
+            opacity: settings.opacity,
+            fadeDuration: motion.animationsEnabled ? focusDimFadeDuration / motion.animationSpeed : 0
         )
+    }
+
+    @MainActor
+    private static func focusDimToken(world: WorldView) -> WindowToken? {
+        if let token = world.borderFocusToken, world.nativeManagedFocusToken == token {
+            return token
+        }
+        guard world.focusedSurfaceIsAboveFocusDim else { return nil }
+        return world.selectedManagedToken
     }
 }
 
+/// Finds the window level of an app's focused window, for windows OmniWM doesn't
+/// manage. OmniWM often knows only the app (it activated before its window was
+/// resolved), so without a window id it uses the app's frontmost on-screen window,
+/// skipping its menu bar items.
 @MainActor
-class FocusDimPanel: NSPanel {
-    /// Above every normal window, below floating panels, menus and bars.
-    static let dimLevel = NSWindow.Level(rawValue: NSWindow.Level.normal.rawValue + 1)
-
-    private let dimLayer = CALayer()
-    private let holeMask = CAShapeLayer()
-    private(set) var hole: CGRect?
-    private var holeCornerRadius: CGFloat = 0
-
-    init(frame: CGRect) {
-        super.init(
-            contentRect: frame,
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false
-        )
-        isOpaque = false
-        backgroundColor = .clear
-        alphaValue = 0
-        ignoresMouseEvents = true
-        hasShadow = false
-        hidesOnDeactivate = false
-        collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
-        isMovableByWindowBackground = false
-        isReleasedWhenClosed = false
-        animationBehavior = .none
-        isRestorable = false
-        level = Self.dimLevel
-
-        let view = NSView(frame: CGRect(origin: .zero, size: frame.size))
-        view.wantsLayer = true
-        dimLayer.backgroundColor = NSColor.black.cgColor
-        dimLayer.actions = ["bounds": NSNull(), "position": NSNull(), "mask": NSNull()]
-        holeMask.fillRule = .evenOdd
-        holeMask.actions = ["path": NSNull(), "bounds": NSNull(), "position": NSNull()]
-        view.layer = dimLayer
-        contentView = view
+enum FocusDimExternalWindowLevel {
+    private struct Lookup {
+        let pid: pid_t
+        let windowId: Int?
+        let layer: Int?
+        let time: TimeInterval
     }
 
-    override var canBecomeKey: Bool {
-        false
-    }
+    /// The focus-dim surface is derived on every animation frame; the level of a
+    /// focused window doesn't change that fast.
+    private static var cached: Lookup?
 
-    override var canBecomeMain: Bool {
-        false
-    }
-
-    override func constrainFrameRect(_ frameRect: NSRect, to _: NSScreen?) -> NSRect {
-        frameRect
-    }
-
-    /// Cuts `hole` (AppKit coordinates) out of the dark layer.
-    func setHole(_ hole: CGRect?, cornerRadius: CGFloat) {
-        guard hole != self.hole || cornerRadius != holeCornerRadius || holeMask.frame != dimLayer.bounds else {
-            return
+    static func layer(pid: pid_t, windowId: Int?) -> Int? {
+        let now = ProcessInfo.processInfo.systemUptime
+        if let cached, cached.pid == pid, cached.windowId == windowId, now - cached.time < 0.5 {
+            return cached.layer
         }
-        self.hole = hole
-        holeCornerRadius = cornerRadius
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        defer { CATransaction.commit() }
-        guard let hole else {
-            dimLayer.mask = nil
-            return
+        let layer = lookUpLayer(pid: pid, windowId: windowId)
+        cached = Lookup(pid: pid, windowId: windowId, layer: layer, time: now)
+        return layer
+    }
+
+    private static func lookUpLayer(pid: pid_t, windowId: Int?) -> Int? {
+        if let windowId, let id = CGWindowID(exactly: windowId),
+           let info = CGWindowListCopyWindowInfo([.optionIncludingWindow], id) as? [[String: Any]],
+           let layer = info.first?[kCGWindowLayer as String] as? Int
+        {
+            return layer
         }
-        let bounds = dimLayer.bounds
-        let local = hole.offsetBy(dx: -frame.minX, dy: -frame.minY)
-        let radius = min(cornerRadius, local.width / 2, local.height / 2)
-        let path = CGMutablePath()
-        path.addRect(bounds)
-        path.addRoundedRect(in: local, cornerWidth: radius, cornerHeight: radius)
-        holeMask.frame = bounds
-        holeMask.path = path
-        dimLayer.mask = holeMask
+        guard let windows = CGWindowListCopyWindowInfo(
+            [.optionOnScreenOnly, .excludeDesktopElements],
+            kCGNullWindowID
+        ) as? [[String: Any]] else { return nil }
+        let menuBarLevel = Int(CGWindowLevelForKey(.mainMenuWindow))
+        for window in windows where window[kCGWindowOwnerPID as String] as? pid_t == pid {
+            guard let layer = window[kCGWindowLayer as String] as? Int, layer < menuBarLevel,
+                  (window[kCGWindowAlpha as String] as? Double ?? 1) > 0
+            else { continue }
+            return layer
+        }
+        return nil
     }
 }
 
@@ -199,22 +187,38 @@ final class FocusDimApplier {
         for (panel, display) in zip(panels, desired.displays) {
             if panel.frame != display.frame {
                 panel.setFrame(display.frame, display: false)
+                panel.resetHole()
             }
-            panel.setHole(display.hole, cornerRadius: desired.holeCornerRadius)
+            let appearing = !panel.isVisible || panel.isFadingOut
+            panel.setHole(
+                display.hole,
+                token: desired.token,
+                cornerRadius: desired.holeCornerRadius,
+                fadeDuration: appearing ? 0 : desired.fadeDuration
+            )
             if abs(panel.alphaValue - opacity) > 0.001 {
                 panel.alphaValue = opacity
             }
             if !panel.isVisible {
+                panel.fadeIn(duration: desired.fadeDuration, fromTransparent: true)
                 panel.orderFront(nil)
+            } else if panel.isFadingOut {
+                panel.fadeIn(duration: desired.fadeDuration)
             }
         }
         applied = desired
     }
 
-    func hide() {
+    /// Hides the layer, fading it out when `applied` asked for fades.
+    func hide(animated: Bool = true) {
         cancelPendingHide()
+        let duration = animated ? applied?.fadeDuration ?? 0 : 0
         for panel in panels where panel.isVisible {
-            panel.orderOut(nil)
+            if duration > 0 {
+                panel.fadeOut(duration: duration) { [weak panel] in panel?.orderOut(nil) }
+            } else {
+                panel.orderOut(nil)
+            }
         }
         applied = nil
     }
@@ -245,7 +249,7 @@ final class FocusDimApplier {
     }
 
     func cleanup() {
-        hide()
+        hide(animated: false)
         while !panels.isEmpty {
             removeLastPanel()
         }

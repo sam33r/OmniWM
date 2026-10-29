@@ -126,6 +126,111 @@ final class FocusDimSurfaceTests: XCTestCase {
         XCTAssertNil(applier.applied)
     }
 
+    func testChangingTheBrightWindowCrossFadesWhileMovesFollowAtOnce() async throws {
+        let recorder = Recorder()
+        let applier = FocusDimApplier(
+            operations: recorder.operations(),
+            surfaceCoordinator: SurfaceCoordinator(scene: SurfaceScene())
+        )
+        defer { applier.cleanup() }
+        let first = WindowToken(pid: 1, windowId: 500)
+        let second = WindowToken(pid: 1, windowId: 600)
+        let other = windowFrame.offsetBy(dx: 700, dy: 0)
+
+        applier.apply(dim(first, [(frameA, windowFrame)], 0.6, fade: 0.1))
+        let panel = recorder.panels[0]
+        XCTAssertEqual(panel.fadingHoleCount, 0, "appearing doesn't cross-fade")
+
+        applier.apply(dim(first, [(frameA, windowFrame.offsetBy(dx: 10, dy: 0))], 0.6, fade: 0.1))
+        XCTAssertEqual(panel.fadingHoleCount, 0, "a moving window follows at once")
+
+        applier.apply(dim(second, [(frameA, other)], 0.6, fade: 0.1))
+        XCTAssertEqual(panel.hole, other)
+        XCTAssertEqual(panel.fadingHoleCount, 1, "the old window fades back to dark")
+
+        applier.apply(dim(first, [(frameA, windowFrame)], 0.6, fade: 0.1))
+        XCTAssertEqual(panel.hole, windowFrame)
+        XCTAssertEqual(panel.fadingHoleCount, 1, "returning revives the fading window instead of stacking")
+
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(panel.fadingHoleCount, 0)
+        XCTAssertEqual(panel.hole, windowFrame)
+
+        applier.apply(dim(second, [(frameA, other)], 0.6))
+        XCTAssertEqual(panel.fadingHoleCount, 0, "no fade while animations are off")
+    }
+
+    func testHidingFadesTheLayerOutAndReappearingCancelsIt() async throws {
+        let recorder = Recorder()
+        let applier = FocusDimApplier(
+            operations: recorder.operations(),
+            surfaceCoordinator: SurfaceCoordinator(scene: SurfaceScene())
+        )
+        defer { applier.cleanup() }
+        let token = WindowToken(pid: 1, windowId: 500)
+
+        applier.apply(dim(token, [(frameA, windowFrame)], 0.6, fade: 0.1))
+        applier.apply(nil)
+        let panel = recorder.panels[0]
+        XCTAssertTrue(panel.shown, "still fading out")
+        XCTAssertTrue(panel.isFadingOut)
+
+        applier.apply(dim(token, [(frameA, windowFrame)], 0.6, fade: 0.1))
+        XCTAssertFalse(panel.isFadingOut)
+        try await Task.sleep(for: .milliseconds(250))
+        XCTAssertTrue(panel.shown, "fading back in cancelled the hide")
+
+        applier.apply(nil)
+        try await Task.sleep(for: .milliseconds(250))
+        XCTAssertFalse(panel.shown)
+    }
+
+    func testALauncherAboveTheDimKeepsThePreviousWindowBright() throws {
+        let (controller, entry) = try reconcileFixture()
+        controller.settings.focus.dimUnfocused = true
+        defer {
+            controller.settings.focus.dimUnfocused = false
+            controller.hasStartedServices = false
+        }
+        let launcherPid: pid_t = 814_200
+        _ = controller.workspaceManager.recordExternalFocus(pid: launcherPid, windowId: nil)
+        XCTAssertNil(controller.workspaceManager.borderFocusToken)
+
+        let floating = Int(NSWindow.Level.floating.rawValue)
+        let launcher = WorldView(controller: controller, externalWindowLayerProvider: { pid, _ in
+            pid == launcherPid ? floating : nil
+        })
+        let kept = try XCTUnwrap(SurfaceDerivation.deriveFocusDim(world: launcher))
+        XCTAssertEqual(kept.token, entry.token)
+        XCTAssertNotNil(kept.displays.first?.hole)
+
+        let normalWindow = WorldView(controller: controller, externalWindowLayerProvider: { _, _ in 0 })
+        XCTAssertNil(SurfaceDerivation.deriveFocusDim(world: normalWindow), "an unmanaged normal window isn't dimmed")
+        let unknown = WorldView(controller: controller, externalWindowLayerProvider: { _, _ in nil })
+        XCTAssertNil(SurfaceDerivation.deriveFocusDim(world: unknown))
+    }
+
+    func testFadesFollowTheAnimationSettings() throws {
+        let (controller, _) = try reconcileFixture()
+        controller.settings.focus.dimUnfocused = true
+        defer {
+            controller.settings.focus.dimUnfocused = false
+            controller.hasStartedServices = false
+            controller.motionPolicy.animationsEnabled = true
+            controller.motionPolicy.animationSpeed = 1
+        }
+        let world = WorldView(controller: controller)
+        controller.motionPolicy.animationsEnabled = true
+        controller.motionPolicy.animationSpeed = 2
+        XCTAssertEqual(
+            try XCTUnwrap(SurfaceDerivation.deriveFocusDim(world: world)).fadeDuration,
+            SurfaceDerivation.focusDimFadeDuration / 2,
+            accuracy: 0.0001
+        )
+        controller.motionPolicy.animationsEnabled = false
+        XCTAssertEqual(try XCTUnwrap(SurfaceDerivation.deriveFocusDim(world: world)).fadeDuration, 0)
+    }
+
     func testReconcilerCutsTheFocusedWindowAndBorderOutOnlyWhileEnabled() throws {
         for fullScene in [false, true] {
             let (controller, entry) = try reconcileFixture()
@@ -135,9 +240,12 @@ final class FocusDimSurfaceTests: XCTestCase {
                 surfaceCoordinator: SurfaceCoordinator(scene: SurfaceScene())
             )
             let reconciler = SurfaceReconciler(controller: controller, focusDimApplier: applier)
+            // Fades have their own tests; this one checks geometry and visibility.
+            controller.motionPolicy.animationsEnabled = false
             defer {
                 controller.settings.focus.dimUnfocused = false
                 controller.hasStartedServices = false
+                controller.motionPolicy.animationsEnabled = true
                 reconciler.cleanup()
             }
             func reconcile() {
@@ -235,13 +343,15 @@ final class FocusDimSurfaceTests: XCTestCase {
     private func dim(
         _ token: WindowToken,
         _ displays: [(frame: CGRect, hole: CGRect?)],
-        _ opacity: Double
+        _ opacity: Double,
+        fade: Double = 0
     ) -> DesiredFocusDimSurface {
         DesiredFocusDimSurface(
             token: token,
             displays: displays.map { .init(frame: $0.frame, hole: $0.hole) },
             holeCornerRadius: 16,
-            opacity: opacity
+            opacity: opacity,
+            fadeDuration: fade
         )
     }
 

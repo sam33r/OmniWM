@@ -35,9 +35,11 @@ live on this fork's **`main`** branch, on top of upstream `main`. Run it as
   niri-style: next past the last occupied workspace opens a new one (a move
   carries the window into it), so no separate new-workspace key is needed.
 - **`[focus] dimUnfocused`** (+ `dimUnfocusedOpacity`, default 0.6): dims
-  everything but the focused window on every display, like HazeOver. Toggle
-  with `omniwmctl command toggle-dim-unfocused` or the `toggleDimUnfocused`
-  hotkey (unassigned).
+  everything but the focused window on every display, like HazeOver, with a
+  short cross-fade when focus moves. Launchers above the layer (goose,
+  Spotlight) keep the previous window bright instead of clearing the dim.
+  Toggle with `omniwmctl command toggle-dim-unfocused` or the
+  `toggleDimUnfocused` hotkey (unassigned).
 - **`[overview] fitWorkspaceRows`** (2–6, unset = fixed size): overview rows
   shrink so up to this many workspaces fit on screen; fewer workspaces get
   bigger rows (never fewer than two).
