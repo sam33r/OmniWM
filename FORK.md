@@ -1,14 +1,16 @@
 # sam33r/OmniWM fork
 
 Personal fork of [OmniNull/OmniWM](https://github.com/OmniNull/OmniWM), forked
-from upstream `main` at `43c178f6` (2026-10-26). Fork changes live on this fork's
-**`main`** branch. Run it as **OmniWM Dev** (`~/Applications/OmniWM Dev.app`),
-next to the Homebrew release.
+from upstream `main` at `43c178f6` (2026-10-26) and last caught up with it at
+`ce40789d` (2026-10-30). Fork changes live on this fork's **`main`** branch. Run
+it as **OmniWM Dev** (`~/Applications/OmniWM Dev.app`), next to the Homebrew
+release.
 
-This is a real fork: `main` never rebases onto or merges upstream wholesale.
-Now and then we review what upstream has changed and cherry-pick the fixes and
-improvements we want (see **Upstream check-ins** below). So fork changes can
-delete or rework upstream code freely, and `main` is never force-pushed.
+This is a real fork: `main` never rebases onto upstream and is never
+force-pushed. Now and then we review what upstream has changed and take what we
+want, by cherry-picking a few commits or merging `upstream/main` when we want
+most of it (see **Upstream check-ins** below). Fork changes can delete or rework
+upstream code freely; a later merge then has to resolve those spots again.
 
 ## What the fork changes
 
@@ -110,16 +112,16 @@ In the user's own terminal, `make -C ~/src/OmniWM run` does steps 4 and 5 in one
   `~/.config/omniwm/`. It uses a newer schema (v5) and migrated its copy on
   first launch (backup: `settings.toml.pre-v5`). OmniWM reloads it live.
   `~/.config/omniwm/CHANGES.md` in the dotfiles repo logs every settings change.
-- **Upstream check-ins:** see the next section. Never `git rebase upstream/main`
-  or `git merge upstream/main` on `main`.
+- **Upstream check-ins:** see the next section. Never rebase `main` onto
+  upstream.
 
 ## Upstream check-ins
 
-Upstream moves fast (176 commits and +81k lines in the four days after the fork
+Upstream moves fast (178 commits and +81k lines in the four days after the fork
 point), so we take only what we want, when we want it: bug fixes (especially
 for new macOS releases), performance work, and features worth having.
 
-**Reviewed through:** `43c178f6` (2026-10-26, the fork point).
+**Reviewed through:** `ce40789d` (2026-10-30, merged in full).
 
 1. Fetch: `git fetch upstream` (add the remote once:
    `git remote add upstream https://github.com/OmniNull/OmniWM.git`).
@@ -130,6 +132,21 @@ for new macOS releases), performance work, and features worth having.
    upstream commit in the message), then build and run the tests.
 4. Set **Reviewed through** above to the upstream commit you reviewed up to, and
    commit that with the picks.
+
+To take nearly everything instead, merge: `git merge upstream/main` on a branch
+off `main` (or in a worktree), resolve, build with tests, run the full suite,
+then fast-forward `main` to it. Spots that need fixing after a merge, beyond the
+text conflicts:
+
+- **Quake stub:** new `QuakeTerminalController` methods that the rest of the app
+  calls need no-op versions in `QuakeTerminalDisabled.swift`.
+- **Ghostty tests:** new test files that `import GhosttyKit` go in
+  `ghosttyQuakeTerminalTests` in `Package.swift`.
+- **Settings IPC:** `SettingsIPCTests` fails for each new upstream scalar
+  setting until it has an entry in `IPCSettingsCatalog+Sections.swift` (or in
+  `notSettableKeys`). New enum cases need adding to existing entries' choices.
+- **IPC protocol:** if upstream bumps `OmniWMIPCProtocol.version`, ours must
+  stay above it (it was 22 upstream, 23 here, as of 2026-10-30).
 
 Good times to check in: when a macOS update breaks something, when hitting a
 bug upstream may have fixed, or every month or so.
