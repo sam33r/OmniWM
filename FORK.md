@@ -1,8 +1,14 @@
 # sam33r/OmniWM fork
 
-Personal fork of [OmniNull/OmniWM](https://github.com/OmniNull/OmniWM). Fork changes
-live on this fork's **`main`** branch, on top of upstream `main`. Run it as
-**OmniWM Dev** (`~/Applications/OmniWM Dev.app`), next to the Homebrew release.
+Personal fork of [OmniNull/OmniWM](https://github.com/OmniNull/OmniWM), forked
+from upstream `main` at `43c178f6` (2026-10-26). Fork changes live on this fork's
+**`main`** branch. Run it as **OmniWM Dev** (`~/Applications/OmniWM Dev.app`),
+next to the Homebrew release.
+
+This is a real fork: `main` never rebases onto or merges upstream wholesale.
+Now and then we review what upstream has changed and cherry-pick the fixes and
+improvements we want (see **Upstream check-ins** below). So fork changes can
+delete or rework upstream code freely, and `main` is never force-pushed.
 
 ## What the fork changes
 
@@ -104,6 +110,26 @@ In the user's own terminal, `make -C ~/src/OmniWM run` does steps 4 and 5 in one
   `~/.config/omniwm/`. It uses a newer schema (v5) and migrated its copy on
   first launch (backup: `settings.toml.pre-v5`). OmniWM reloads it live.
   `~/.config/omniwm/CHANGES.md` in the dotfiles repo logs every settings change.
-- **Pull upstream:** `git fetch upstream && git rebase upstream/main` on
-  `main`, then `git push --force-with-lease` (add the remote once: `git remote add upstream https://github.com/OmniNull/OmniWM.git`). If upstream changes `QuakeTerminalController`'s interface,
-  update `QuakeTerminalDisabled.swift` to match.
+- **Upstream check-ins:** see the next section. Never `git rebase upstream/main`
+  or `git merge upstream/main` on `main`.
+
+## Upstream check-ins
+
+Upstream moves fast (176 commits and +81k lines in the four days after the fork
+point), so we take only what we want, when we want it: bug fixes (especially
+for new macOS releases), performance work, and features worth having.
+
+**Reviewed through:** `43c178f6` (2026-10-26, the fork point).
+
+1. Fetch: `git fetch upstream` (add the remote once:
+   `git remote add upstream https://github.com/OmniNull/OmniWM.git`).
+2. List what's new since the last review:
+   `git log --no-merges --reverse --format='%h %ad %s' --date=short <reviewed>..upstream/main`.
+   Add `-- <paths>` to limit it to code the fork still has.
+3. Cherry-pick what we want with `git cherry-pick -x <sha>` (`-x` records the
+   upstream commit in the message), then build and run the tests.
+4. Set **Reviewed through** above to the upstream commit you reviewed up to, and
+   commit that with the picks.
+
+Good times to check in: when a macOS update breaks something, when hitting a
+bug upstream may have fixed, or every month or so.
