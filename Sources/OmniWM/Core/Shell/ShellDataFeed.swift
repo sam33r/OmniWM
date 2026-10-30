@@ -51,6 +51,7 @@ final class ShellDataFeed {
     private let deliver: @MainActor (ShellWidgetData) -> Void
     let onBadgesDemandChange: @MainActor (Bool) -> Void
     let loadWeather: @Sendable (ShellWeatherLocation) async throws -> ShellWeatherReading
+    let permissions: ShellNetworkPermissions
     private let clockFormatter: DateFormatter
     private let dateFormatter: DateFormatter
     private var timer: DispatchSourceTimer?
@@ -88,35 +89,44 @@ final class ShellDataFeed {
     let calendar: CalendarController?
     let devices: ShellDevices?
     let notifications: ShellNotificationsController?
+    let awakeManager: SleepPreventionManager
+    let microphone: ShellMicrophoneMonitor
+    var awakeSubscription: UUID?
 
     init(
-        loadWeather: @escaping @Sendable (ShellWeatherLocation) async throws -> ShellWeatherReading =
-            ShellWeatherClient.forecast,
+        permissions: ShellNetworkPermissions = ShellNetworkPermissions(),
+        loadWeather: (@Sendable (ShellWeatherLocation) async throws -> ShellWeatherReading)? = nil,
         appVolumes: AppVolumeMixer? = nil,
         media: MediaController? = nil,
         lyrics: LyricsController = LyricsController(),
         calendar: CalendarController? = nil,
         devices: ShellDevices? = nil,
         notifications: ShellNotificationsController? = nil,
+        awakeManager: SleepPreventionManager = .shared,
+        microphone: ShellMicrophoneMonitor = ShellMicrophoneMonitor(),
         onBadgesDemandChange: @escaping @MainActor (Bool) -> Void = { _ in },
         deliver: @escaping @MainActor (ShellWidgetData) -> Void
     ) {
         self.deliver = deliver
         self.onBadgesDemandChange = onBadgesDemandChange
-        self.loadWeather = loadWeather
+        self.permissions = permissions
+        self.loadWeather = loadWeather ?? { try await ShellWeatherClient.forecast($0, permissions: permissions) }
         self.appVolumes = appVolumes
         self.media = media
         self.lyrics = lyrics
+        lyrics.setPermissions(permissions)
         self.calendar = calendar
         self.devices = devices
         self.notifications = notifications
+        self.awakeManager = awakeManager
+        self.microphone = microphone
         clockFormatter = DateFormatter()
         clockFormatter.timeStyle = .short
         clockFormatter.dateStyle = .none
         dateFormatter = DateFormatter()
         dateFormatter.setLocalizedDateFormatFromTemplate("EEEdMMM")
         lyrics.onLoad = { [weak self] value in
-            guard let self, data.lyrics != value else { return }
+            guard let self, permissions.access(.lyrics) == .ok, data.lyrics != value else { return }
             data.lyrics = value
             publish()
         }
@@ -163,6 +173,8 @@ final class ShellDataFeed {
     func start() {
         guard !started else { return }
         started = true
+        listenToAwake(!paused && demands(.awake))
+        listenToMicrophone(!paused && demands(.microphone))
         listenToBadges()
         listenToNotifications(!paused && demands(.notifications))
         sampleBattery()
@@ -176,6 +188,8 @@ final class ShellDataFeed {
         listenToBadges()
         cancelTimer()
         removeAudioListeners()
+        listenToAwake(false)
+        listenToMicrophone(false)
         listAudioApps(false)
         listenToMedia(false)
         showLyrics(false)

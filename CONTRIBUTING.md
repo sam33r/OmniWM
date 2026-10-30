@@ -12,14 +12,7 @@ Building OmniWM requires an **Apple Silicon Mac running macOS 27**, **Xcode 27**
 
 Install Xcode from [Apple Developer Downloads](https://developer.apple.com/download/all/), open it, and finish its first-launch setup. In **Xcode → Settings → Locations → Command Line Tools**, select Xcode 27. The standalone Command Line Tools package is not a substitute for this Xcode installation.
 
-Install [swiftly](https://www.swift.org/install/macos/), then install the pinned toolchain from the checkout and confirm it:
-
-```bash
-swiftly install
-swift --version
-```
-
-The result must report the Swift 6.5 development snapshot named in `.swift-version`.
+Install [swiftly](https://www.swift.org/install/macos/) to manage the pinned Swift toolchain.
 
 ### 2. Fork, Clone, and Create a Branch
 
@@ -35,13 +28,22 @@ git switch -c my-change upstream/main
 
 Use a descriptive branch name in place of `my-change`. Each contribution should start from `main` and focus on one problem.
 
+From the repository directory, install and confirm the pinned toolchain:
+
+```bash
+swiftly install
+swift --version
+```
+
+The result must report the Swift 6.5 development snapshot named in `.swift-version`.
+
 ### 3. Set Up Dependencies
 
 ```bash
 make setup
 ```
 
-Setup needs [Lix](https://lix.systems/install/) (or another Nix with flakes). It builds the repository's `flake.nix`: the pinned, prebuilt GhosttyKit is linked at `Frameworks/GhosttyKit.xcframework` and checked against its checksum, and the pinned SwiftFormat, SwiftLint, Python, Fish and Nushell are linked at `.cache/flake-tools`. **You do not need to compile GhosttyKit**, and no Homebrew installation is required. `nix develop` opens a shell with the same tools on `PATH`.
+Setup needs [Lix](https://lix.systems/install/) (or another Nix with flakes). It builds the repository's `flake.nix`: the pinned, prebuilt GhosttyKit is linked at `Frameworks/GhosttyKit.xcframework` and checked against its checksum, and the pinned SwiftFormat, SwiftLint, Python, Fish and Nushell are linked at `.cache/flake-tools`. **You do not need to compile GhosttyKit**, and no Homebrew installation is required. `nix develop` opens a shell with the same tools on `PATH`. With [direnv](https://direnv.net), `direnv allow` loads that shell whenever you enter the checkout.
 
 Tool versions and download checksums are recorded in [Scripts/dev-tools.env](Scripts/dev-tools.env), which the flake reads; other packages are pinned by `flake.lock`. Ghostty's internal archive pin remains in [Scripts/build-metadata.env](Scripts/build-metadata.env). Setup preserves an existing framework that does not match the pin and explains the mismatch instead of overwriting it. Setup does not launch OmniWM or change privacy permissions, login items, or CLI links.
 
@@ -82,6 +84,7 @@ Commit your change, push your branch to your fork, and open a pull request targe
 | --- | --- |
 | `make setup` | Check prerequisites and obtain the pinned dependencies. |
 | `make doctor` | Diagnose tools, dependencies, signing, and app paths without changing them. |
+| `make hooks` | Enable the pre-commit hook: SwiftFormat and SwiftLint on staged Swift files, and a warning when a pinned download in `Scripts/dev-tools.env` is not public yet. |
 | `make build` | Build the app without installing or launching it. |
 | `make run` | Build, sign, install, and switch to Dev; alias for `make dev-install`. |
 | `make use-dev` | Switch to the installed Dev app without rebuilding. |
@@ -176,7 +179,7 @@ GitHub's **OmniWM CI** workflow reports **Tooling** (flake check, formatting, li
 
 Start with `make doctor` and the first error reported by the failing command.
 
-- **Wrong Swift version:** select Xcode 27 in its Locations settings, complete its first-launch setup, and check `xcrun swift --version` again.
+- **Wrong Swift version:** from the repository directory, run `swiftly install` and check `swift --version` against `.swift-version`. Ensure swiftly's `bin` directory is on `PATH`. Use `make doctor` to check the Swift toolchain and selected Xcode installation separately.
 - **Missing dependencies:** run `make setup`. If an existing GhosttyKit fails its checksum, move your custom framework aside before running setup again; the helper will not replace it for you.
 - **Permissions requested again:** check the signing identity with `make doctor`, rebuild with the same valid certificate, and grant Dev's permissions again when prompted. Stable and Dev permissions are separate.
 - **Switching stops because OmniWM is still running:** quit that copy from its menu, then retry. The helper does not force-kill it or install over a running copy.
@@ -190,7 +193,7 @@ Start with `make doctor` and the first error reported by the failing command.
 - Create your change branch from `main` and target `main`. There is no permanent `develop` branch.
 - Contributor PRs are normally integrated with merge commits so their commit history and authorship remain intact. You do not need to squash or perfect your history before asking for review.
 
-Reviewed development lands on `main`; published releases come from version tags. Merging a PR does not itself update users' installed apps.
+Reviewed development lands on `main`; published releases come from version tags. Merging a PR does not itself update users' installed apps. Work that merges to `main` outside a PR, such as a release branch, needs a name ending in `-release` so the same CI runs on every push to it.
 
 ### Releases
 

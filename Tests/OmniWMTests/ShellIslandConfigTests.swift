@@ -51,6 +51,17 @@ final class ShellIslandConfigTests: XCTestCase {
         XCTAssertTrue(problems.isEmpty)
     }
 
+    func testDisplaySizingIsOptInAndValidated() throws {
+        try write("[island]\nsizing = \"display\"\n", to: "look/shell.toml")
+        var problems: [String] = []
+        XCTAssertEqual(ShellConfig.load(shellDirectory: root, problems: &problems)?.island?.sizing, .display)
+        XCTAssertTrue(problems.isEmpty)
+        try write("[island]\nsizing = \"monitor-name\"\n", to: "look/shell.toml")
+        problems = []
+        XCTAssertNil(ShellConfig.load(shellDirectory: root, problems: &problems)?.island)
+        XCTAssertTrue(problems.contains { $0.contains("sizing") })
+    }
+
     func testInvalidIslandValuesFailClosedWithDiagnostics() throws {
         for value in [
             "island = 7", "[island]\nroot = \"../escape\"", "[island]\ndisplays = \"primary\"",
@@ -78,7 +89,7 @@ final class ShellIslandConfigTests: XCTestCase {
         XCTAssertTrue(problems.contains { $0.contains("island belongs in [profiles.look]") })
     }
 
-    func testComponentArraysReplaceAndOnlyUserFileGrantsProviderConsent() throws {
+    func testComponentArraysReplaceAndProviderIsAnOrdinaryOption() throws {
         try write("""
         [island]
         [[island.components]]
@@ -90,7 +101,7 @@ final class ShellIslandConfigTests: XCTestCase {
         var problems: [String] = []
         var config = try XCTUnwrap(ShellConfig.load(shellDirectory: root, problems: &problems))
         XCTAssertEqual(config.island?.components.count, 1)
-        XCTAssertEqual(config.island?.components.first?.provider, false)
+        XCTAssertEqual(config.island?.components.first?.options["provider"], .bool(true))
         XCTAssertNil(config.island?.components.first?.capabilities)
         try write("""
         profile = "look"
@@ -107,7 +118,7 @@ final class ShellIslandConfigTests: XCTestCase {
         """, to: "shell.toml")
         config = try XCTUnwrap(ShellConfig.load(shellDirectory: root, problems: &problems))
         XCTAssertEqual(config.island?.components.map(\.id), ["tokyo", "london"])
-        XCTAssertEqual(config.island?.components.first?.provider, true)
+        XCTAssertEqual(config.island?.components.first?.options["provider"], .bool(true))
         XCTAssertEqual(config.island?.components.first?.capabilities?.commands, ["media"])
         XCTAssertEqual(config.island?.components.first?.options["zone"], .string("Asia/Tokyo"))
         XCTAssertEqual(config.island?.components.last?.enabled, false)

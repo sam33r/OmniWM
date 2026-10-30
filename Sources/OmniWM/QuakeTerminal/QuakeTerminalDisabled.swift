@@ -35,6 +35,11 @@ final class QuakeTerminalController: NSObject {
 
     func toggle() {}
 
+    /// The launcher's built-in terminal option needs Ghostty, so it always fails here.
+    func launch(_: LauncherLaunchRequest) -> Bool {
+        false
+    }
+
     func hideForProviderSwitch() {}
 
     func applyGeometryToVisibleWindow() {}

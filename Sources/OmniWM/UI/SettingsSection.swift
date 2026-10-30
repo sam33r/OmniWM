@@ -4,9 +4,9 @@
 import SwiftUI
 
 enum SettingsSection: String, CaseIterable, Identifiable {
-    case general, appearance, styles, menuBar
+    case general, appearance, styles, menuBar, network
     case workspaces, layouts, monitors, appRules, overview, windowSwitcher
-    case hotkeys, mouseTrackpad, quakeTerminal, diagnostics, reportIssue, advanced
+    case hotkeys, mouseTrackpad, launcher, quakeTerminal, diagnostics, reportIssue, advanced
 
     var id: String {
         rawValue
@@ -62,6 +62,12 @@ enum SettingsSection: String, CaseIterable, Identifiable {
                 "menubar.arrow.up.rectangle",
                 String(localized: "Manage OmniWM’s status item and hidden menu-bar apps.")
             )
+        case .network:
+            Presentation(
+                String(localized: "Network & Permissions"),
+                "network.badge.shield.half.filled",
+                String(localized: "Review what OmniShell widgets, native programs, and built-in services can reach.")
+            )
         case .workspaces:
             Presentation(
                 String(localized: "Workspaces"),
@@ -109,6 +115,11 @@ enum SettingsSection: String, CaseIterable, Identifiable {
                 String(localized: "Mouse & Trackpad"),
                 "computermouse",
                 String(localized: "Configure gestures, window manipulation, and pointer focus.")
+            )
+        case .launcher:
+            Presentation(
+                String(localized: "Launcher"), "square.grid.2x2",
+                String(localized: "Launch apps, CLI tools, saved commands, and scripts.")
             )
         case .quakeTerminal:
             Presentation(
@@ -158,10 +169,10 @@ enum SettingsSectionGroup: String, CaseIterable, Identifiable {
     var sections: [SettingsSection] {
         switch self {
         case .app: [.general, .appearance]
-        case .desktop: [.styles, .menuBar]
+        case .desktop: [.styles, .menuBar, .network]
         case .windows: [.workspaces, .layouts, .monitors, .appRules, .overview, .windowSwitcher]
         case .input: [.hotkeys, .mouseTrackpad]
-        case .tools: [.quakeTerminal]
+        case .tools: [.launcher, .quakeTerminal]
         case .support: [.diagnostics, .reportIssue, .advanced]
         }
     }

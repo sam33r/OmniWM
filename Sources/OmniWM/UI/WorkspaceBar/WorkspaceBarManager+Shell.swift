@@ -108,7 +108,8 @@ extension WorkspaceBarManager {
             drawers: host.drawers,
             monitors: controller.workspaceManager.monitors,
             buttonsDown: NSEvent.pressedMouseButtons != 0,
-            open: host.openDrawer
+            open: host.openDrawer,
+            islandDragging: host.islandDragging
         ) {
         case let .open(drawer, monitor)?: _ = host.toggleDrawer(drawer, on: monitor)
         case .close?: host.closeDrawer()
@@ -133,7 +134,8 @@ extension WorkspaceBarManager {
             publishShellBadges()
         }
         host.setBarColors(accent: settings.workspaceBar.accentColor, foreground: settings.workspaceBar.textColor)
-        host.setLocked(controller?.isLockScreenActive == true)
+        shellPermissionPrompts?.observe(host)
+        setShellLocked(controller?.isLockScreenActive == true)
         host.start()
     }
 
@@ -144,6 +146,7 @@ extension WorkspaceBarManager {
             resources: makeShellResources(),
             focusPolicyEngine: controller?.focusPolicyEngine,
             sessionToken: shellSessionToken,
+            permissions: shellPermissions,
             world: { [weak self] in
                 self?.controller?.shellWorld() ?? ShellWorldData()
             },
@@ -186,7 +189,8 @@ extension WorkspaceBarManager {
             windowIcon: { [weak self] id in self?.shellItemIcons[id] },
             iconOverride: { [weak self] bundleId in
                 self?.controller?.workspaceBarIconResolver.image(for: bundleId)
-            }
+            },
+            keepAwake: { [weak self] command in self?.controller?.performKeepAwake(command) }
         )
     }
 
@@ -232,8 +236,17 @@ extension WorkspaceBarManager {
         }
     }
 
+    func updateShellPermissions(_ settings: SettingsStore, reloadingManagedPolicy: Bool = false) {
+        guard shellPermissions.update(
+            decisions: settings.shellPermissions.decisions,
+            managed: reloadingManagedPolicy ? ShellManagedPolicy.current() : nil
+        ) else { return }
+        shellHost?.permissionsChanged()
+    }
+
     func setShellLocked(_ locked: Bool) {
         shellHost?.setLocked(locked)
+        shellPermissionPrompts?.setSuspended(locked)
     }
 
     private func keepsShellInstance(_ bar: DesiredBarSurface) -> Bool {

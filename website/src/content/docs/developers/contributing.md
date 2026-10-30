@@ -17,14 +17,7 @@ Building OmniWM requires an **Apple Silicon Mac running macOS 27**, **Xcode 27**
 
 Install Xcode from [Apple Developer Downloads](https://developer.apple.com/download/all/), open it, and finish its first-launch setup. In **Xcode → Settings → Locations → Command Line Tools**, select Xcode 27. The standalone Command Line Tools package is not a substitute for this Xcode installation.
 
-Install [swiftly](https://www.swift.org/install/macos/), then install the pinned toolchain from the checkout and confirm it:
-
-```bash
-swiftly install
-swift --version
-```
-
-The result must report the Swift 6.5 development snapshot named in `.swift-version`.
+Install [swiftly](https://www.swift.org/install/macos/) to manage the pinned Swift toolchain.
 
 ### 2. Fork, Clone, and Create a Branch
 
@@ -39,6 +32,15 @@ git switch -c my-change upstream/main
 ```
 
 Use a descriptive branch name in place of `my-change`. Each contribution should start from `main` and focus on one problem.
+
+From the repository directory, install and confirm the pinned toolchain:
+
+```bash
+swiftly install
+swift --version
+```
+
+The result must report the Swift 6.5 development snapshot named in `.swift-version`.
 
 ### 3. Set Up Dependencies
 
@@ -163,9 +165,13 @@ For changes to setup, packaging, development installation, or related tooling, a
 
 CI also checks that the generated IPC wire encoders match their models. After changing IPC models or the generator, run `python3 Scripts/generate_ipc_wire.py --check`. If it reports stale files, run `python3 Scripts/generate_ipc_wire.py`, review the generated diff, and rerun the check.
 
+### Trying a Style
+
+The optional styles live in `styles/`, one folder per style. To try one from your checkout, run `python3 Scripts/styles.py install <name> --to ~/.config/omniwm/shell`, then choose it in **Settings > Styles & Widgets**. The script never replaces an existing folder.
+
 ### Translating the App
 
-Translations live in the [string catalogs](https://github.com/OmniNull/OmniWM/tree/main/Sources/OmniWM/Resources). `Localizable.xcstrings` contains interface text, `Commands.xcstrings` contains command names, categories, and scopes, `InfoPlist.xcstrings` contains the macOS permission descriptions, and `Shell.xcstrings` contains built-in OmniShell widget text. Add or edit your language's `localizations` entries in those files. Keep the English keys and source values intact, and translate the meaning in context. English is the fallback for strings without a translation.
+Translations live in the [string catalogs](https://github.com/OmniNull/OmniWM/tree/main/Sources/OmniWM/Resources). `Localizable.xcstrings` contains interface text, `Commands.xcstrings` contains command names, categories, and scopes, `InfoPlist.xcstrings` contains the macOS permission descriptions, and `Shell.xcstrings` contains the Default OmniShell widget text; add or edit your language's `localizations` entries in those catalogs. Each style in `styles/` keeps its own text in flat `strings/<locale>.toml` tables: `en.toml` lists the English text, and a language file maps the same English keys to translations. Keep the English keys and source values intact, and translate the meaning in context. English is the fallback for strings without a translation.
 
 Preserve each format argument's type when translating. You may reorder arguments with positional forms such as `%2$@` and `%1$lld`; a `%lld` count cannot become `%@`. Plural branches may omit a count when the wording does not need it. `make verify` checks format arguments, including plural forms, before a translation is accepted. To preview length and direction issues, use Xcode's localization pseudolanguages or change the app language in macOS settings.
 
@@ -181,7 +187,7 @@ GitHub's **OmniWM CI** workflow reports **Tooling** (flake check, formatting, li
 
 Start with `make doctor` and the first error reported by the failing command.
 
-- **Wrong Swift version:** select Xcode 27 in its Locations settings, complete its first-launch setup, and check `xcrun swift --version` again.
+- **Wrong Swift version:** from the repository directory, run `swiftly install` and check `swift --version` against `.swift-version`. Ensure swiftly's `bin` directory is on `PATH`. Use `make doctor` to check the Swift toolchain and selected Xcode installation separately.
 - **Missing dependencies:** run `make setup`. If an existing GhosttyKit fails its checksum, move your custom framework aside before running setup again; the helper will not replace it for you.
 - **Permissions requested again:** check the signing identity with `make doctor`, rebuild with the same valid certificate, and grant Dev's permissions again when prompted. Stable and Dev permissions are separate.
 - **Switching stops because OmniWM is still running:** quit that copy from its menu, then retry. The helper does not force-kill it or install over a running copy.

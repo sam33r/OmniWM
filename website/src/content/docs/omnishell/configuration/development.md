@@ -5,31 +5,29 @@ sidebar:
   order: 4
 ---
 
-:::note[Unreleased]
-OmniShell is available when building from `main`.
-:::
-
 OmniShell scripts are ordinary files under `~/.config/omniwm/shell/`. Edit them in your own editor. The host watches source and configuration changes and reloads affected packages; you do not need to restart the window manager for each edit.
+
+Before using the CLI below, turn on **Settings > Advanced > Enable IPC**; it is off by default. See [CLI setup](/reference/cli/overview/#installation) for installation and the status-menu alternative.
 
 ## Create or eject a widget
 
-Create a new user widget:
+Create a new widget in the selected profile:
 
 ```sh
 omniwmctl shell init hello-clock
 ```
 
-This creates `~/.config/omniwm/shell/widgets/hello-clock/init.luau`. Names use letters, digits, `-` and `_`. An existing folder returns `no_change` and is left intact. Follow [Build your first widget](/omnishell/guides/first-widget/) for a complete example.
+This creates `~/.config/omniwm/shell/<profile>/widgets/hello-clock/init.luau`, where `<profile>` is the selected style's profile folder, such as `default` or `lake`. Names use letters, digits, `-` and `_`. An existing folder at that destination returns `no_change` and is left intact. Follow [Build your first widget](/omnishell/guides/first-widget/) for a complete example.
 
-Before changing an inherited widget, choose **Settings > Advanced > Shell Development > Widget Source > Edit Widget Source…**, or copy it into the persistent user layer:
+Before changing an inherited widget, choose **Settings > Advanced > Shell Development > Widget Source > Edit Widget Source…**, or copy it into an editable override:
 
 ```sh
 omniwmctl shell eject clock
 ```
 
-The effective widget is copied into `shell/widgets/clock/`. A widget already there returns `no_change`. **Open Shell Folder…** opens the containing folder. Settings does not include a Luau editor.
+For an OmniWM-managed profile, the effective widget is copied into `shell/widgets/clock/`; for your own profile, it is copied into `shell/<profile>/widgets/clock/`. A widget already at the destination returns `no_change`. **Open Shell Folder…** opens the containing folder. Settings does not include a Luau editor.
 
-User widgets override all profiles, so use a unique name for a tutorial or a profile-local widget when a change should apply to only one style. The [shell folder and profile rules](/omnishell/configuration/profiles-palettes/#the-shell-folder) describe managed files, backup copies and fallback resolution.
+Top-level `shell/widgets/` overrides apply to every profile. `shell init` writes into the selected profile instead; widgets in `default/widgets/` can also be inherited by other profiles. Use a unique name for a tutorial. The [shell folder and profile rules](/omnishell/configuration/profiles-palettes/#the-shell-folder) describe managed files, backup copies and fallback resolution.
 
 ## Modules and editor types
 
@@ -70,15 +68,20 @@ The query shows widget state and errors, plus mistakes in `shell.toml` and theme
 | Options are absent | Put `settings.toml` beside the effective `init.luau`; declare the keys that source actually reads. User replacements do not inherit an ignored schema. |
 | State disappears after reload | Save durable values with `omniwm.store`; ordinary view state is not persisted. |
 | Data is unavailable | Check the permission below, then the data or service error. Reading data alone does not grant access. |
-| Provider does not run | Declare its manifest capability and explicitly enable `provider = true` in your own configured instance; see [Providers](/omnishell/reference/providers/). |
+| Provider does not run | Declare its manifest capability, enable its instance, and approve its trust prompt in **Settings > Network & Permissions**; check for a changed executable or an organization block. See [Providers](/omnishell/reference/providers/). |
 
 ## Permissions
 
 | Feature | Permission |
 |---|---|
+| Widget HTTP | Declared hosts plus remembered consent; an undecided request fails and automatically prompts. Review in **Settings > Network & Permissions**. |
+| Native provider | Author declaration plus trust for the executable and command |
+| Built-in Weather and Lyrics | On by default; global switches in **Settings > Network & Permissions**; organization blocks apply |
 | Per-app volume | System Audio Recording, asked the first time an app is turned down |
 | Calendar | Calendar full access, asked from the calendar widget |
 | Reminders | Reminders full access, requested only by `reminders authorize`; independent of Calendar access |
+| Notification data | Full Disk Access to read Notification Center's database; `notifications settings` opens that privacy pane |
+| Notification replies and dismissal | Accessibility, plus a complete notification snapshot and a uniquely matched native action; see [notification actions](/omnishell/reference/context-data/#notification-snapshots) |
 | Wi-Fi network name | Location, asked from the Wi-Fi widget; signal, band and security need none |
 | Bluetooth | Bluetooth, asked from the Bluetooth widget |
 | Audio spectrum | System Audio Recording, like per-app volume |
@@ -87,4 +90,4 @@ The query shows widget state and errors, plus mistakes in `shell.toml` and theme
 
 Now Playing needs no permission.
 
-Component capabilities are separate from macOS permissions. Network hosts, files, clipboard and provider execution must satisfy the [component contract](/omnishell/reference/components-configuration/), [service API](/omnishell/reference/services/) and [provider policy](/omnishell/reference/providers/). A widget cannot grant itself new capabilities through its configuration controls.
+Component capabilities are separate from macOS permissions. Network hosts, files, clipboard and provider execution must satisfy the [component contract](/omnishell/reference/components-configuration/), [service API](/omnishell/reference/services/) and [provider policy](/omnishell/reference/providers/). A widget cannot grant itself new capabilities through its configuration controls. Instance `capabilities.network` in your own `shell.toml` extends a declaration only; consent and program trust live in the app’s [settings.toml](/config/settings-reference/#shellpermissions). Organization policy uses separate [managed preferences](/config/managed-preferences/).

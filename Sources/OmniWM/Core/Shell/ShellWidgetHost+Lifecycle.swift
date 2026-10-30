@@ -40,7 +40,7 @@ extension ShellWidgetHost {
         outbox = ShellWidgetOutbox { [weak self] batch in
             self?.receive(batch)
         }
-        observation = ShellDirectoryObservation { [weak self] in
+        observation = ShellDirectoryObservation(watchLinks: true) { [weak self] in
             self?.rescan()
         }
         observeSystem()
@@ -129,6 +129,8 @@ extension ShellWidgetHost {
         publishToggleNames()
         bars = [:]
         placedSlots = [:]
+        networkApprovals = [:]
+        providerApprovals = [:]
     }
 
     func updateWallpaperPalette() {
@@ -244,6 +246,8 @@ extension ShellWidgetHost {
             }
             widgets[name] = state
         }
+        refreshHiddenBarMenuHosts()
+        pruneApprovals()
     }
 
     func folders(of state: WidgetState) -> [URL] {
@@ -256,8 +260,8 @@ extension ShellWidgetHost {
     }
 
     func watchFiles() {
-        observation?
-            .sync(paths: watchedPaths + resources.shaders.files + resources.images.files + configurationMetadataPaths)
+        let paths = watchedPaths + resources.shaders.files + resources.images.files + configurationMetadataPaths
+        observation?.sync(paths: paths, recursivePaths: paths)
     }
 
     private func shadersChanged(includingAssets: Bool = true) {
@@ -311,6 +315,8 @@ extension ShellWidgetHost {
                 directory.appendingPathComponent("shell.toml"),
                 directory.appendingPathComponent("widgets", isDirectory: true),
                 directory.appendingPathComponent("shaders", isDirectory: true),
+                directory.appendingPathComponent("fonts", isDirectory: true),
+                directory.appendingPathComponent(ShellStrings.folder, isDirectory: true),
                 themes
             ] + files.filter { $0.pathExtension == "toml" }
         }
@@ -359,6 +365,7 @@ extension ShellWidgetHost {
             latestData.publish(ShellWidgetData())
         } else if feed == nil {
             let feed = ShellDataFeed(
+                permissions: permissions,
                 appVolumes: resources.appVolumes,
                 media: resources.media,
                 calendar: resources.calendar,

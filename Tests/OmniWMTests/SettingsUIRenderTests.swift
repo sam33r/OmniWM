@@ -72,6 +72,7 @@ final class SettingsUIRenderTests: XCTestCase {
                 configuration.shellDirectory.standardizedFileURL.path,
                 directory.appendingPathComponent("config/shell", isDirectory: true).standardizedFileURL.path
             )
+            try ShellStyleFixture.installAll(into: configuration.shellDirectory)
             try await configuration.refresh()
             _ = try await configuration.selectProfile("lake")
             XCTAssertNil(controller.workspaceBarManager.shellHost)
@@ -81,6 +82,67 @@ final class SettingsUIRenderTests: XCTestCase {
             await controller.workspaceBarManager.shellConfiguration.flush()
             try? FileManager.default.removeItem(at: directory)
         }
+    }
+
+    func testLauncherSettingsAndSharedEntryEditorRenderNatively() async throws {
+        try requireNativeRendering()
+        let fixture = try Fixture()
+        try await fixture.prepare()
+        var entry = LauncherEntry()
+        entry.name = "Build Project"
+        entry.command = "swift build"
+        fixture.settings.launcher.entries = [entry]
+        do {
+            for windowClass in windowClasses {
+                let navigation = SettingsNavigationModel()
+                navigation.section = .launcher
+                try await render(
+                    SettingsView(
+                        settings: fixture.settings,
+                        controller: fixture.controller,
+                        windowCornerPreferences: fixture.corners,
+                        updateCoordinator: nil,
+                        navigation: navigation
+                    ),
+                    fixture: fixture, windowClass: windowClass, section: .launcher,
+                    name: "launcher-\(windowClass.suffix)",
+                    requiredText: [
+                        "Saved Entries",
+                        "Build Project",
+                        "Execution Defaults",
+                        "Discovery and Advanced Options"
+                    ]
+                )
+            }
+            for kind in LauncherEntry.Kind.allCases {
+                var draft = entry
+                draft.kind = kind
+                draft.path = kind == .application ? "/Applications/Ghostty.app" : "/usr/bin/printf"
+                if kind == .script || kind == .executable { draft.arguments = ["%s", "hello world"] }
+                if kind == .script { draft.interpreter = "/bin/sh" }
+                for dark in [true, false] {
+                    try await render(
+                        LauncherEntryEditor(
+                            entry: draft, runOnly: kind == .executable, configuration: fixture.settings.launcher,
+                            save: { _ in }, run: { _ in }
+                        ),
+                        fixture: fixture, windowClass: WindowClass(size: CGSize(width: 620, height: 600), dark: dark),
+                        section: .launcher, name: "launcher-entry-\(kind.rawValue)-\(dark ? "dark" : "light")",
+                        requiredText: [
+                            kind == .executable ? "Run CLI" : "Launcher Entry",
+                            "Build Project",
+                            "Advanced Options",
+                            "Cancel",
+                            kind == .executable ? "Save Entry" : "Save"
+                        ]
+                    )
+                }
+            }
+        } catch {
+            await fixture.close()
+            throw error
+        }
+        await fixture.close()
     }
 
     func testEverySettingsDestinationRendersNativeContentAtBothWindowClasses() async throws {
@@ -111,6 +173,69 @@ final class SettingsUIRenderTests: XCTestCase {
                     )
                 }
             }
+        } catch {
+            await fixture.close()
+            throw error
+        }
+        await fixture.close()
+    }
+
+    func testNetworkPermissionsPageListsTheStyleWidgetsProgramsAndServices() async throws {
+        try requireNativeRendering()
+        let fixture = try Fixture()
+        try await fixture.prepare()
+        do {
+            for windowClass in windowClasses {
+                let navigation = SettingsNavigationModel()
+                navigation.section = .network
+                let root = SettingsView(
+                    settings: fixture.settings, controller: fixture.controller,
+                    windowCornerPreferences: fixture.corners, updateCoordinator: nil, navigation: navigation
+                )
+                try await render(
+                    root, fixture: fixture, windowClass: windowClass, section: .network,
+                    name: "settings-network-permissions-\(windowClass.suffix)",
+                    requiredText: [SettingsSection.network.subtitle, "CI status", "api.github.com"],
+                    requiredObservations: [String(localized: "Widgets"), String(localized: "Not asked")]
+                )
+                XCTAssertNil(fixture.controller.workspaceBarManager.shellHost)
+            }
+        } catch {
+            await fixture.close()
+            throw error
+        }
+        await fixture.close()
+    }
+
+    func testLauncherPaletteShowsFiltersAndSavedCommands() async throws {
+        try requireNativeRendering()
+        let fixture = try Fixture()
+        try await fixture.prepare()
+        var entry = LauncherEntry()
+        entry.name = "Build Project"
+        entry.command = "swift build"
+        fixture.settings.launcher.entries = [entry]
+        var environment = CommandPaletteEnvironment()
+        environment.submitApplicationSearch = { _, _, _, generation, publish in
+            publish(generation, [LauncherSection(id: .all, title: "Apps", items: [
+                LauncherApplicationResult(
+                    bundleURL: URL(fileURLWithPath: ApplicationCatalogFilter.finderPath),
+                    bundleIdentifier: "com.apple.finder",
+                    displayName: "Finder"
+                )
+            ])], [])
+        }
+        environment.stopApplicationSearch = {}
+        let palette = CommandPaletteController(motionPolicy: fixture.controller.motionPolicy, environment: environment)
+        palette.show(wmController: fixture.controller, mode: .applications)
+        defer { palette.dismiss(reason: .cancel) }
+        do {
+            try await render(
+                CommandPaletteView(controller: palette, motionPolicy: fixture.controller.motionPolicy),
+                fixture: fixture, windowClass: WindowClass(size: CGSize(width: 760, height: 420), dark: true),
+                section: .launcher, name: "launcher-palette",
+                requiredText: ["All", "Apps", "Saved", "CLI Tools", "Add", "Build Project", "Finder"]
+            )
         } catch {
             await fixture.close()
             throw error
@@ -175,6 +300,138 @@ final class SettingsUIRenderTests: XCTestCase {
                 )
                 XCTAssertEqual(configuration.config, original)
                 XCTAssertEqual(navigation.section, .general)
+            }
+        } catch {
+            await fixture.close()
+            throw error
+        }
+        await fixture.close()
+    }
+
+    func testUnappliedGestureProposalStaysCurrentWhileItsTabIsHidden() async throws {
+        try requireNativeRendering()
+        let fixture = try Fixture()
+        try await fixture.prepare()
+        do {
+            let gestures = fixture.settings.gestures
+            gestures.scrollEnabled = true
+            gestures.fingerCount = .three
+            gestures.workspaceSwipeEnabled = false
+            gestures.overviewGestureEnabled = true
+            gestures.overviewGestureFingerCount = .four
+            gestures.windowMoveEnabled = false
+            gestures.windowResizeEnabled = false
+            let editor = GestureAssignmentEditor()
+            editor.submit(
+                .init(action: .move, change: .enabled(true)),
+                settings: fixture.settings,
+                monitors: Monitor.current()
+            )
+            XCTAssertNotNil(editor.proposal)
+            let navigation = SettingsNavigationModel()
+            navigation.section = .mouseTrackpad
+            let root = MouseTrackpadSettingsTab(
+                settings: fixture.settings, controller: fixture.controller, gestureEditor: editor
+            ).environment(navigation)
+            try await render(
+                root, fixture: fixture, windowClass: windowClasses[1], name: "gesture-proposal-tab-round-trip",
+                requiredText: [String(localized: "Cancel")],
+                beforeCapture: { _ in
+                    let window = try XCTUnwrap(NSApp.windows.first { $0.isVisible && $0.title == "OmniWM Settings" })
+                    navigation.selectTab("mouse")
+                    await self.display(window, appearance: window.effectiveAppearance)
+                    gestures.adoptNativeResize.toggle()
+                    await self.display(window, appearance: window.effectiveAppearance)
+                    navigation.selectTab("trackpad")
+                    await self.display(window, appearance: window.effectiveAppearance)
+                }
+            )
+            XCTAssertEqual(editor.proposal?.refreshed, true)
+        } catch {
+            await fixture.close()
+            throw error
+        }
+        await fixture.close()
+    }
+
+    func testTabKeepsItsScrollPositionAcrossTabSwitches() async throws {
+        try requireNativeRendering()
+        let fixture = try Fixture()
+        try await fixture.prepare()
+        do {
+            let navigation = SettingsNavigationModel()
+            navigation.request(SettingsRoute(section: .layouts, tab: "niri"))
+            let root = SettingsView(
+                settings: fixture.settings, controller: fixture.controller,
+                windowCornerPreferences: fixture.corners, updateCoordinator: nil, navigation: navigation
+            )
+            try await render(
+                root, fixture: fixture, windowClass: windowClasses[1], name: "settings-tab-scroll-round-trip",
+                requiredText: [],
+                beforeCapture: { _ in
+                    @MainActor func scrollViews(in view: NSView) -> [NSScrollView] {
+                        ((view as? NSScrollView).map { [$0] } ?? []) + view.subviews.flatMap { scrollViews(in: $0) }
+                    }
+                    let window = try XCTUnwrap(NSApp.windows.first { $0.isVisible && $0.title == "OmniWM Settings" })
+                    let content = try XCTUnwrap(window.contentView)
+                    let scroll = try XCTUnwrap(scrollViews(in: content).first { view in
+                        view.convert(view.bounds, to: content).minX >= 220
+                            && (view.documentView?.bounds.height ?? 0) > view.contentView.bounds.height + 300
+                    })
+                    let clip = scroll.contentView
+                    let offset = try XCTUnwrap(scroll.documentView).isFlipped
+                        ? 300 : try XCTUnwrap(scroll.documentView).bounds.height - clip.bounds.height - 300
+                    clip.scroll(to: CGPoint(x: clip.bounds.minX, y: offset))
+                    scroll.reflectScrolledClipView(clip)
+                    navigation.selectTab("dwindle")
+                    await self.display(window, appearance: window.effectiveAppearance)
+                    navigation.selectTab("niri")
+                    await self.display(window, appearance: window.effectiveAppearance)
+                    XCTAssertNotNil(scroll.window, "Niri's form was rebuilt")
+                    XCTAssertEqual(clip.bounds.minY, offset)
+                }
+            )
+        } catch {
+            await fixture.close()
+            throw error
+        }
+        await fixture.close()
+    }
+
+    func testTabbedPagesOpenedInVisibleWindowKeepTabsLegible() async throws {
+        try requireNativeRendering()
+        let fixture = try Fixture()
+        try await fixture.prepare()
+        do {
+            let searchResult = try XCTUnwrap(SettingsSearchIndex.results(for: "gap").first {
+                $0.route.section == .layouts && $0.route.tab == "spacing"
+            })
+            let destinations: [(search: String, route: SettingsRoute, tabs: [String])] = [
+                ("gap", searchResult.route, ["Spacing", "Niri", "Dwindle"]),
+                ("", SettingsRoute(section: .appearance), ["App & Motion", "Window Borders"]),
+                ("", SettingsRoute(section: .styles), ["Bar", "Island", "Drawers"]),
+                ("", SettingsRoute(section: .menuBar), ["macOS Status Item", "Hidden Bar"]),
+                ("", SettingsRoute(section: .monitors), ["Arrangement", "Behavior"]),
+                ("", SettingsRoute(section: .mouseTrackpad), ["Trackpad", "Mouse & Focus"])
+            ]
+            for windowClass in windowClasses {
+                for destination in destinations {
+                    let navigation = SettingsNavigationModel()
+                    navigation.searchText = destination.search
+                    let root = SettingsView(
+                        settings: fixture.settings, controller: fixture.controller,
+                        windowCornerPreferences: fixture.corners, updateCoordinator: nil, navigation: navigation
+                    )
+                    let name = "settings-open-\(destination.route.section.rawValue)-\(windowClass.suffix)"
+                    try await render(
+                        root, fixture: fixture, windowClass: windowClass, name: name,
+                        requiredText: [],
+                        requiredObservations: destination.tabs.map { String(localized: String.LocalizationValue($0)) },
+                        beforeCapture: { _ in navigation.request(destination.route) }
+                    )
+                    XCTAssertEqual(navigation.route, destination.route, name)
+                    XCTAssertEqual(navigation.searchText, "", name)
+                }
             }
         } catch {
             await fixture.close()
@@ -415,6 +672,7 @@ final class SettingsUIRenderTests: XCTestCase {
         case .appearance: String(localized: "App Appearance")
         case .styles: String(localized: "Bar Widgets")
         case .menuBar: String(localized: "Show Workspace")
+        case .network: String(localized: "Built-in Services")
         case .workspaces: String(localized: "Layout Algorithm")
         case .layouts: String(localized: "Spacing")
         case .monitors: String(localized: "Arrangement")
@@ -423,6 +681,7 @@ final class SettingsUIRenderTests: XCTestCase {
         case .windowSwitcher: String(localized: "Enable Window Switcher")
         case .hotkeys: String(localized: "System Hyper Trigger")
         case .mouseTrackpad: String(localized: "Trackpad")
+        case .launcher: String(localized: "Saved Entries")
         case .quakeTerminal: String(localized: "Enable Quake Terminal")
         case .diagnostics: String(localized: "Health")
         case .reportIssue: String(localized: "Title")

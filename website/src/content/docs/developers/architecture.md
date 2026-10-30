@@ -100,6 +100,7 @@ Sources/
 │   │   ├── Multitouch/              Raw multitouch frame source + gesture bindings
 │   │   ├── Monitor/                 Display detection, OutputId, restore assignments
 │   │   ├── Overview/                Expose-style workspace overview
+│   │   ├── Launcher/                App/file discovery, shell environments and saved-entry execution
 │   │   ├── Clipboard/               Clipboard history service/store/models
 │   │   ├── Menu/                    Menu extraction for Menu Anywhere
 │   │   ├── Diagnostics/             Logging, bounded recorders, runtime trace capture, health reports
@@ -109,7 +110,7 @@ Sources/
 │   │   ├── LockScreen/              Lock screen detection
 │   │   └── Support/                 Utility types & extensions
 │   ├── IPC/                         IPC server, connections, routing, broker
-│   ├── QuakeTerminal/               Drop-down terminal, Ghostty and Kitty integration
+│   ├── QuakeTerminal/               Drop-down terminal, Ghostty, Kitty and foot integration
 │   └── UI/                          SwiftUI/AppKit settings, bars, palette, status, stats
 ├── OmniWMApp/                       @main entry + settings redirect
 ├── OmniWMCtl/                       CLI parser, IPC client, renderer, completion
@@ -153,7 +154,7 @@ swift test                   # Default suite; live/private integration and measu
 
 `make build` first runs `Scripts/ghostty-preflight.sh`, which fails the build unless the GhosttyKit archive named in
 `Scripts/build-metadata.env` exists, is arm64-only, and matches the pinned SHA-256. `make format`/`make lint` pin exact
-tool versions (SwiftFormat 0.64.1, SwiftLint 0.65.1) and fail fast on any other version. SwiftFormat's `fileHeader`
+tool versions (SwiftFormat 0.64.4, SwiftLint 0.65.1) and fail fast on any other version. SwiftFormat's `fileHeader`
 rule also inserts and enforces the two-line SPDX/GPL-2.0-only header that every Swift source and test file under
 `Sources/` and `Tests/` must carry; `Package.swift` is the exception, because its `swift-tools-version` directive
 must stay on line one.
@@ -247,9 +248,12 @@ snapshot are outside scope.
 8. **`StatusBarController`** — menu-bar UI and manual update checks.
 9. **`IPCServer`** — started only if `ipcEnabled` is set.
 10. **Automatic update checks** — started after the rest of the core bootstrap succeeds.
-11. **Launch and monitor-setup presentation** — starts monitor-readiness observation, plays `LaunchOverlayController`
-    on the primary display the first time each version launches with animations enabled, then evaluates whether to
-    present the monitor setup guide once the overlay finishes or is skipped.
+11. **Launch, Welcome and monitor-setup presentation** — starts monitor-readiness observation and plays
+    `LaunchOverlayController` on the primary display the first time each version launches with animations enabled.
+    When the overlay finishes or is skipped, `presentWelcomeIfNeeded` shows the first-run Welcome window and sets
+    `RuntimeStateStore.welcomePresented`. Closing that first-run window schedules monitor-setup evaluation; later
+    launches evaluate setup directly. Settings links leave Welcome open, and **Help & Links > Welcome to OmniWM**
+    reopens it without restarting the first-run setup sequence.
 
 `FatalCapture` is not a process-wide Swift trap handler. Preconditions, force unwraps, Core Foundation ownership
 faults, and other raw traps bypass those explicit shims. GhosttyKit's embedded crash handler can instead write a
@@ -523,6 +527,12 @@ There is one deliberate exception to "all mutation goes through commit": **per-f
 - **The intake buffer.** `EventIntake` holds its buffer in a `nonisolated OSAllocatedUnfairLock`, so `EventIntake.post(...)` is callable from any transport thread; the drain re-enters the main actor via `CFRunLoopPerformBlock` + `MainActor.assumeIsolated`.
 - **IPC actors.** `IPCApplicationBridge`, `IPCConnection`, `IPCEventBroker`, and `IPCConnectionRegistry` are Swift actors; they hop to `@MainActor` for any window-management work.
 - **Clipboard store.** `ClipboardHistoryStore` is a Swift actor; pasteboard reads happen on a utility `DispatchQueue`.
+- **OmniShell.** Source/catalog loading, Luau packages, durable storage, resources and native providers have actor
+  owners with serial executors. `ShellLayerScene.engineQueue` handles retained layer-scene work; the main-actor
+  `ShellWidgetHost` owns AppKit surfaces and routes input. See [OmniShell](#416-omnishell) for the boundaries.
+- **Launcher.** `LauncherEnvironmentCache` shares asynchronous shell-environment resolution. `LauncherProcess`
+  collects bounded child output using dispatch sources; the main-actor `LauncherExecution` publishes outcomes
+  and opens the selected terminal. See [Launcher](#415-launcher).
 
 ---
 
@@ -638,7 +648,7 @@ NiriRoot (per workspace)
 
 **File organization.** The core engine is split across `NiriLayoutEngine.swift` and focused `NiriLayoutEngine+*.swift` extensions, with navigation in `NiriNavigation.swift`, the node tree in `NiriNode.swift`, viewport math in `ViewportState.swift` and its extensions, and overlays for interactive move/resize, drag ghost, and swap targets. Tabbed Niri columns and grouped Dwindle tiles share the surface-layer `TabRailManager`.
 
-**Interactive move/resize.** Desktop moves start when one configured non-Shift modifier chord, with or without Shift, is held at mouse-down. The chord defaults to Option, and Off leaves modified drags entirely to applications. Mouse moves in both layouts choose swap or insertion from the drop position through `WindowMoveGeometry`: the central 40% of the target swaps and the nearest edge inserts on that side. Niri maps primary-axis edges to a new column and cross-axis edges to the target column's stack, and re-evaluates the release position before applying the change. Multi-finger move gestures only swap. **Unreleased:** a mouse release on another display is classified by `MouseEventHandler.classifyMoveLocation`, planned and validated by `WMController.crossDisplayDropPlan` (target slot, destination constraints), and committed as one `cross_display_drop` world event through both engines' cross-workspace transfer helpers. `DragGhostController` captures a ScreenCaptureKit thumbnail shown as a translucent ghost and `SwapTargetOverlay` highlights the drop target. Edge-dragging resizes the container on the primary axis and the selected window on the secondary axis. Each interaction captures its orientation at begin and keeps that axis ownership through update and completion.
+**Interactive move/resize.** Desktop moves start when one configured non-Shift modifier chord, with or without Shift, is held at mouse-down. The chord defaults to Option, and Off leaves modified drags entirely to applications. Mouse moves in both layouts choose swap or insertion from the drop position through `WindowMoveGeometry`: the central 40% of the target swaps and the nearest edge inserts on that side. Niri maps primary-axis edges to a new column and cross-axis edges to the target column's stack, and re-evaluates the release position before applying the change. Multi-finger move gestures only swap. A mouse release on another display is classified by `MouseEventHandler.classifyMoveLocation`, planned and validated by `WMController.crossDisplayDropPlan` (target slot, destination constraints), and committed as one `cross_display_drop` world event through both engines' cross-workspace transfer helpers. `DragGhostController` captures a ScreenCaptureKit thumbnail shown as a translucent ghost and `SwapTargetOverlay` highlights the drop target. Edge-dragging resizes the container on the primary axis and the selected window on the secondary axis. Each interaction captures its orientation at begin and keeps that axis ownership through update and completion.
 
 ### 4.4 Dwindle Layout Engine (BSP)
 
@@ -675,7 +685,7 @@ enum DwindleNodeKind {
 
 Each leaf owns one stable tile containing an ordered member list and one active member. Singleton-to-neighbor joins preserve the destination tile identity; extraction removes only the active member while preserving the remaining group identity and per-member fullscreen state. `DwindleLayoutEngine` owns these tree/tile mutations, while `DwindleLayoutHandler` owns hidden-member reveal, rollback, and verified focus completion. Group rails are derived through `WorldView` and applied by the shared `TabRailManager`. Overview caches every eligible group member for search and projects one preview into the canonical group content frame; tab controls change only the preview until dismissal activates the selected member through the existing Dwindle handler.
 
-`DwindleLayoutEngine.calculateLayout(for:screen:) -> [WindowToken: CGRect]`. **Smart split** (`planSplit`) chooses orientation from the available rectangle's slope vs. aspect; **preselection** lets the user direct where the next window inserts. The engine also supports resize/balance/whole-tile swap/toggle-orientation/toggle-fullscreen, grouped-member reorder, and geometric-neighbor navigation. **Unreleased, available when building from `main`:** modifier-drag chooses swapping or insertion from the current drop position within the same workspace, without requiring Shift. A target is a tile with an optional direction, an outer workspace edge, or an internal split boundary. The central 40% of a tile's width and height selects swapping and previews the whole tile; the surrounding regions select directional insertion and preview half the tile. The controller supplies the current working frame, so workspace-edge targets respect display insets and take precedence in an edge band capped at 24 points or 10% of the frame's shorter side, after at least 10 points of pointer travel. Release re-evaluates the target and records the resulting operation before requesting relayout. Insertion detaches the source tile, collapses its old split, and either splits the target leaf or wraps the remaining tree in a new root split. Both use a 50:50 ratio subject to the existing minimum-size projection. Edge insertion preserves the remaining tree's internal split ratios and seeds affected tiles from their presented frames for animation continuity. Group membership, constraints, and preselection are preserved. Cross-display drops move whole tiles unless `gestures.dwindleGroupDragAcrossDisplays` is `window`; a group entering Niri becomes one tabbed column. Multi-finger moves remain swap-only. Internal-boundary hit testing walks the presented visible tree once, checks child dividers before their enclosing split within a band capped at 12 points per side, and requires at least 10 points of pointer travel. Each branch must retain a visible tile besides the source. On release, the source is detached and inserted before the second branch through a new equal split, preserving the original divider ratio and both retained subtrees' internal ratios. If source removal promotes the target split, insertion resolves through its surviving parent. Previewing leaves the tree untouched; removing a window from the workspace or invalidating the target cancels the interaction. Like Niri it is a plain `final class`, AX-free, mutation-gated by `WorldStore`.
+`DwindleLayoutEngine.calculateLayout(for:screen:) -> [WindowToken: CGRect]`. **Smart split** (`planSplit`) chooses orientation from the available rectangle's slope vs. aspect; **preselection** lets the user direct where the next window inserts. The engine also supports resize/balance/whole-tile swap/toggle-orientation/toggle-fullscreen, grouped-member reorder, and geometric-neighbor navigation. Modifier-drag chooses swapping or insertion from the current drop position within the same workspace, without requiring Shift. A target is a tile with an optional direction, an outer workspace edge, or an internal split boundary. The central 40% of a tile's width and height selects swapping and previews the whole tile; the surrounding regions select directional insertion and preview half the tile. The controller supplies the current working frame, so workspace-edge targets respect display insets and take precedence in an edge band capped at 24 points or 10% of the frame's shorter side, after at least 10 points of pointer travel. Release re-evaluates the target and records the resulting operation before requesting relayout. Insertion detaches the source tile, collapses its old split, and either splits the target leaf or wraps the remaining tree in a new root split. Both use a 50:50 ratio subject to the existing minimum-size projection. Edge insertion preserves the remaining tree's internal split ratios and seeds affected tiles from their presented frames for animation continuity. Group membership, constraints, and preselection are preserved. Cross-display drops move whole tiles unless `gestures.dwindleGroupDragAcrossDisplays` is `window`; a group entering Niri becomes one tabbed column. Multi-finger moves remain swap-only. Internal-boundary hit testing walks the presented visible tree once, checks child dividers before their enclosing split within a band capped at 12 points per side, and requires at least 10 points of pointer travel. Each branch must retain a visible tile besides the source. On release, the source is detached and inserted before the second branch through a new equal split, preserving the original divider ratio and both retained subtrees' internal ratios. If source removal promotes the target split, insertion resolves through its surviving parent. Previewing leaves the tree untouched; removing a window from the workspace or invalidating the target cancels the interaction. Like Niri it is a plain `final class`, AX-free, mutation-gated by `WorldStore`.
 
 ### 4.5 Focus Lifecycle
 
@@ -939,8 +949,8 @@ The per-frame **display link** is owned by `LayoutRefreshController` (not by `An
 | Feature | Key Files | Description |
 |---------|-----------|-------------|
 | **Overview** | `Core/Overview/OverviewController.swift`, `OverviewLayerRenderer.swift`, `OverviewThumbnailCapture.swift` | Expose-style workspace overview with retained Core Animation layers and per-window ScreenCaptureKit streams. Search, structural hotkeys, interactive gestures, and drag placement. |
-| **Quake Terminal** | `QuakeTerminal/QuakeTerminalController.swift`, `QuakeTerminal/KittyQuickAccessTerminal.swift` | Selects embedded Ghostty or Kitty's quick-access terminal. Ghostty tabs are trees of split panes (`QuakeTerminalTab` → `QuakeSplitContainer`/`SplitNode`), each a `GhosttySurfaceView` (CAMetalLayer-backed); edge placements slide and fade, while Center and custom frames fade in place. Ghostty registers as a `.quake` surface. Kitty uses a dedicated quick-access instance. `KittyQuickAccessTerminal` manages panel overrides through the Kitty remote-control helper using `KittyQuakeControlRequest`. |
-| **Command Palette** | `UI/CommandPalette/CommandPaletteController.swift` | Substring search with tiered ranking over windows, application menus, and clipboard history. |
+| **Quake Terminal** | `QuakeTerminal/QuakeTerminalController.swift`, `QuakeTerminal/KittyQuickAccessTerminal.swift`, `QuakeTerminal/FootQuickAccessTerminal.swift` | Selects embedded Ghostty, Kitty's quick-access terminal or foot's Quake terminal. Ghostty tabs are trees of split panes (`QuakeTerminalTab` → `QuakeSplitContainer`/`SplitNode`), each a `GhosttySurfaceView` (CAMetalLayer-backed); edge placements slide and fade, while Center and custom frames fade in place. Ghostty registers as a `.quake` surface. Kitty uses a dedicated quick-access instance. `KittyQuickAccessTerminal` manages panel overrides through the Kitty remote-control helper using `KittyQuakeControlRequest`. `FootQuickAccessTerminal` starts a dedicated `foot --server` on a private socket, waits for its PID line, and sends `footclient --quake` toggle, hide and status with per-call overrides. |
+| **Command Palette** | `UI/CommandPalette/CommandPaletteController.swift`, `Core/Launcher/` | Six modes: windows, application menus, clipboard, commands, Launcher and Files. The original four use substring search with tiered ranking; apps/files use Spotlight ranking, while saved entries match their own names, keywords, paths and command text. |
 | **Menu Anywhere** | `UI/MenuAnywhere/MenuAnywhereController.swift` | Pops the frontmost app's menu bar as a native `NSMenu` at the cursor, via `MenuExtractor` (ObjC runtime AX-tree walk). |
 | **Workspace Bar** | `UI/WorkspaceBar/WorkspaceBarManager.swift` | Per-monitor workspace bars — now **driven by `SurfaceReconciler`** via `apply([DesiredBarSurface])`, not self-polling. |
 | **Hidden Bar** | `UI/HiddenBar/HiddenBarController.swift` | Per-app concealment through macOS menu-bar visibility preferences, AX item discovery and icon capture, and a hidden-items panel. Original visibility choices are journaled before changes and restored when released or on recovery after an interrupted session. OmniWM keeps its native status item available. `HiddenBarDrawerView` reveals the panel from its attachment edge using a Core Animation clipping mask and the shared motion policy; icons and their hit regions stay fixed during the transition. Selection and teardown dismiss immediately before native item interaction. |
@@ -960,6 +970,67 @@ Overview ribbons and workspace-swipe backdrops each own an `OverviewWallpaperCac
 **Overview mutation ownership.** `NiriLayoutHandler` owns explicit-`WindowHandle` Niri reorder, consume/expel, column, and insertion mutations; `WorkspaceNavigationHandler` owns explicit-handle window workspace/monitor transfers and Niri whole-column workspace transfers. Their internal `StructuralMutationOutcome` reports the selected handle, moved tokens, destination, and affected workspaces. `OverviewController` uses that result to make `WorkspaceManager` activate the destination workspace and interaction monitor, commit remembered layout focus, request relayout only for affected workspaces, and keep the moved window selected. Overview mutations suppress client-window activation, so no AX focus is issued until an intentional dismissal focuses the current selection.
 
 Dragging a card continues to resolve an `OverviewDragTarget` for workspace-only, exact-card, or between-column placement. A cross-layout move into Niri first commits destination admission, then applies the exact target in a version-gated post-layout continuation; if the continuation is invalidated, the workspace transfer remains authoritative and the stale insertion is discarded. Projection refreshes reuse cached titles, frames, icons, and thumbnails while updating affected engine snapshots and active-workspace flags. Close completion is driven by `WorkspaceManager.onWindowRemoved`, not a speculative timer, so selection advances only after authoritative removal.
+
+### 4.15 Launcher
+
+**Directories:** `Core/Launcher/`, `UI/CommandPalette/`; configuration lives in `LauncherConfiguration.swift`.
+
+The palette's persisted/IPC mode ID remains `applications`, while its displayed name is Launcher.
+`ApplicationCatalogService` combines registered apps with selected application folders;
+`LauncherExecutableCatalog` discovers executable files from the selected shell's PATH and configured folders.
+Files use `FileSearchEngine` and the metadata index. `CommandPaletteController` owns filtering, selection and
+presentation; `CommandPaletteActionExecutor` opens apps/files or dispatches a saved entry.
+
+For commands, scripts and saved executables, the execution path is:
+
+```text
+LauncherExecution.run(entry)
+  → LauncherLaunchRequest.prepare
+      → LauncherEnvironmentCache → selected shell environment
+      → resolve executable, argument array and working directory
+  → Background: LauncherProcess.run → bounded output and exit status
+  → Built-in: QuakeTerminalController.launch → a fresh Ghostty command tab
+  → External: LauncherExternalTerminal.launch → a fresh terminal session
+```
+
+Command text uses the selected shell's syntax. Script/executable arguments remain separate array elements.
+The built-in route requires the Ghostty Quake provider; external Terminal/iTerm2 control may require Automation
+permission. These user-started native commands are outside OmniShell widget HTTP consent and provider trust.
+Saved entries/defaults belong to `[launcher]` in `settings.toml`; see the [settings reference](/config/settings-reference/#launcher).
+
+### 4.16 OmniShell
+
+**Directory:** `Core/Shell/`, with `OmniWMScriptHost` hosting Luau and `OmniWMShellCore` handling layout/diff data.
+
+`ShellConfigurationCoordinator` resolves the selected profile and overrides, observes source/configuration inputs,
+and publishes configuration and source generations. `ShellWidgetSourceLoader` loads effective package sources.
+The main-actor `ShellWidgetHost` owns bar, island and popout instances; each `ShellWidgetPackage` actor owns its
+Luau VM, component lifecycle and service ledger. A root's configured components share its VM while retaining
+separate service owners, stores and instance state. View data subscriptions determine which feeds and views update.
+
+```text
+configuration/source observation
+  → ShellConfigurationCoordinator / ShellWidgetSourceLoader
+  → ShellWidgetHost → ShellWidgetPackage (Luau and retained component views)
+  → widget tree → OmniWMShellCore layout/diff → ShellLayerScene
+
+input or service completion
+  → owning package callback → changed state/dependencies → affected views
+```
+
+Package work uses its serial executor; `ShellLayerScene.engineQueue` handles scene work separately from the
+main-actor AppKit host. Native animation and gesture tracking do not require a Luau render for every sample.
+Source replacement retires the affected package or component generation, cancels its services and rejects late
+completions. Durable data lives in `ShellStore` and `ShellResourceStore`, outside the editable configuration.
+
+Declarations and approval have separate owners. A root/bar `settings.toml` or component manifest declares hosts;
+`ShellNetworkPermissions` applies user decisions and managed policy to HTTP requests and redirects.
+`ShellWidgetHost+Permissions` collects package approval requests and prunes them against current declarations.
+`ShellPermissionPrompts` observes that host, queues native prompts and passes choices to `ShellPermissionSettings`
+for persistence in `shellPermissions`. `ShellProvider` supervises native component programs only after source/command/digest
+trust, independently of HTTP host consent. Weather/Lyrics have their own service switches under the same effective
+organization policy. See [HTTP consent](/omnishell/reference/services/#consent-and-policy),
+[providers](/omnishell/reference/providers/) and [managed preferences](/config/managed-preferences/).
 
 ---
 

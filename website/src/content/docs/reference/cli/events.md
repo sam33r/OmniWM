@@ -29,7 +29,7 @@ core window relayout is not consumer-gated.
 | `windows-changed` | windows | Managed window inventory updates, including Niri column renumbering |
 | `display-changed` | displays | Full display snapshot after any adopted display add, remove, or reconfigure, after a gap-setting change, or when the interaction monitor changes; identical consecutive snapshots are not repeated |
 | `layout-changed` | workspaces | Workspace layout updates, including Niri column viewport changes |
-| `shell-widgets` | shell-widgets | Luau shell widget loads and failures, and problems in `shell.toml` and theme files. Unreleased: available when building from `main` |
+| `shell-widgets` | shell-widgets | Luau shell widget loads and failures, and problems in `shell.toml` and theme files |
 | `settings-changed` | settings | The same snapshot as [`query settings`](/reference/cli/queries/#settings), sent after any settings change: `omniwmctl settings`, the Settings window, or a reload of an edited `settings.toml`. Changes to settings the query leaves out, such as hotkeys, send it too, so clients know to re-read `query commands`. A burst of changes sends one snapshot. Fork: available in the sam33r/OmniWM fork |
 
 ## subscribe

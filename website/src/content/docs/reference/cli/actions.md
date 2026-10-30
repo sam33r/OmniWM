@@ -68,7 +68,7 @@ Marks give live managed windows unique names across workspaces. They last until 
 
 ## Window Gather
 
-Gather windows into one Niri column, in the order you list their opaque IDs. Unreleased: available when building from `main`.
+Gather windows into one Niri column, in the order you list their opaque IDs.
 
 ```
 omniwmctl window gather [--from workspace|monitor|all] <window-id>...
@@ -129,7 +129,7 @@ Configured monitor assignment remains enforced unless `--force` is present. A fo
 
 ## Shell Widgets
 
-Push values from any script to Luau bar widgets, open a widget's popout, switch the shell profile or theme, or copy a widget into your shell folder to edit it. Widgets read values as `ctx.data.vars[key]` and re-render when they change. Values last until OmniWM quits; they are not saved. Unreleased: available when building from `main`.
+Push values from any script to Luau bar widgets, open a widget's popout, switch the shell profile or theme, or copy a widget into your shell folder to edit it. Widgets read values as `ctx.data.vars[key]` and re-render when they change. Values last until OmniWM quits; they are not saved.
 
 ```
 omniwmctl shell set <key> <value...>
@@ -149,8 +149,8 @@ omniwmctl shell trigger <widget> <name> [value...]
 | `shell toggle <widget-or-drawer>` | Open or close the drawer of that name from `[drawer.<id>]` in `shell.toml`, or else the widget's popout on the focused display, under its bar slot, or at the top-right edge when the widget draws nothing in the bar. An unknown name returns `not_found` |
 | `shell profile <name>` | Set `profile` in `~/.config/omniwm/shell/shell.toml`. The name is `default` or a folder inside the shell folder. A missing folder returns `not_found`; the current profile returns `no_change`. The profile keeps its own settings and theme |
 | `shell theme <name> [scheme]` | Set the active profile's `profiles.<profile>.theme` in `~/.config/omniwm/shell/shell.toml`, or remove it when `<name>` is the profile's own theme. The name is `native` or a theme file in a `themes` folder of the shell folder, the active profile, `default/` or OmniWM's bundled themes. An unknown theme returns `not_found`; the current theme returns `no_change`. With `wallpaper`, a `scheme` such as `vibrant` also sets `profiles.<profile>.scheme`; a scheme with any other theme, or an unknown one, returns `invalid_arguments` |
-| `shell eject <widget>` | Copy the widget the active profile uses into `~/.config/omniwm/shell/widgets`, where it overrides the profile and OmniWM updates no longer replace it. A widget already there returns `no_change` |
-| `shell init <widget>` | Create a starter widget in `~/.config/omniwm/shell/widgets/<widget>`. Names use letters, digits, `-` and `_`; an existing folder returns `no_change` |
+| `shell eject <widget>` | Copy the widget the active profile uses into `~/.config/omniwm/shell/widgets/<widget>/` for an OmniWM-managed profile, or `~/.config/omniwm/shell/<profile>/widgets/<widget>/` for your own profile. A widget already at the destination returns `no_change` |
+| `shell init <widget>` | Create a starter widget at `~/.config/omniwm/shell/<profile>/widgets/<widget>/init.luau`, where `<profile>` is the selected profile (for example `default` or `lake`). Names use letters, digits, `-` and `_`; an existing folder at that destination returns `no_change` |
 | `shell trigger <widget> <name> [value...]` | Call the widget's `trigger(ctx, event)` with `event.name` and `event.value` on each instance it shows, then redraw it. A widget without a `trigger` function returns `not_found` |
 
 Keys use ASCII letters, digits, `_`, `-` and `.`, up to 64 bytes. Values are limited to 4096 bytes and 64 keys; anything else returns `invalid_arguments`.

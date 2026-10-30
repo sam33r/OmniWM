@@ -94,6 +94,7 @@ extension ShellWidgetHost {
         let next = barData()
         guard next != bars else { return }
         bars = next
+        refreshIslandData()
         if let popout, popout.key.placement == .bar, headless == nil, next[popout.key] == nil {
             closePopout()
         }
@@ -173,6 +174,8 @@ extension ShellWidgetHost {
             .first(where: { $0.generation == delivery.generation })
         {
             deliverDesktop(delivery.desktopRequests, package: package)
+            recordNetworkApprovals(delivery.networkApprovals)
+            recordProviderApprovals(delivery.providerApprovals)
         }
         guard delivery.generation == state.generation else { return }
         let previousDemand = demand(of: state)

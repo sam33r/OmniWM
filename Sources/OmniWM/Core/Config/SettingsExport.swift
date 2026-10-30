@@ -53,12 +53,15 @@ struct SettingsExport: Equatable {
     var animationSpeed: Double
     var language: String?
 
+    var launcher = LauncherConfiguration()
+
     var clipboard: Clipboard
 
     var quakeTerminal: QuakeTerminal
 
     var appearanceMode: AppearanceMode
     var tabRailAppIcons: Bool
+    var shellPermissions = ShellPermissionDecisions()
 
     struct Island: Codable, Equatable {
         var enabled: Bool
@@ -70,6 +73,7 @@ struct SettingsExport: Equatable {
 
     struct Focus: Codable, Equatable {
         var followsMouse: Bool
+        var followsMouseOnlyFullyVisible: Bool = false
         var edgeNavigationInterval: Double
         var raiseOnMouseFocus: Bool
         var lockModifier: FocusLockModifier
@@ -119,6 +123,8 @@ struct SettingsExport: Equatable {
         var edgeGaps: Bool?
         var resizeStepPercent: Int?
         var moveWindowStacksIntoColumn: Bool?
+        var allowOverscroll: Bool?
+        var overscrollVisibleStripPercent: Int?
     }
 
     struct Dwindle: Codable, Equatable {
@@ -161,6 +167,7 @@ struct SettingsExport: Equatable {
         var monitorMode: QuakeTerminalMonitorMode?
         var provider: QuakeTerminalProvider?
         var kitty: KittyQuakeSettings?
+        var foot: FootQuakeSettings?
     }
 
     struct Borders: Codable, Equatable {
@@ -317,6 +324,8 @@ extension SettingsExport.Focus {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         followsMouse = try container.decode(Bool.self, forKey: .followsMouse)
+        followsMouseOnlyFullyVisible = try container.decodeIfPresent(Bool.self, forKey: .followsMouseOnlyFullyVisible)
+            ?? Self.defaults().followsMouseOnlyFullyVisible
         edgeNavigationInterval = try container.decodeIfPresent(Double.self, forKey: .edgeNavigationInterval)
             ?? Self.defaults().edgeNavigationInterval
         raiseOnMouseFocus = try container.decode(Bool.self, forKey: .raiseOnMouseFocus)
@@ -401,7 +410,9 @@ extension SettingsExport.Niri {
             defaultContainerPrimarySpan: 0.5,
             edgeGaps: true,
             resizeStepPercent: BuiltInSettingsDefaults.niriResizeStepPercent,
-            moveWindowStacksIntoColumn: true
+            moveWindowStacksIntoColumn: true,
+            allowOverscroll: false,
+            overscrollVisibleStripPercent: 5
         )
     }
 }
@@ -451,7 +462,8 @@ extension SettingsExport.QuakeTerminal {
             backgroundBlurRadius: QuakeTerminalAppearancePolicy.disabledBackgroundBlurRadius,
             monitorMode: .focusedWindow,
             provider: .ghostty,
-            kitty: nil
+            kitty: nil,
+            foot: nil
         )
     }
 }

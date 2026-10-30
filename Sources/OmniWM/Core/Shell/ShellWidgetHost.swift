@@ -23,6 +23,7 @@ struct ShellCommandOrigin {
     var event = ShellEvent()
     var widget: String?
     var command: String?
+    var island = false
 }
 
 enum ShellRequest: Equatable, Sendable {
@@ -65,15 +66,24 @@ enum ShellSettingsPane: String, Sendable {
     case inputSource = "input-source"
     case wifi
     case bluetooth
+    case brightness
     case notifications
+    case focus
+    case screenshot
 
     var url: URL? {
+        if self == .screenshot {
+            return URL(fileURLWithPath: "/System/Applications/Utilities/Screenshot.app")
+        }
         let pane = switch self {
         case .battery: "com.apple.Battery-Settings.extension"
         case .inputSource: "com.apple.Keyboard-Settings.extension"
         case .wifi: "com.apple.wifi-settings-extension"
         case .bluetooth: "com.apple.BluetoothSettings"
+        case .brightness: "com.apple.Displays-Settings.extension"
         case .notifications: "com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles"
+        case .focus: "com.apple.Focus-Settings.extension"
+        case .screenshot: ""
         }
         return URL(string: "x-apple.systempreferences:\(pane)")
     }
@@ -82,6 +92,9 @@ enum ShellSettingsPane: String, Sendable {
 enum ShellAction: Equatable, Sendable {
     case wm(ShellRequest)
     case volume(ShellVolumeCommand)
+    case microphone(ShellMicrophoneCommand)
+    case brightness(ShellBrightnessCommand)
+    case awake(ShellAwakeCommand)
     case media(ShellMediaCommand)
     case calendar(ShellCalendarCommand)
     case reminders(ShellRemindersCommand)
@@ -92,9 +105,12 @@ enum ShellAction: Equatable, Sendable {
     case session(ShellSessionCommand)
     case settings(ShellSettingsPane)
     case toggle(widget: String)
+    case trigger(widget: String, name: String, value: String?)
 
     private static let domains: [String: @Sendable ([String]) -> ShellAction?] = [
         "volume": { ShellVolumeCommand(words: $0).map(ShellAction.volume) },
+        "microphone": { ShellMicrophoneCommand(words: $0).map(ShellAction.microphone) },
+        "brightness": { ShellBrightnessCommand(words: $0).map(ShellAction.brightness) },
         "media": { ShellMediaCommand(words: $0).map(ShellAction.media) },
         "calendar": { ShellCalendarCommand(words: $0).map(ShellAction.calendar) },
         "reminders": { ShellRemindersCommand(words: $0).map(ShellAction.reminders) },
@@ -102,13 +118,20 @@ enum ShellAction: Equatable, Sendable {
         "input-source": { ShellInputSourceCommand(words: $0).map(ShellAction.inputSource) },
         "wifi": { ShellWiFiCommand(words: $0).map(ShellAction.wifi) },
         "bluetooth": { ShellBluetoothCommand(words: $0).map(ShellAction.bluetooth) },
-        "session": { ShellSessionCommand(words: $0).map(ShellAction.session) }
+        "session": {
+            ShellAwakeCommand(words: $0).map(ShellAction.awake)
+                ?? ShellSessionCommand(words: $0).map(ShellAction.session)
+        }
     ]
 
     init?(_ text: String) {
         let words = text.split(whereSeparator: \.isWhitespace).map(String.init)
         if words.count == 3, words[0] == "shell", words[1] == "toggle" {
             self = .toggle(widget: words[2])
+        } else if words.count >= 4, words[0] == "shell", words[1] == "trigger" {
+            let value = words.count > 4 ? words[4...].joined(separator: " ") : nil
+            guard IPCShellRequest.trigger(widget: words[2], name: words[3], value: value).isValid else { return nil }
+            self = .trigger(widget: words[2], name: words[3], value: value)
         } else if words.count == 2, words[1] == "settings", let pane = ShellSettingsPane(rawValue: words[0]) {
             self = .settings(pane)
         } else if let parse = words.first.flatMap({ Self.domains[$0] }) {
@@ -238,6 +261,7 @@ final class ShellWidgetHost {
         var backgroundDemand: UInt64 = 0
         var declaration = ShellWidgetDeclaration()
         var assetPackages: [String: URL] = [:]
+        var declaredHosts: Set<String> = []
         var componentDescriptors: [ShellComponentDescriptor] = []
 
         init(name: String, sourceURL: URL) {
@@ -254,6 +278,16 @@ final class ShellWidgetHost {
     lazy var dropIngress = ShellDropIngress(resources: resourceStore)
     let focusPolicyEngine: FocusPolicyEngine?
     let sessionToken: String
+    let permissions: ShellNetworkPermissions
+    var networkApprovals: [ShellNetworkApproval.Key: ShellNetworkApproval] = [:] {
+        didSet { if networkApprovals != oldValue { onApprovalsChange?() } }
+    }
+
+    var providerApprovals: [ShellProviderApproval.Key: ShellProviderApproval] = [:] {
+        didSet { if providerApprovals != oldValue { onApprovalsChange?() } }
+    }
+
+    var onApprovalsChange: (@MainActor () -> Void)?
     var config = ShellConfig()
     let configurationCatalogLoader = ShellConfigurationCatalogLoader()
     var configurationCatalog: ShellConfigurationCatalog?
@@ -322,9 +356,11 @@ final class ShellWidgetHost {
     var placedSlots: [Monitor.ID: [WorkspaceBarShellWidget]] = [:]
     var popout: ShellPopout?
     var hiddenBarMenu: ShellHiddenBarMenu?
+    var hiddenBarMenuHosts: Set<String> = []
     var onHiddenBarMenuClose: (@MainActor () -> Void)?
     var closingPopout: ShellPopout?
     var drawer: ShellEdgeDrawer?
+    var islandDrawer: (id: String, monitor: Monitor.ID)?
     var closingDrawer: ShellEdgeDrawer?
     var drawerKeys: [String: ShellBarKey] = [:]
     var onBadgesDemandChange: (@MainActor (Bool) -> Void)?
@@ -347,6 +383,7 @@ final class ShellWidgetHost {
         resourceStore: ShellResourceStore? = nil,
         focusPolicyEngine: FocusPolicyEngine? = nil,
         sessionToken: String = "",
+        permissions: ShellNetworkPermissions = ShellNetworkPermissions(),
         world: @escaping @MainActor () -> ShellWorldData,
         vars: @escaping @MainActor () -> [String: String],
         bars: @escaping @MainActor () -> [ShellBarKey: ShellBarData],
@@ -373,6 +410,7 @@ final class ShellWidgetHost {
             ))
         self.focusPolicyEngine = focusPolicyEngine
         self.sessionToken = sessionToken
+        self.permissions = permissions
         self.world = world
         self.vars = vars
         barData = bars

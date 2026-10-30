@@ -112,7 +112,8 @@ extension ShellWidgetHost {
                 anchor: click.anchor,
                 event: click.event,
                 widget: state.name,
-                command: command
+                command: command,
+                island: key.placement == .island
             ),
             for: state
         )
@@ -122,6 +123,9 @@ extension ShellWidgetHost {
         switch action {
         case let .wm(request): onCommand(request, origin)
         case let .volume(command): ShellAudio.perform(command, appVolumes: resources.appVolumes)
+        case let .microphone(command): ShellAudio.perform(command)
+        case let .brightness(command): resources.devices.brightness.perform(command)
+        case let .awake(command): resources.keepAwake(command)
         case let .media(command): resources.media?.perform(command)
         case let .calendar(command): resources.calendar?.perform(command)
         case let .reminders(command): resources.calendar?.perform(command)
@@ -157,15 +161,17 @@ extension ShellWidgetHost {
             }
         case let .toggle(widget):
             if !toggle(widget, on: origin.monitor) {
-                report(
-                    state,
-                    ShellScriptFailure(
-                        kind: .runtime,
-                        message: "shell toggle: no widget or drawer named \"\(widget)\""
-                    )
-                )
+                reportMissing("shell toggle: no widget or drawer named \"\(widget)\"", for: state)
+            }
+        case let .trigger(widget, name, value):
+            if !trigger(widget, name: name, value: value) {
+                reportMissing("shell trigger: no widget named \"\(widget)\" with a trigger hook", for: state)
             }
         }
+    }
+
+    private func reportMissing(_ message: String, for state: WidgetState) {
+        report(state, ShellScriptFailure(kind: .runtime, message: message))
     }
 
     var hiddenBarWidget: String? {
@@ -206,6 +212,8 @@ extension ShellWidgetHost {
         let state = WidgetState(name: "hidden-bar-menu", sourceURL: url)
         do {
             let source = try widgetSource(of: state)
+            hiddenBarMenuHosts = source.declaredHosts
+            pruneApprovals()
             onHiddenBarMenuClose = onClose
             hiddenBarMenu = ShellHiddenBarMenu(
                 page: page,
@@ -217,6 +225,9 @@ extension ShellWidgetHost {
                 resourceStore: resourceStore,
                 source: source,
                 directories: folders(of: state),
+                permissions: permissions,
+                onNetworkApprovals: { [weak self] in self?.recordNetworkApprovals($0) },
+                onProviderApprovals: { [weak self] in self?.recordProviderApprovals($0) },
                 onSelect: onSelect,
                 onFailure: { [weak self] in self?.closeHiddenBarMenu() },
                 onDismiss: dismiss
@@ -239,6 +250,14 @@ extension ShellWidgetHost {
         let onClose = onHiddenBarMenuClose
         onHiddenBarMenuClose = nil
         onClose?()
+    }
+
+    func refreshHiddenBarMenuHosts() {
+        guard !hiddenBarMenuHosts.isEmpty, hiddenBarMenu == nil else { return }
+        let url = config.widget("hidden-bar-menu") ?? ShellConfig.bundledWidget("hidden-bar-menu")
+        hiddenBarMenuHosts = url.flatMap {
+            try? widgetSource(of: WidgetState(name: "hidden-bar-menu", sourceURL: $0)).declaredHosts
+        } ?? []
     }
 
     func togglePopout(

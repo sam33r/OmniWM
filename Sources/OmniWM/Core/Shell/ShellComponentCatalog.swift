@@ -54,13 +54,13 @@ struct ShellComponentCapabilities: Equatable, Sendable {
     var files = false
     var clipboard = false
     var provider = false
+    var purpose: String?
 }
 
 struct ShellComponentInstance: Equatable, Sendable {
     let id: String
     let widget: String
     var enabled = true
-    var provider = false
     var options: [String: ShellComponentValue] = [:]
     var capabilities: ShellComponentCapabilities?
 }
@@ -112,6 +112,24 @@ struct ShellComponentDescriptor: Equatable, Sendable {
     let capabilities: ShellComponentCapabilities
     let providerCommand: [String]?
     let folder: URL
+    let principal: ShellWidgetPrincipal
+
+    init(
+        widget: String, title: String, icon: String, views: [String], uses: [String],
+        options: [String: ShellComponentOption], capabilities: ShellComponentCapabilities,
+        providerCommand: [String]?, folder: URL
+    ) {
+        self.widget = widget
+        self.title = title
+        self.icon = icon
+        self.views = views
+        self.uses = uses
+        self.options = options
+        self.capabilities = capabilities
+        self.providerCommand = providerCommand
+        self.folder = folder
+        principal = ShellWidgetPrincipal(role: .component, name: widget, folder: folder)
+    }
 
     func validate(_ instance: ShellComponentInstance) throws -> ShellComponentInstance {
         var result = instance
@@ -130,8 +148,9 @@ struct ShellComponentDescriptor: Equatable, Sendable {
 enum ShellComponentCatalog {
     static let rootModuleLimit = 512
     static let instanceLimit = 64
+    static let purposeLimit = 300
     static let reservedOptions: Set<String> = [
-        "id", "widget", "enabled", "provider", "capabilities", "commands", "network", "files", "clipboard"
+        "id", "widget", "enabled", "capabilities", "commands", "network", "files", "clipboard"
     ]
 
     struct Failure: Error, LocalizedError {
@@ -168,16 +187,16 @@ enum ShellComponentCatalog {
                   case let .string(widget)? = table["widget"], validName(widget)
             else { throw Failure("[island] each component needs a unique id and a widget name") }
             var instance = ShellComponentInstance(id: id, widget: widget)
-            for key in ["enabled", "provider"] where table[key] != nil {
+            for key in ["enabled"] where table[key] != nil {
                 guard case let .boolean(flag)? = table[key] else {
                     throw Failure("[island] component \(id): \(key) must be boolean")
                 }
-                if key == "enabled" { instance.enabled = flag } else { instance.provider = flag }
+                instance.enabled = flag
             }
             if let capabilities = table["capabilities"] {
                 instance.capabilities = try parseCapabilities(capabilities, place: id)
             }
-            for (key, node) in table where !["id", "widget", "enabled", "provider", "capabilities"].contains(key) {
+            for (key, node) in table where !["id", "widget", "enabled", "capabilities"].contains(key) {
                 guard !reservedOptions.contains(key), let value = ShellComponentValue(node) else {
                     throw Failure("[island] component \(id): invalid option \(key)")
                 }
@@ -215,7 +234,7 @@ enum ShellComponentCatalog {
             throw Failure("\(widget) uses must contain unique component names")
         }
         let options = try parseOptions(table["options"], place: widget)
-        let capabilities = try parseCapabilities(table["capabilities"], place: widget)
+        let capabilities = try parseCapabilities(table["capabilities"], place: widget, describesPurpose: true)
         var command: [String]?
         if let node = table["provider"] {
             guard case let .table(provider) = node else { throw Failure("\(widget) provider must be a table") }
@@ -266,13 +285,14 @@ enum ShellComponentCatalog {
 
     static func configurationBytes(
         instances: [ShellComponentInstance],
-        descriptors: [ShellComponentDescriptor]
+        descriptors: [ShellComponentDescriptor],
+        permissions: ShellNetworkPermissions = ShellNetworkPermissions()
     ) -> [UInt8] {
         let descriptors = Dictionary(uniqueKeysWithValues: descriptors.map { ($0.widget, $0) })
         var writer = ShellValueWriter()
         writer.array(instances.count)
         for instance in instances {
-            writer.map(6)
+            writer.map(7)
             writer.key("id")
             writer.string(instance.id)
             writer.key("widget")
@@ -281,8 +301,16 @@ enum ShellComponentCatalog {
             writer.string(descriptors[instance.widget]?.title ?? instance.widget)
             writer.key("enabled")
             writer.bool(instance.enabled)
+            let descriptor = descriptors[instance.widget]
+            let declared = descriptor?.authorizesProvider(instance) == true
+            writer.key("providerDeclared")
+            writer.bool(declared)
             writer.key("provider")
-            writer.bool(descriptors[instance.widget]?.authorizesProvider(instance) == true)
+            writer.bool(declared && descriptor.flatMap { descriptor in
+                descriptor.providerCommand.flatMap {
+                    permissions.approvedDigest(for: descriptor.principal, command: $0)
+                }
+            } != nil)
             writer.key("options")
             writer.map(instance.options.count)
             for key in instance.options.keys.sorted() {
@@ -308,7 +336,7 @@ enum ShellComponentCatalog {
         return options
     }
 
-    private static func option(_ node: TOMLNode, key: String, widget: String) throws -> ShellComponentOption {
+    static func option(_ node: TOMLNode, key: String, widget: String) throws -> ShellComponentOption {
         let place = "\(widget) option \(key)"
         guard case let .table(table) = node, case let .string(type)? = table["type"],
               let kind = ShellComponentOption.Kind(rawValue: type)
@@ -352,11 +380,15 @@ enum ShellComponentCatalog {
         }
     }
 
-    private static func parseCapabilities(_ node: TOMLNode?, place: String) throws -> ShellComponentCapabilities {
+    private static func parseCapabilities(
+        _ node: TOMLNode?, place: String, describesPurpose: Bool = false
+    ) throws -> ShellComponentCapabilities {
         guard let node else { return ShellComponentCapabilities() }
         guard case let .table(table) = node else { throw Failure("\(place) capabilities must be a table") }
-        try checkKeys(table, allowed: ["commands", "network", "provider", "files", "clipboard"], place: place)
+        let keys: Set<String> = ["commands", "network", "files", "clipboard"]
+        try checkKeys(table, allowed: describesPurpose ? keys.union(["provider", "purpose"]) : keys, place: place)
         var result = ShellComponentCapabilities()
+        result.purpose = try purpose(table["purpose"], place: place)
         result.commands = try strings(table["commands"], fallback: [], place: "\(place) commands")
         result.network = try strings(table["network"], fallback: [], place: "\(place) network")
         for key in ["provider", "files", "clipboard"] where table[key] != nil {
@@ -368,11 +400,22 @@ enum ShellComponentCatalog {
         return result
     }
 
-    static func rootNetwork(_ node: TOMLNode?, place: String) throws -> [String] {
-        guard let node else { return [] }
+    static func rootCapabilities(_ node: TOMLNode?, place: String) throws -> ShellComponentCapabilities {
+        guard let node else { return ShellComponentCapabilities() }
         guard case let .table(table) = node else { throw Failure("\(place) capabilities must be a table") }
-        try checkKeys(table, allowed: ["network"], place: place)
-        return try strings(table["network"], fallback: [], place: "\(place) network")
+        try checkKeys(table, allowed: ["network", "purpose"], place: place)
+        var result = ShellComponentCapabilities()
+        result.network = try strings(table["network"], fallback: [], place: "\(place) network")
+        result.purpose = try purpose(table["purpose"], place: place)
+        return result
+    }
+
+    private static func purpose(_ node: TOMLNode?, place: String) throws -> String? {
+        guard let node else { return nil }
+        guard case let .string(value) = node, value.count <= purposeLimit else {
+            throw Failure("\(place) purpose must be a string of at most \(purposeLimit) characters")
+        }
+        return value
     }
 
     private static func checkKeys(_ table: [String: TOMLNode], allowed: Set<String>, place: String) throws {

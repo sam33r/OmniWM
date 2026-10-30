@@ -23,6 +23,27 @@ OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling wi
 
 ---
 
+### 🛠️ Maintainers
+
+<table align="center">
+  <tr>
+    <td nowrap>
+      <a href="https://github.com/Guria" title="Aleksei Gurianov">
+        <img src="https://github.com/Guria.png?size=96" width="72" alt="Aleksei Gurianov">
+      </a>
+      <a href="https://github.com/dappermint" title="millia ampora">
+        <img src="https://github.com/dappermint.png?size=96" width="72" alt="millia ampora">
+      </a>
+      <a href="https://github.com/rickythefox" title="Richard G">
+        <img src="https://github.com/rickythefox.png?size=96" width="72" alt="Richard G">
+      </a>
+      <a href="https://github.com/hezhizhen" title="Zhizhen He">
+        <img src="https://github.com/hezhizhen.png?size=96" width="72" alt="Zhizhen He">
+      </a>
+    </td>
+  </tr>
+</table>
+
 ### 🏢 By Employer
 
 <table align="center">
@@ -128,6 +149,23 @@ OmniWM is a free, open-source, Developer ID-signed and Apple-notarized tiling wi
       <a href="https://github.com/MuhammadKh"><strong>muhammadkh</strong></a>
       <br>
       <sub>@MuhammadKh</sub>
+    </td>
+    <td align="center" valign="top">
+      <a href="https://github.com/inDriver">
+        <img src="https://avatars.githubusercontent.com/u/22284207?v=4" width="72" alt="inDrive">
+      </a>
+      <br>
+      <a href="https://github.com/inDriver"><strong>inDrive</strong></a>
+      <br>
+      <sub>━━━━━━━━</sub>
+      <br>
+      <a href="https://github.com/dappermint" title="millia ampora">
+        <img src="https://github.com/dappermint.png?size=96" width="72" alt="millia ampora">
+      </a>
+      <br>
+      <a href="https://github.com/dappermint"><strong>millia ampora</strong></a>
+      <br>
+      <sub>@dappermint</sub>
     </td>
     <td align="center" valign="top">
       <a href="https://github.com/liip">
@@ -647,6 +685,7 @@ OmniWM is built for high responsiveness and smooth, crisp animations.
 - **SIP stays enabled** — Official OmniWM releases do not require disabling System Integrity Protection.
 - **Signed and notarized releases** — Official release builds are Developer ID signed and Apple-notarized.
 - **Free and open source** — OmniWM has no subscriptions, feature paywalls, trial limits, or usage caps and is licensed GPL-2.0-only.
+- **OmniShell network consent (Unreleased: available when building from `main`)** — Widgets need declared hosts and user consent or organization preapproval; native programs need trust tied to their executable and command. **Settings > Network & Permissions** manages those decisions and the built-in Weather and Lyrics switches, both on by default. Organization policies can block them. See [network permissions](https://omniwm.app/omnishell/reference/services/#consent-and-policy) and [managed preferences](https://omniwm.app/config/managed-preferences/).
 
 ## Requirements
 
@@ -654,8 +693,8 @@ OmniWM is built for high responsiveness and smooth, crisp animations.
 - Hidden Bar concealment and optional issue-report rewriting require macOS 27 or later; rewriting also requires enabled Apple Intelligence and an available local model
 - Accessibility and Input Monitoring permissions (required at launch)
 - Screen Recording permission for Overview thumbnails, drag previews, and captured Hidden Bar glyphs (optional)
-- Full Disk Access permission for Hidden Bar concealment (optional)
-- System Audio Recording permission for per-app volume, Calendars access for the calendar widget, Location for the Wi-Fi widget's network name and Bluetooth for the Bluetooth widget in the Luau shell (optional; when building from `main`)
+- Full Disk Access permission for Hidden Bar concealment and the OmniShell Notifications widget (optional); notification replies and dismissal also use Accessibility
+- System Audio Recording permission for per-app volume, Calendars access for the calendar widget, Location for the Wi-Fi widget's network name and Bluetooth for the Bluetooth widget in the Luau shell (optional)
 - Displays have separate spaces **ON** (the macOS default; OmniWM pauses window management until it is enabled)
 
 ## Installation
@@ -738,7 +777,7 @@ To try one with a Homebrew or GitHub Releases install:
 2. Quit OmniWM, then download the newest [canary build](https://github.com/OmniNull/OmniWM/releases?q=canary) and replace `OmniWM.app` in `/Applications` with the app from its ZIP
 3. Relaunch OmniWM. It uses your existing settings
 
-**Unreleased:** Canary builds check only for newer published Canary releases. Stable builds continue to check only stable releases. Updates stay manual: download from the release page, or use `brew upgrade --cask omniwm@canary` if you installed that Homebrew cask and its new version is available. Older Canary builds need one manual update to gain Canary update checks.
+Canary builds check only for newer published Canary releases. Stable builds continue to check only stable releases. Updates stay manual: download from the release page, or use `brew upgrade --cask omniwm@canary` if you installed that Homebrew cask and its new version is available. Older Canary builds need one manual update to gain Canary update checks.
 
 To return to stable, quit OmniWM. If you installed `omniwm@canary`, run `brew uninstall --cask omniwm@canary` followed by `brew install --cask omniwm`. For an existing `omniwm` Homebrew install, run `brew reinstall --cask omniwm`; for a direct download, replace the app with the [latest release](https://github.com/OmniNull/OmniWM/releases/latest). If stable cannot read settings saved by a canary, quit OmniWM and restore your copy. When reporting a canary bug, include its release link.
 
@@ -888,7 +927,7 @@ When you create workspace 10 or higher, Settings > Keyboard Shortcuts adds its S
 | Previous Track | `Unassigned` | `Shared` |
 | Toggle `<drawer or widget>` | `Unassigned` | `Shared` |
 
-The volume, media and Toggle actions are available when building from `main`. Settings > Keyboard Shortcuts lists a Toggle action for every shell drawer and every shell widget with a popout.
+Settings > Keyboard Shortcuts lists a Toggle action for every shell drawer and every shell widget with a popout.
 
 #### Move Window
 
@@ -1031,13 +1070,17 @@ OmniWM remembers one custom size and position. It reuses that frame when it fits
 
 Quake Terminal loads Ghostty's normal configuration files and their included files, so font, theme, and other terminal preferences can be shared. OmniWM applies its Quake background opacity and effect afterward; configure those in **Settings → Quake Terminal**.
 
+Select **Kitty** under **Settings → Quake Terminal → Terminal** to use Kitty's quick-access terminal. Install Kitty separately. It uses `quick-access-terminal.conf`, with optional placement, auto-hide, and opacity overrides in OmniWM. The Ghostty settings and shortcuts above apply to the embedded provider. See the [Kitty provider guide](https://omniwm.app/features/quake-terminal/#kitty-provider).
+
+**Unreleased: available when building from `main`.** Select **foot** to use the Quake terminal of [foot for macOS](https://github.com/gobijan/foot-macos) 1.28.0-macos.8 or newer, installed separately. OmniWM runs a dedicated foot server that it keeps for reuse. It uses `foot.ini`, with optional placement, auto-hide, opacity and dim overrides that apply the next time the panel is shown; dimming is off by default. foot has no tabs or splits, and the regular foot app's own `` Option + ` `` hotkey can clash with OmniWM's shortcut. See the [foot provider guide](https://omniwm.app/features/quake-terminal/#foot-provider).
+
 #### Command Palette
 
 Quickly search windows, app menus, clipboard history, OmniWM commands, applications, or files from one shared palette:
 
 - Open it from the global shortcut shown in `Keyboard Shortcuts`
 - Use `Tab` / `Shift + Tab` to cycle forward or backward through the available modes
-- Use `Cmd + 1` for `Windows`, `Cmd + 2` for `Menu`, `Cmd + 3` for `Clipboard`, `Cmd + 4` for `Commands`, `Cmd + 5` for `Applications`, and `Cmd + 6` for `Files`
+- Use `Cmd + 1` for `Windows`, `Cmd + 2` for `Menu`, `Cmd + 3` for `Clipboard`, `Cmd + 4` for `Commands`, `Cmd + 5` for `Launcher`, and `Cmd + 6` for `Files`
 - Type to search; mark-name matches come first in Windows mode, then window title, app name, and workspace name, with focus recency breaking ties
 - Windows mode shows window marks and finds windows by mark name; its Mark and Remove Mark buttons act on the selected window
 - Menu results always show keyboard shortcuts when available
@@ -1048,9 +1091,11 @@ Quickly search windows, app menus, clipboard history, OmniWM commands, applicati
 - Windows from macOS-hidden apps remain searchable with a Hidden badge; selecting one unhides its app and focuses that exact window
 - In Windows mode, `Shift + Enter` summons the selected window to the right when available, or moves it into an empty current workspace, including floating windows. Floating windows cannot be summoned right
 - In Clipboard mode, `Enter` copies the selected entry; `Shift + Enter` pastes it into the previous app when that target is still available
-- Applications and Files open in a browse grid; switch either mode to a list from the view menu
+- Launcher and Files open in a browse grid; switch either mode to a list from the view menu
 - Files shows recent documents before typing, supports type filters, and can reveal a selection in Finder with `Cmd + Enter`
 - `Escape` dismisses the palette
+
+**Unreleased: available when building from `main`.** Launcher adds saved commands, scripts and CLI tool discovery to the former Applications mode. Configure entries in **Settings > Launcher**; see the [Launcher guide](https://omniwm.app/features/command-palette/#launcher) and [TOML reference](https://omniwm.app/config/settings-reference/#launcher).
 
 Clipboard history starts disabled. Open Clipboard mode (`Cmd + 3`) and click **Enable**, or set `clipboard.historyEnabled = true` in `settings.toml`. History retains text, rich text, HTML, images, file references, and safe native formats within the configured limits; concealed, transient, and recognized password-manager content is skipped. A selected item has a preview, each row can be pasted or pinned, and Clear removes unpinned history. See the [command palette guide](https://omniwm.app/features/command-palette/#clipboard-history) for storage details.
 
@@ -1064,10 +1109,10 @@ Overview supports [trackpad opening and closing](https://omniwm.app/features/ove
 
 See all windows at once with thumbnails:
 - Open it from the global shortcut shown in `Keyboard Shortcuts`
-- Configure the 50–150% baseline zoom plus backdrop and window-border colors in **Settings → Overview**
+- Configure the 50–150% zoom, scrolling controls, and backdrop and window-border colors in **Settings → Overview**
 - Click a window to focus it
 - Type to filter/search windows; `Backspace` deletes search text
-- `Alt (Option) + Shift + Mouse Scroll` temporarily zooms the current overview; the next opening starts from the configured baseline
+- `Alt (Option) + Shift + Mouse Scroll` changes the zoom; closing Overview saves it for the next opening
 - `Arrow Keys` navigate spatially; `Left` / `Right` stay within the current workspace. `Tab` / `Shift + Tab` cycle forward or backward through matching windows, and keyboard navigation automatically scrolls the selected thumbnail into view
 - Assigned structural move, reorder, consume/expel, and workspace-transfer shortcuts operate on the selected thumbnail while Overview is open
 - In Niri workspaces, reorder windows and columns, consume or expel windows, move windows into or out of columns, move windows across workspaces and monitors, and move whole columns between Niri workspaces
@@ -1091,20 +1136,20 @@ A visual indicator showing your workspaces:
 - Optionally show a System Stats button that opens a CPU, memory, GPU, disk, and uptime popup. `Toggle System Stats` and `omniwmctl command toggle-system-stats` drive the same popup, and both do nothing unless a monitor currently shows that workspace-bar button
 - Optionally hide the bar on a monitor while that monitor shows a macOS native fullscreen window, and bring it back on exit (`Hide in Native Fullscreen`); reserved tiled layout space is left untouched so windows do not shuffle around the fullscreen session
 - Exclude individual apps or choose alternate app icons across all monitors in Settings
-- When building from `main`, the bar is drawn by Luau widgets in `~/.config/omniwm/shell/` that you can restyle or replace, with the Wayline, Nocturne and Celestial styles and twelve colour themes bundled; see [OmniShell](https://omniwm.app/features/luau-shell/)
-- Add **Notifications** from **Bar Widgets** to browse retained macOS notifications. Its Details view includes participants, attachments, action definitions and native metadata, also available to widgets through `ctx.data.notifications`. The feed reads Notification Center's database on changes; native persistence can delay updates by several seconds. The widget shows storage-access errors and links to Full Disk Access settings. Reply and dismiss definitions are metadata; the widget does not execute those native actions.
+- The bar is drawn by Luau widgets in `~/.config/omniwm/shell/` that you can restyle or replace, with optional styles in `styles/` and bundled colour themes; see [OmniShell](https://omniwm.app/features/luau-shell/)
+- **Notifications (Unreleased: available when building from `main`)** browses retained macOS notifications. If absent from your bar, add it under **Settings → Styles & Widgets → Bar → Add Widget…**. It needs Full Disk Access to read Notification Center's database; native persistence can delay updates by several seconds. Dismiss, Clear All and supported replies use Notification Center through Accessibility. A submitted reply confirms the native action was dispatched, not delivery to its recipient. Details and `ctx.data.notifications` expose participants, attachments, action definitions and native metadata. See [Notifications](https://omniwm.app/features/workspace-bar/#notifications) for setup and action limits.
 - The editable effects library includes native motion presets, Metal lighting and reveal masks. Add `effects-lab` to a bar lane in `shell.toml` to explore them with blur and glass materials; see [Effects library](https://omniwm.app/omnishell/reference/effects-shaders/).
 
 Workspace-bar appearance controls are optional and also support per-monitor overrides:
 
 - **Automatically hide and show** reveals the bar when the pointer touches its edge and hides it after the pointer moves inward past the bar and interactions end, without reserving layout space. Set `workspaceBar.autoHide = true`; the default is `false`.
-- **Transparent Background** removes the outer bar material, tint, and border; icons remain clickable. It takes precedence over **Solid Black Background**.
-- **Solid Black Background** uses opaque black instead of the outer bar's material and tint.
+- **Transparent Background** removes the outer bar material, tint, and border; icons remain clickable.
+- **Solid Black Background** uses opaque black instead of the outer bar's material and tint. It takes precedence over **Transparent Background** when both are enabled.
 - **Inactive Icon Opacity** adjusts non-focused app icons. Leaving it unset preserves the standard opacity for each kind of item; hidden-app icons retain their hidden-state appearance. Values are limited to 0–1, and nonfinite values are treated as unset.
 - Disable **Show Item Backgrounds** to remove the backgrounds behind workspace groups, floating windows, scratchpads, and the stats button.
 - Disable **Show Accent Highlights** to remove focused-item accent outlines and glows without changing focus behavior.
 - **Bottom / Left / Right placement** docks at the usable display edge. Side bars stack upright content and scroll when needed; **Bar Thickness** controls their width. See [Workspace Bar](website/src/content/docs/features/workspace-bar.md) for details.
-- **Fill Left of Notch** covers the menu-bar band from the display's left edge to the notch, or to the display midpoint when no notch is present. This deliberately covers application menus; choose another notch mode to access them again. At top positions, this mode uses the menu-bar height, overrides position/offset/height controls, and does not reserve extra tiled layout space. It always hides on displays showing native fullscreen content. Bottom/Left/Right ignore notch modes and follow **Hide in Native Fullscreen**.
+- **Fill Left of Notch** covers the menu-bar band from the display's left edge to the notch, or to the display midpoint when no notch is present. This deliberately covers application menus; choose another notch mode to access them again. At top positions, this mode uses the menu-bar height and overrides position/offset/height controls. With **Reserve Layout Space** on and automatic hiding off, a visible bar can reserve space where it overlaps the usable display area, such as on a display without a notch whose system menu bar is automatically hidden. It always hides on displays showing native fullscreen content. Bottom/Left/Right ignore notch modes and follow **Hide in Native Fullscreen**.
 
 Existing appearance stays unchanged until you opt in. For example, edit these keys inside the existing `[workspaceBar]` table (do not replace the complete configuration with this fragment):
 
@@ -1145,10 +1190,10 @@ If you need more features for hiding status bar icons, I recommend [Thaw](https:
 
 - **Workspaces** - Create named workspaces in Settings to organize by project or context (You can use emojis 🥳)
 - **App Rules** - Exclude problematic apps from tiling or assign them to specific workspaces
-- **Mouse** - Hold the configured mouse-move modifier and drag tiled windows. **Unreleased:** drop at another tile's center to swap or near one of its edges to insert on that side; in Niri the edges facing neighboring columns open a new column, and Dwindle also inserts between existing splits or at the workspace's outer edges. Dwindle moves whole tiles, including their tab groups. Drops on another display work the same way, between Niri and Dwindle too. The modifier defaults to `Option` and can be changed or disabled in **Settings → Mouse & Trackpad**. In Overview, dragging a thumbnail needs no modifier and targets a workspace, window position, or Niri column gap
+- **Mouse** - Hold the configured mouse-move modifier and drag tiled windows. Drop at another tile's center to swap or near one of its edges to insert on that side; in Niri the edges facing neighboring columns open a new column, and Dwindle also inserts between existing splits or at the workspace's outer edges. Dwindle moves whole tiles, including their tab groups. Drops on another display work the same way, between Niri and Dwindle too. The modifier defaults to `Option` and can be changed or disabled in **Settings → Mouse & Trackpad**. In Overview, dragging a thumbnail needs no modifier and targets a workspace, window position, or Niri column gap
 - **Mouse Resize** - Hold the configured right-mouse resize modifier (`Option` by default) and right-drag a tiled window to resize it in either layout
 - **Scroll Gestures (Mouse)** - Hold `Option + Shift + Mouse Scroll Wheel` (default, configurable) to scroll along the active Niri primary axis: left/right in horizontal orientation or up/down in vertical orientation
-- **Trackpad Gestures** - Use 2/3/4-finger gestures (configurable) along the active Niri primary axis; direction can be inverted
+- **Trackpad Gestures** - Use 3- or 4-finger gestures (configurable) to scroll along the active Niri primary axis; direction can be inverted. Workspace switching and window move/resize also support two fingers
 - **Window Move & Resize (Trackpad)** - Opt-in in Settings → Mouse & Trackpad: drag without clicking to move or resize the tiled window under the cursor in either layout; lift your fingers to drop. Defaults are four fingers to move and three to resize. Column scrolling is on by default with three fingers, so the Resize row first offers **Set Up…**; pick another finger count (two fingers can intercept normal scrolling in apps) or turn off **Scroll columns**. Choose finger counts unused by other enabled gestures; **Set Up…** previews conflicts and lets you choose which gestures to turn off before applying the assignment. Turn off matching macOS gestures in System Settings → Trackpad → More Gestures to prevent them firing alongside window gestures.
 - **Workspace Swipe (Trackpad)** - Opt-in in Settings → Mouse & Trackpad: swipe with a configurable finger count (2/3/4) and axis (horizontal/vertical) to switch to the next/previous workspace on the monitor under the cursor, one switch per swipe; when sharing fingers with enabled column scrolling in Niri, workspace swipes use the perpendicular axis on each display; otherwise they use the selected axis. For vertical swipes with three or four fingers, first turn off Mission Control in  → System Settings → Trackpad → More Gestures so macOS does not intercept the gesture.
 
@@ -1286,4 +1331,6 @@ The similarly named files under `docs/` are compatibility stubs that direct old 
 
 OmniWM is licensed under the [GNU General Public License v2.0-only](LICENSE). Copyright (C) 2026 OmniNull — https://github.com/OmniNull/OmniWM.
 
-Every OmniWM source file carries an SPDX license header. The vendored Luau runtime in `Sources/OmniWMLuau` keeps its MIT license (`LICENSE.txt` and `lua_LICENSE.txt`), and app builds ship both texts in `Contents/Resources/Licenses`. The Nocturne and Wayline shell themes use colours from [Noctalia](https://github.com/noctalia-dev/noctalia) and [Wayle](https://github.com/wayle-rs/wayle), both MIT. The Catppuccin, Dracula, Everforest, Gruvbox, Kanagawa, Nord and Rosé Pine shell themes adapt those MIT colour schemes through the same two projects. The bundled fonts Google Sans Flex and Rubik (SIL Open Font License) and Material Symbols Rounded (Apache 2.0) keep their licenses, as does Google's Material Color Utilities (Apache 2.0), vendored in `Sources/OmniWMMaterialColor`. All of these notices are in `Resources/Licenses` and ship there too. Forks and redistributions must retain these notices and the `LICENSE` file, and remain GPL-2.0-only with source available.
+Every OmniWM source file carries an SPDX license header. App-bundled third-party notices stay in `Resources/Licenses` and ship in `Contents/Resources/Licenses`. They cover the vendored Luau and Lua runtimes (MIT), generic colour palettes adapted through [Noctalia](https://github.com/noctalia-dev/noctalia) and [Wayle](https://github.com/wayle-rs/wayle) (MIT), Google Sans Flex (SIL Open Font License), Material Symbols Rounded and Google's Material Color Utilities (Apache 2.0).
+
+Optional styles keep their own notices in their folders. [Vitreus](styles/vitreus/README.md) retains its upstream MIT notice and the Space Grotesk font's OFL notice; [Celestial](styles/celestial/README.md) retains Rubik's OFL notice. Each style README lists its credits and licences. Forks and redistributions must retain the applicable notices and the `LICENSE` file, and remain GPL-2.0-only with source available.

@@ -41,10 +41,12 @@ extension SettingsStore {
             animationsEnabled: animationsEnabled,
             animationSpeed: animationSpeed,
             language: language,
+            launcher: launcher,
             clipboard: clipboard.export(),
             quakeTerminal: quakeTerminal.export(),
             appearanceMode: appearanceMode,
-            tabRailAppIcons: tabRailAppIcons
+            tabRailAppIcons: tabRailAppIcons,
+            shellPermissions: shellPermissions.export()
         )
     }
 }

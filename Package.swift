@@ -32,6 +32,7 @@ let ghosttyQuakeTerminalTests = [
     "GhosttySurfaceDisplayTests.swift",
     "GhosttySurfaceOcclusionTests.swift",
     "GhosttySurfaceSizingTests.swift",
+    "LauncherTerminalLiveTests.swift",
     "QuakeClipboardPromptTests.swift",
     "QuakeGhosttyAppearanceTests.swift",
     "QuakeGhosttyKeyEquivalentTests.swift",
@@ -169,7 +170,6 @@ let package = Package(
                 .process("Resources"),
                 .copy("Core/IssueReporter/Prompts"),
                 .copy("ShellDefault"),
-                .copy("ShellStyles"),
                 .copy("Fonts")
             ],
             swiftSettings: [

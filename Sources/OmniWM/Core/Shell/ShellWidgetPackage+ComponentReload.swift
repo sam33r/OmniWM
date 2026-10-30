@@ -5,15 +5,18 @@ import OmniWMScriptHost
 
 extension ShellWidgetPackage {
     func updateComponents(_ source: ShellWidgetSource, in script: ShellScript) async {
-        guard source.profile == storeProfile, let plan = ShellComponentReloadPlan.make(
-            source: source, loaded: .init(chunk: loadedChunk, main: loadedMain, modules: loadedModules),
-            previousDescriptors: componentDescriptors,
-            matches: { module in
-                omni_vm_module_matches(
-                    script.vm, module.path, module.path.utf8.count, module.source, module.source.utf8.count
-                )
-            }
-        ) else {
+        guard source.profile == storeProfile,
+              ShellFontLibrary.shared.fonts(in: source.fontFolders) == loadedFonts,
+              let plan = ShellComponentReloadPlan.make(
+                  source: source, loaded: .init(chunk: loadedChunk, main: loadedMain, modules: loadedModules),
+                  previousDescriptors: componentDescriptors,
+                  matches: { module in
+                      omni_vm_module_matches(
+                          script.vm, module.path, module.path.utf8.count, module.source, module.source.utf8.count
+                      )
+                  }
+              )
+        else {
             requestReload()
             return
         }
@@ -55,6 +58,7 @@ extension ShellWidgetPackage {
         let retired = Set(configuredComponents.compactMap { affected.contains($0.value.widget) ? $0.key : nil })
         let owners = storeOwners.filter { $0.key.instance.map(retired.contains) == true }
         configuredComponents = configuredComponents.filter { !retired.contains($0.key) }
+        configuredComponentInstances.removeAll { retired.contains($0.id) }
         for namespace in owners.keys { storeOwners.removeValue(forKey: namespace) }
         loadedModules = Set(source.modules.map(\.path))
         await retireProviders()
@@ -73,8 +77,11 @@ extension ShellWidgetPackage {
         })
         guard !retired.isEmpty else { return true }
         var retained = ShellWidgetSource(chunk: source.chunk, main: source.main, modules: [])
-        retained.components = configuredComponents.values.filter { !retired.contains($0.id) }.sorted { $0.id < $1.id }
+        retained.components = configuredComponentInstances.filter { !retired.contains($0.id) }
         retained.componentDescriptors = componentDescriptors
+        retained.network = source.network
+        retained.principal = source.principal
+        retained.purpose = source.purpose
         if let failure = configureComponents(retained, in: script.vm) {
             outbox.fail(name: name, generation: generation, failure: failure)
             return false

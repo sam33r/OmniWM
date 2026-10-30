@@ -11,6 +11,7 @@ extension WMController {
     }
 
     func applyPersistedSettings(_ settings: SettingsStore, startServices: Bool = true) {
+        workspaceBarManager.updateShellPermissions(settings, reloadingManagedPolicy: true)
         setAnimationsEnabled(settings.animationsEnabled, persist: false)
         setAnimationSpeed(settings.animationSpeed, persist: false)
         applyCurrentAppearanceMode()
@@ -147,6 +148,7 @@ extension WMController {
             centerFocusedColumn: settings.niri.centerFocusedColumn,
             alwaysCenterSingleColumn: settings.niri.alwaysCenterSingleColumn,
             singleWindowFit: settings.niri.singleWindowFit,
+            edgeOverscroll: settings.niri.edgeOverscroll,
             containerPrimarySpanPresets: settings.niri.containerPrimarySpanPresets,
             defaultContainerPrimarySpan: settings.niri.defaultContainerPrimarySpan
         )

@@ -55,7 +55,7 @@ The full contributor guide is published at `/developers/contributing/`, and this
 
 The documentation follows `main`, which can include features newer than the latest release. Place an **Unreleased** note beside each unreleased feature or setting, stating that it is available when building from `main`. Check the feature against the latest release tag before removing the note. Keep download links and the displayed release version tied to the published release.
 
-Keep facts in sync with the app: defaults belong to `Sources/OmniWM/Core/Config/SettingsExport.swift` and its `SettingsExport+*.swift` extensions; the domain settings types consume those defaults and map live values to/from the export. The TOML schema lives in `CanonicalTOMLConfig.swift`, and default hotkeys are assembled by `Core/Input/ActionCatalog.swift` from its `ActionCatalog+*.swift` extensions. The command palette uses substring matching with tiered ranking for its original four modes and Spotlight-style token matching for Applications and Files. The quake terminal's default position is Center, which fades rather than slides.
+Keep facts in sync with the app: defaults belong to `Sources/OmniWM/Core/Config/SettingsExport.swift` and its `SettingsExport+*.swift` extensions; the domain settings types consume those defaults and map live values to/from the export. The TOML schema lives in `CanonicalTOMLConfig.swift`, and default hotkeys are assembled by `Core/Input/ActionCatalog.swift` from its `ActionCatalog+*.swift` extensions. The command palette uses substring matching with tiered ranking for its original four modes and Spotlight-style token matching for Launcher apps and Files. The quake terminal's default position is Center, which fades rather than slides.
 
 ## Landing page
 
@@ -65,7 +65,7 @@ At the release that includes the new gestures and border effects, update the exi
 
 ## Data files
 
-- `src/data/employers.ts`, `education.ts`, `contributors.ts` mirror the machine-generated credits block in the repository README (`<!-- contributors:start -->` … `<!-- contributors:end -->`). When crediting someone new, update both.
+- `src/data/maintainers.ts`, `employers.ts`, `education.ts`, `contributors.ts` mirror the machine-generated credits block in the repository README (`<!-- contributors:start -->` … `<!-- contributors:end -->`). When crediting someone new, update both.
 - `src/data/sponsors.ts` mirrors the rank-ordered list in `Sources/OmniWM/UI/SponsorsView.swift`; sponsor avatars in `public/credits/sponsors/` are copies of the app-bundled images in `Sources/OmniWM/Resources/`.
 - Employer and education logos in `public/credits/` are self-hosted copies downloaded once from the README's logo URLs.
 

@@ -18,6 +18,7 @@ final class SettingsStore {
     let gestures = GestureSettings()
     let workspaceBar = WorkspaceBarSettings()
     let island = IslandSettings()
+    let shellPermissions = ShellPermissionSettings()
     let workspaces = WorkspaceSettings()
 
     private let persistence: SettingsFilePersistence
@@ -197,6 +198,10 @@ final class SettingsStore {
         didSet { scheduleSave() }
     }
 
+    var launcher = LauncherConfiguration() {
+        didSet { scheduleSave() }
+    }
+
     let clipboard = ClipboardSettings()
 
     let quakeTerminal = QuakeTerminalSettings()
@@ -283,6 +288,7 @@ final class SettingsStore {
         workspaceBar.onChange = { [weak self] in self?.layoutConfigurationDidChange() }
         workspaceBar.onNotificationBadgesChange = { [weak self] in self?.scheduleSave() }
         island.onChange = { [weak self] in self?.scheduleSave() }
+        shellPermissions.onChange = { [weak self] in self?.scheduleSave() }
         workspaces.onChange = { [weak self] in self?.workspacesDidChange() }
         borders.onChange = { [weak self] in self?.layoutConfigurationDidChange() }
         overview.onChange = { [weak self] in
@@ -356,10 +362,6 @@ final class SettingsStore {
         configNotice = notice
         onConfigNoticeChanged?()
     }
-
-    func scratchpadLabel(for index: Int) -> String? {
-        scratchpadLabels[String(index)]
-    }
 }
 
 extension SettingsStore {
@@ -390,6 +392,10 @@ extension SettingsStore {
     private func layoutConfigurationDidChange() {
         layoutConfigurationRevision &+= 1
         scheduleSave()
+    }
+
+    func scratchpadLabel(for index: Int) -> String? {
+        scratchpadLabels[String(index)]
     }
 
     static func normalizedScratchpadLabels(_ labels: [String: String]) -> [String: String] {
@@ -472,11 +478,13 @@ extension SettingsStore {
         animationSpeed = export.animationSpeed
         language = export.language
         clipboard.apply(export.clipboard)
+        launcher = export.launcher
 
         quakeTerminal.apply(export.quakeTerminal, baseline: SettingsStore.defaultExport.quakeTerminal)
 
         appearanceMode = export.appearanceMode
         tabRailAppIcons = export.tabRailAppIcons
+        shellPermissions.apply(export.shellPermissions)
     }
 
     private func pointerSettingsDidChange() {

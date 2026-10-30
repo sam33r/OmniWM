@@ -39,6 +39,8 @@ final class WorkspaceBarManager {
     private let surfaceCoordinator = SurfaceCoordinator.shared
     private var hiddenBarJoin: HiddenBarPanelPlacement.Join?
     var shellHost: ShellWidgetHost?
+    let shellPermissions = ShellNetworkPermissions()
+    private(set) var shellPermissionPrompts: ShellPermissionPrompts?
     private let configDirectory: URL
     lazy var shellConfiguration = ShellConfigurationCoordinator(
         shellDirectory: ShellWidgetHost.shellDirectory(in: configDirectory),
@@ -76,6 +78,17 @@ final class WorkspaceBarManager {
         controller.hiddenBarController.shellDrawer = makeShellHiddenBarDrawer()
         settings.liveShellNamesForHotkeys = { [weak self] in
             self?.shellHost?.toggleNames ?? []
+        }
+        settings.shellPermissions.onDecisionsChange = { [weak self, weak settings] in
+            guard let settings else { return }
+            self?.updateShellPermissions(settings)
+        }
+        if shellPermissionPrompts == nil {
+            shellPermissionPrompts = ShellPermissionPrompts(settings: settings.shellPermissions) { [weak self] in
+                ShellPermissionPromptPanel.present(
+                    $0, title: self?.shellHost?.title(of: $0.principal) ?? $0.principal.name, answer: $1
+                )
+            }
         }
         configureDragController(controller: controller)
         syncHoverPreview(controller: controller, settings: settings)

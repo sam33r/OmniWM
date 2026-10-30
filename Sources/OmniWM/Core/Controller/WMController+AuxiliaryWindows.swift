@@ -18,11 +18,15 @@ extension WMController {
         windowActionHandlerStorage?.invalidateOverviewDeferredActionsForServiceStop()
     }
 
-    func setPreventSleepEnabled(_ enabled: Bool) {
-        if enabled {
-            SleepPreventionManager.shared.preventSleep()
-        } else {
-            SleepPreventionManager.shared.allowSleep()
+    func setPreventSleepEnabled(_ enabled: Bool, manager: SleepPreventionManager = .shared) {
+        guard enabled != manager.awake.indefinite else { return }
+        manager.perform(enabled ? .on : .off)
+    }
+
+    func performKeepAwake(_ command: ShellAwakeCommand, manager: SleepPreventionManager = .shared) {
+        manager.perform(command)
+        if settings.preventSleepEnabled != manager.awake.indefinite {
+            settings.preventSleepEnabled = manager.awake.indefinite
         }
     }
 
@@ -82,15 +86,20 @@ extension WMController {
     private func applyQuakeTerminalSelection(_ selection: QuakeTerminalProvider?) {
         let previous = appliedQuakeTerminalSelection
         appliedQuakeTerminalSelection = selection
-        if previous == .kitty, selection != .kitty {
-            kittyQuickAccessTerminal.hide()
+        if previous != selection {
+            switch previous {
+            case .kitty: kittyQuickAccessTerminal.hide()
+            case .foot: footQuickAccessTerminal.hide()
+            case .ghostty,
+                 nil: break
+            }
         }
         switch selection {
         case nil:
             quakeTerminalController.cleanup()
         case .ghostty:
             quakeTerminalController.setup()
-            if previous == .kitty {
+            if previous == .kitty || previous == .foot {
                 reloadQuakeTerminalAppearance()
             }
         case .kitty:
@@ -98,6 +107,10 @@ extension WMController {
             quakeTerminalController.hideForProviderSwitch()
             kittyQuickAccessTerminal.activate()
             applyKittyQuakeSettings()
+        case .foot:
+            guard previous != .foot else { return }
+            quakeTerminalController.hideForProviderSwitch()
+            footQuickAccessTerminal.activate()
         }
     }
 
@@ -107,26 +120,32 @@ extension WMController {
             quakeTerminalController.toggle()
         case .kitty:
             kittyQuickAccessTerminal.toggle()
+        case .foot:
+            footQuickAccessTerminal.toggle()
         case nil:
             return
         }
     }
 
-    func kittyQuakeControlContext() -> KittyQuakeControlContext? {
-        let monitors = workspaceManager.monitors
-        guard let monitor = currentMouseLocation().monitorApproximation(in: monitors)
-            ?? monitors.first(where: \.isMain) ?? monitors.first
+    func externalQuakeDisplay() -> ExternalQuakeDisplay? {
+        guard let monitor = ExternalQuakeDisplay.monitor(at: currentMouseLocation(), in: workspaceManager.monitors)
         else { return nil }
-        let screen = NSScreen.screens.first(where: { $0.displayId == monitor.displayId })
-        return KittyQuakeControlContext(
-            settings: settings.quakeTerminal.kitty,
-            screen: .init(
-                frame: screen?.frame ?? monitor.frame,
-                visibleFrame: screen?.visibleFrame ?? monitor.visibleFrame,
-                scale: screen?.backingScaleFactor ?? 1
-            ),
-            barBottom: workspaceBarManager.topBarBottom(on: monitor.id)
-        )
+        return ExternalQuakeDisplay(monitor: monitor, topBarBottom: workspaceBarManager.topBarBottom(on: monitor.id))
+    }
+
+    func kittyQuakeControlContext() -> KittyQuakeControlContext? {
+        externalQuakeDisplay().map { KittyQuakeControlContext(settings: settings.quakeTerminal.kitty, display: $0) }
+    }
+
+    func footQuakeControlContext() -> FootQuakeControlContext? {
+        let animationDuration = motionPolicy.animationsEnabled ? settings.quakeTerminal.animationDuration : 0
+        return externalQuakeDisplay()?.panelArea.map {
+            FootQuakeControlContext(
+                settings: settings.quakeTerminal.foot,
+                area: $0,
+                animationDuration: animationDuration
+            )
+        }
     }
 
     func applyKittyQuakeSettings() {
@@ -146,12 +165,12 @@ extension WMController {
         quakeTerminalController.reloadBackgroundBlur()
     }
 
-    func presentKittyQuickAccessFailure(_ problem: KittyQuickAccessTerminal.Problem) {
+    func presentQuakeTerminalFailure(title: String, message: String) {
         Task { @MainActor in
             let alert = NSAlert()
             alert.alertStyle = .warning
-            alert.messageText = String(localized: "Kitty Quake Terminal Unavailable")
-            alert.informativeText = problem.message
+            alert.messageText = title
+            alert.informativeText = message
             alert.addButton(withTitle: String(localized: "OK"))
             _ = alert.runModal()
         }

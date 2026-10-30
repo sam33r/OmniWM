@@ -46,10 +46,14 @@ final class ShellDesktopEditor {
     var cards: [StyleCard] {
         configuration.profiles.map {
             StyleCard(
-                name: $0, title: ShellStyleText.title($0), summary: ShellStyleText.summary($0),
+                name: $0, title: configuration.styleTitle($0), summary: configuration.styleSummary($0),
                 active: $0 == activeStyle
             )
         }
+    }
+
+    var strings: ShellStrings {
+        snapshot?.style.strings ?? .empty
     }
 
     var monitor: Monitor? {
@@ -259,6 +263,10 @@ final class ShellDesktopEditor {
 
     func detach() {
         if navigation?.leaveGuard != nil { navigation?.leaveGuard = nil }
+    }
+
+    func openPermissions(_ role: ShellWidgetPrincipal.Role, _ name: String) {
+        navigation?.request(SettingsRoute(section: .network, anchor: NetworkPermissionsPage.anchor(role, name)))
     }
 
     private func complete(_ transition: Transition) async -> Bool {

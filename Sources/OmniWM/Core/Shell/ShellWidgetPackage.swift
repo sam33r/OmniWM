@@ -5,7 +5,7 @@ import Foundation
 import OmniWMScriptHost
 import Synchronization
 
-struct ShellScriptFailure: Error, Equatable, Sendable {
+struct ShellScriptFailure: LocalizedError, Equatable, Sendable {
     enum Kind: Equatable, Sendable {
         case compile
         case runtime
@@ -31,6 +31,10 @@ struct ShellScriptFailure: Error, Equatable, Sendable {
         default: .internalError
         }
         self.message = message
+    }
+
+    var errorDescription: String? {
+        message
     }
 }
 
@@ -64,6 +68,7 @@ enum ShellWidgetMessage: Sendable {
     case resources
     case nativeInput(ShellNativeInput)
     case capture(ShellCaptureRequest)
+    case permissions
 }
 
 struct ShellWidgetDeclaration: Equatable, Sendable {
@@ -141,6 +146,8 @@ actor ShellWidgetPackage {
     nonisolated let resourceInbox = ShellResourceInbox()
     nonisolated let nativeInput = ShellNativeInputPort()
     nonisolated let capture: ShellCapturePort
+    nonisolated let permissions: ShellNetworkPermissions
+    nonisolated let httpDeclarations = ShellHTTPDeclarations()
     var captureContext: ShellFrameTraceContext?
     var captureBeginTask: Task<Void, Never>?
     var captureEndTask: Task<UInt64, Never>?
@@ -159,8 +166,11 @@ actor ShellWidgetPackage {
     var storeProfile = ShellDefaults.profile
     var storeOwners: [ShellStoreNamespace: ShellServiceOwner] = [:]
     var configuredComponents: [String: ShellComponentInstance] = [:]
+    var configuredComponentInstances: [ShellComponentInstance] = []
     var componentConfigurationValid = false
     var http: ShellHTTPService?
+    var networkApprovalRevision: UInt64 = 0
+    var networkApprovals: Set<ShellNetworkApproval.Key> = []
     var providerConfigurations: [String: ShellProviderConfiguration] = [:]
     var providerSlots: [String: ProviderSlot] = [:]
     var pendingProviderRequests: [PendingProviderRequest] = []
@@ -171,10 +181,11 @@ actor ShellWidgetPackage {
     var closeTask: Task<[ShellStoreFailure], Never>?
     var script: ShellScript?
     var loadedModules: Set<String> = []
+    var loadedFonts = ShellFontSet()
     var loadedChunk = ""
     var loadedMain = ""
     var componentDescriptors: [ShellComponentDescriptor] = []
-    var rootNetwork: Set<String> = []
+    var rootPurpose: String?
     var hasComponents = false
     var reloadRequested = false
     var states: [ShellBarKey: InstanceState] = [:]
@@ -203,6 +214,7 @@ actor ShellWidgetPackage {
 
     init(
         name: String, generation: Int, outbox: ShellWidgetOutbox, store: ShellStore = .shared,
+        permissions: ShellNetworkPermissions = ShellNetworkPermissions(),
         latestData: ShellLatestWidgetData? = nil, resourceStore: ShellResourceStore? = nil,
         retireResourceImages: @escaping @Sendable (ShellServiceOwner) async -> Void = { _ in }
     ) {
@@ -210,6 +222,7 @@ actor ShellWidgetPackage {
         self.generation = generation
         self.outbox = outbox
         self.store = store
+        self.permissions = permissions
         self.latestData = latestData
         self.retireResourceImages = retireResourceImages
         self
@@ -232,13 +245,15 @@ actor ShellWidgetPackage {
 
     func load(_ source: ShellWidgetSource, validateOnly: Bool = false) async -> ShellScriptFailure? {
         guard !closing else { return ShellScriptFailure(kind: .internalError, message: "package is closed") }
-        guard let vm = ShellVM.make(memoryLimit: Self.memoryLimit) else {
+        let fonts = ShellFontLibrary.shared.fonts(in: source.fontFolders)
+        guard let vm = ShellVM.make(memoryLimit: Self.memoryLimit, fonts: fonts, strings: source.strings) else {
             return ShellScriptFailure(kind: .internalError, message: "the script VM could not be created")
         }
         let loaded = ShellScript(vm: vm)
         script = loaded
         storeProfile = source.profile
-        rootNetwork = Set(source.network.map(ShellHTTPPolicy.canonicalHost))
+        httpDeclarations.update(source, components: [], permissions: permissions)
+        rootPurpose = source.purpose
         guard omni_vm_set_service_generation(vm, services.generation) == OMNI_OK else {
             script = nil
             return ShellScriptFailure(kind: .internalError, message: "service generation could not be initialized")
@@ -270,12 +285,17 @@ actor ShellWidgetPackage {
             return ShellScriptFailure(kind: .compile, message: "the widget does not define a render function")
         }
         if validateOnly { return nil }
-        return await finishLoad(source, in: loaded)
+        return await finishLoad(source, fonts: fonts, in: loaded)
     }
 
-    private func finishLoad(_ source: ShellWidgetSource, in loaded: ShellScript) async -> ShellScriptFailure? {
+    private func finishLoad(
+        _ source: ShellWidgetSource,
+        fonts: ShellFontSet,
+        in loaded: ShellScript
+    ) async -> ShellScriptFailure? {
         let vm = loaded.vm
         loadedModules = Set(source.modules.map(\.path))
+        loadedFonts = fonts
         loadedChunk = source.chunk
         loadedMain = source.main
         await seedComponents(source, in: loaded)

@@ -5,7 +5,7 @@ export type Color = string | number
 export type Motion = "none" | "spring" | "bouncy" | "smooth" | "ease"
 export type Material = "none" | "ultraThin" | "thin" | "regular" | "thick" | "ultraThick" | "bar" | "popover" | "glass" | "clear"
 export type TextStyle = "body" | "bold" | "mono" | "small" | "caption" | "rounded"
-export type Font = "system" | "sans" | "rubik" | "symbols"
+export type Font = "system" | "sans" | "symbols" | string
 export type Weight = "ultraLight" | "thin" | "light" | "regular" | "medium" | "semibold" | "bold" | "heavy" | "black"
 export type Align =
     "center"
@@ -22,7 +22,38 @@ export type Curve = "linear" | "easeIn" | "easeOut" | "easeInOut" | "back"
     | "standard" | "standardAccel" | "standardDecel" | "emphasized" | "emphasizedAccel" | "emphasizedDecel"
     | "fastSpatial" | "spatial" | "slowSpatial" | "fastEffects" | "effects" | "slowEffects" | { number }
 export type Animate = Motion | Curve | number | { duration: number?, curve: Curve? } | { response: number, bounce: number? }
-export type Presence = { opacity: number?, scale: number?, dx: number?, dy: number?, animate: Animate? }
+export type Presence = {
+    opacity: number?, scale: number?, dx: number?, dy: number?, animate: Animate?,
+    anchor: { x: number, y: number }?, delay: number?,
+}
+export type Spring = { response: number, bounce: number? }
+export type Reveal = Spring & { delay: number?, hold: number? }
+export type ShapeReveal = Reveal & { exit: boolean? }
+export type MorphStop = { at: number, scale: number?, opacity: number?, dx: number?, dy: number? }
+export type Morph = { anchor: { x: number, y: number }?, stops: { MorphStop } } | { track: string }
+export type ShapeMorphStop = {
+    at: number, scale: number?, w: number?, h: number?, round: number?,
+    dx: number?, dy: number?, thickness: number?,
+}
+export type ShapeStretch = { gain: number?, max: number?, w: number?, h: number? }
+export type ShapeImpulse = {
+    at: number?, after: number?, rising: boolean?, on: ("open" | "close")?, spring: Spring,
+    velocity: number?, w: number?, h: number?, pivot: ("anchor" | "centre")?,
+}
+export type ShapeEdges = { lead: Spring, trail: Spring, thin: number?, unit: number }
+export type ShapeSource = {
+    target: string, edge: "top" | "left" | "right" | "bottom", from: number?, span: number, contact: boolean?,
+    pads: { left: number?, right: number?, top: number?, bottom: number? }?,
+    adhere: { left: number?, right: number?, top: number?, bottom: number? }?,
+}
+export type ShapeTrigger = { shape: string, at: number, rising: boolean?, contact: boolean? }
+export type ShapeMorph = {
+    anchor: { x: number, y: number }?, stops: { ShapeMorphStop }?, stretch: ShapeStretch?,
+    impulses: { ShapeImpulse }?, edges: ShapeEdges?, source: ShapeSource?, trigger: ShapeTrigger?,
+}
+export type Pulse = {
+    key: string | number, duration: number, rotate: { number }?, scale: { number }?, dx: { number }?, dy: { number }?,
+}
 export type GestureRange = { number } & { rubber: number? }
 export type Enter = {
     opacity: number?,
@@ -80,6 +111,7 @@ export type BarStyle = {
     inactive: number,
     position: "overlappingMenuBar" | "belowMenuBar" | "bottom" | "left" | "right" | "top",
     vertical: boolean,
+    fullWidth: boolean,
     notch: string,
     notchWidth: number,
     level: string,
@@ -145,10 +177,11 @@ export type BarDrag = {
 
 export type Bar = {
     monitor: string,
+    monitorId: string,
     island: "all" | "active" | "secondary",
     drag: BarDrag?,
     badges: "off" | "dot" | "text",
-    style: BarStyle,
+    style: BarStyle?,
     workspaces: { BarWorkspace },
     scratchpads: { BarScratchpad },
 }
@@ -227,6 +260,23 @@ export type Calendar = {
     access: "full" | "writeOnly" | "denied" | "restricted" | "notDetermined",
     events: { CalendarEvent },
     month: CalendarMonth?,
+    selectedDay: string?,
+    reminders: Reminders?,
+}
+
+export type Awake = {
+    on: boolean,
+    ["until"]: number?,
+}
+
+export type Microphone = {
+    volume: number?,
+    muted: boolean?,
+}
+
+export type Brightness = {
+    value: number,
+    available: boolean,
 }
 
 export type NotificationAction = {
@@ -316,6 +366,12 @@ export type Reminders = {
     error: string?,
 }
 
+export type Lyrics = {
+    access: "ok" | "off" | "blocked",
+    status: "loading" | "synced" | "none",
+    lines: { { time: number, text: string } },
+}
+
 export type WeatherHour = {
     time: number,
     code: number,
@@ -338,7 +394,12 @@ export type WeatherDay = {
     rain: number?,
 }
 
+export type WeatherUnavailable = {
+    access: "off" | "blocked",
+}
+
 export type Weather = {
+    access: "ok",
     temp: number,
     feels: number?,
     high: number?,
@@ -357,7 +418,7 @@ export type Weather = {
     status: "ok" | "stale",
     hours: { WeatherHour },
     days: { WeatherDay },
-}
+} | WeatherUnavailable
 
 export type SystemDisplay = {
     w: number,
@@ -441,6 +502,7 @@ export type IslandNavigation = {
 
 export type Island = {
     display: string,
+    usableRect: { x: number, y: number, w: number, h: number },
     size: { w: number, h: number },
     notch: { x: number, w: number, h: number }?,
     menuBar: number,
@@ -451,6 +513,7 @@ export type Island = {
     focused: boolean,
     drag: { active: boolean, types: { "file" | "url" | "text" | "image" } },
     navigation: IslandNavigation?,
+    drawer: string?,
 }
 
 export type Data = {
@@ -490,7 +553,7 @@ export type Data = {
     thermal: { cpu: number?, gpu: number?, gpuName: string? }?,
     networkHistory: { down: { number }, up: { number }, received: number, sent: number }?,
     appearance: ("light" | "dark")?,
-    lyrics: { status: "loading" | "synced" | "none", lines: { { time: number, text: string } } }?,
+    lyrics: Lyrics?,
     spectrum: { access: "unknown" | "granted" | "denied", bars: { number }, bpm: number? }?,
     tempo: number?,
     island: Island?,
@@ -501,9 +564,13 @@ export type Data = {
     badges: { [string]: string },
     menuApp: { pid: number, name: string, bundle: string }?,
     notifications: Notifications?,
+    awake: Awake?,
+    microphone: Microphone?,
+    brightness: Brightness?,
 }
 
 export type Format = {
+    measure: (text: string, style: { font: Font?, size: number?, weight: Weight?, maxWidth: number?, lines: number?, quarter: boolean? }?) -> (number, number),
     number: (value: number, digits: number?) -> string,
     percent: (fraction: number, digits: number?) -> string,
     bytes: (count: number, style: ("memory" | "file")?) -> string,
@@ -555,7 +622,7 @@ export type ConfigResult = {
 export type ConfigCallback = (result: ConfigResult) -> ()
 
 export type ProviderState = {
-    status: "stopped" | "starting" | "running" | "exited" | "failed",
+    status: "stopped" | "starting" | "running" | "exited" | "failed" | "not_approved",
     error: string?,
     exitCode: number?,
     state: { [string]: any },
@@ -619,6 +686,9 @@ export type DropHoverEvent = { phase: "entered" | "exited", types: { ResourceKin
 export type DragOutEvent = { phase: "began" | "ended", operation: "copy" | "none" }
 
 export type Event = {
+    transaction: string?,
+    rect: { x: number, y: number, w: number, h: number }?,
+    reason: string?,
     button: "left" | "right" | "middle" | "none",
     shift: boolean,
     option: boolean,
@@ -628,7 +698,7 @@ export type Event = {
     dy: number,
     precise: boolean,
     value: number?,
-    phase: ("began" | "changed" | "ended" | "down" | "up" | "cancel" | "cancelled")?,
+    phase: ("began" | "changed" | "ended" | "down" | "up" | "cancel" | "cancelled" | "selected" | "applied")?,
     x: number?,
     y: number?,
     clicks: number?,
@@ -640,6 +710,7 @@ export type Event = {
     characters: string?,
     text: string?,
     focused: boolean?,
+    claimed: boolean?,
     ["repeat"]: boolean?,
 }
 
@@ -653,7 +724,15 @@ export type InputHandler = (ctx: Context, event: Event) -> ()
 export type Click = string | InputHandler
 
 export type Gesture = {
-    track: { dx: GestureRange?, dy: GestureRange?, scale: GestureRange?, opacity: GestureRange? }?,
+    track: {
+        dx: GestureRange?, dy: GestureRange?, scale: GestureRange?, opacity: GestureRange?,
+        mode: ("move" | "resize" | "scale")?, target: string?,
+        bounds: { x: number, y: number, w: number, h: number }?,
+        min: { w: number, h: number }?, max: { w: number, h: number }?,
+        edge: ("n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se")?,
+        inset: { x: number, y: number }?,
+        outline: (false | Color)?,
+    }?,
     axis: ("x" | "y" | "free" | "auto")?,
     source: ("pointer" | "scroll" | "both")?,
     threshold: number?,
@@ -663,6 +742,11 @@ export type Gesture = {
 }
 
 export type Props = {
+    cursor: ("grab" | "pointer")?,
+    decorative: boolean?,
+    manipulationCommit: string?,
+    manipulationFollow: { response: number, bounce: number? }?,
+    effect: { source: string, values: { number }?, fps: number?, bleed: number? }?,
     accepts: { ResourceKind }?,
     onDrop: ((ctx: Context, event: DropEvent) -> ())?,
     onDropHover: ((ctx: Context, event: DropHoverEvent) -> ())?,
@@ -670,6 +754,8 @@ export type Props = {
     onDragOut: ((ctx: Context, event: DragOutEvent) -> ())?,
     appear: Presence?,
     exit: Presence?,
+    reveal: Reveal?,
+    morph: Morph?,
     key: string?,
     rotate: number?,
     loop: { dx: { number }?, dy: { number }?, rotate: { number }?, paused: boolean? }?,
@@ -728,6 +814,8 @@ export type Props = {
     scale: number?,
     shadow: Color?,
     shadowRadius: number?,
+    shadowOffset: { x: number, y: number }?,
+    pulse: Pulse?,
     target: string?,
     menu: boolean?,
     preview: boolean?,
@@ -815,6 +903,65 @@ export type ShaderProps = Props & {
     audio: boolean?,
 }
 
+export type GlassProps = {
+    key: string?,
+    w: number?,
+    h: number?,
+    grow: number?,
+    gap: number?,
+    pad: number?,
+    center: boolean?,
+    align: Align?,
+    dx: number?,
+    dy: number?,
+    scale: number?,
+    rotate: number?,
+    opacity: number?,
+    animate: Animate?,
+    open: number?,
+    close: number?,
+    enter: Enter?,
+    appear: Presence?,
+    exit: Presence?,
+    morph: Morph?,
+    fill: Color?,
+    blurRadius: number?,
+    saturation: number?,
+    shadow: Color?,
+    shadowRadius: number?,
+    blend: number?,
+    backdrop: boolean?,
+    rim: number?,
+    gradient: { from: Color, to: Color, angle: number? }?,
+    pulse: Pulse?,
+    light: { x: number, y: number }?,
+    shadowOffset: { x: number, y: number }?,
+    [number]: Element,
+}
+
+export type ShapeProps = {
+    key: string?,
+    w: number?,
+    h: number?,
+    grow: number?,
+    align: Align?,
+    dx: number?,
+    dy: number?,
+    radius: number?,
+    shape: ("rect" | "ellipse" | "frame")?,
+    thickness: number?,
+    animate: Animate?,
+    rotate: number?,
+    reveal: ShapeReveal?,
+    follow: string?,
+    followRadius: ("scaled" | "fixed")?,
+    hit: boolean?,
+    shadowOffset: { x: number, y: number }?,
+    morph: ShapeMorph?,
+    spectrum: { band: number, gain: number?, taper: number?, inset: number?, threshold: number?,
+        response: number?, bounce: number? }?,
+}
+
 export type ComponentProps = Props & {
     id: string,
     view: string,
@@ -835,6 +982,8 @@ export type HTTPRequest = {
     timeout: number?,
 }
 
+export type HTTPError = "network_not_approved" | "network_blocked" | "network_denied" | string
+
 export type HTTPResult = {
     ok: boolean,
     status: number,
@@ -842,7 +991,7 @@ export type HTTPResult = {
     text: string?,
     json: any?,
     bytes: string?,
-    error: string?,
+    error: HTTPError?,
 }
 
 export type StoreStatus = {
@@ -914,6 +1063,8 @@ declare ui: {
     image: (props: ImageProps) -> Element,
     progress: (props: ProgressProps) -> Element,
     shader: (props: ShaderProps) -> Element,
+    glass: (props: GlassProps) -> Element,
+    shape: (props: ShapeProps) -> Element,
     path: (props: PathProps) -> Element,
     slider: (props: SliderProps) -> Element,
     popout: (ctx: Context) -> (),

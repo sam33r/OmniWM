@@ -297,6 +297,7 @@ struct NodeActivationOptions {
             fullscreenLayoutFrame: controller.niriFullscreenLayoutFrame(
                 layoutFrames.fullscreenLayoutFrame,
                 workingFrame: layoutFrames.workingFrame,
+                roomGapLimits: layoutFrames.roomGapLimits,
                 monitor: monitor,
                 gap: gaps
             ),

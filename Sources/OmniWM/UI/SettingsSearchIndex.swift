@@ -33,7 +33,7 @@ enum SettingsSearchIndex {
             route: SettingsRoute(section: section),
             keywords: aliases(for: section)
         )
-    } + settings
+    } + settings + networkSettings
 
     private static func setting(
         _ title: LocalizedStringResource,
@@ -49,6 +49,13 @@ enum SettingsSearchIndex {
     }
 
     private static let settings: [SettingsSearchEntry] = [
+        setting("Saved Entries", section: .launcher),
+        setting("App Folders", section: .launcher, anchor: "launcher-discovery"),
+        setting("Extra CLI Folders", section: .launcher, anchor: "launcher-discovery"),
+        setting("Custom Shell Executable", section: .launcher, anchor: "launcher-discovery"),
+        setting("Execution Defaults", section: .launcher, anchor: "launcher-execution"),
+        setting("Shell", section: .launcher, anchor: "launcher-execution"),
+        setting("Terminal", section: .launcher, anchor: "launcher-execution"),
         setting("Language", section: .general, anchor: "Language"),
         setting("App Language", section: .general, anchor: "App Language"),
         setting("Startup", section: .general, anchor: "Startup"),
@@ -106,6 +113,8 @@ enum SettingsSearchIndex {
         setting("Infinite Loop Navigation", section: .layouts, tab: "niri", anchor: "Infinite Loop Navigation"),
         setting("Center Focused Column", section: .layouts, tab: "niri", anchor: "Center Focused Column"),
         setting("Always Center Single Column", section: .layouts, tab: "niri", anchor: "Always Center Single Column"),
+        setting("Allow Overscroll", section: .layouts, tab: "niri", anchor: "Allow Overscroll"),
+        setting("Overscroll Visible Strip", section: .layouts, tab: "niri", anchor: "Overscroll Visible Strip"),
         setting("Gaps at Screen Edges", section: .layouts, tab: "niri", anchor: "Gaps at Screen Edges"),
         setting(
             "Stack Moved Window Into Adjacent Column",
@@ -249,6 +258,10 @@ enum SettingsSearchIndex {
             anchor: "Maximum Mouse Focus Scroll"
         ),
         setting("Focus Lock Modifier", section: .mouseTrackpad, tab: "mouse", anchor: "Focus Lock Modifier"),
+        setting(
+            "Only Focus Fully Visible Niri Windows", section: .mouseTrackpad, tab: "mouse",
+            anchor: "Only Focus Fully Visible Niri Windows"
+        ),
         setting("Edge navigation interval", section: .mouseTrackpad, tab: "mouse", anchor: "Edge navigation interval"),
         setting("Quake Terminal", section: .quakeTerminal, anchor: "Quake Terminal"),
         setting("Enable Quake Terminal", section: .quakeTerminal, anchor: "Enable Quake Terminal"),
@@ -258,6 +271,12 @@ enum SettingsSearchIndex {
         setting("Kitty Behavior", section: .quakeTerminal, anchor: "Kitty Behavior"),
         setting("Kitty Appearance", section: .quakeTerminal, anchor: "Kitty Appearance"),
         setting("Override Kitty Opacity", section: .quakeTerminal, anchor: "Override Kitty Opacity"),
+        setting("foot Placement", section: .quakeTerminal, anchor: "foot Placement"),
+        setting("Override foot Placement", section: .quakeTerminal, anchor: "Override foot Placement"),
+        setting("foot Behavior", section: .quakeTerminal, anchor: "foot Behavior"),
+        setting("foot Appearance", section: .quakeTerminal, anchor: "foot Appearance"),
+        setting("Override foot Opacity", section: .quakeTerminal, anchor: "Override foot Opacity"),
+        setting("Dim Screen", section: .quakeTerminal, anchor: "Dim Screen"),
         setting("Position & Size", section: .quakeTerminal, anchor: "Position & Size"),
         setting("Position", section: .quakeTerminal, anchor: "Position"),
         setting("Show On", section: .quakeTerminal, anchor: "Show On"),
@@ -344,6 +363,13 @@ enum SettingsSearchIndex {
 }
 
 extension SettingsSearchIndex {
+    private static let networkSettings: [SettingsSearchEntry] = [
+        setting("Widget Network Access", section: .network, anchor: NetworkPermissionsPage.widgetsAnchor),
+        setting("Programs", section: .network, anchor: NetworkPermissionsPage.programsAnchor),
+        setting("Built-in Services", section: .network, anchor: NetworkPermissionsPage.servicesAnchor),
+        setting("Lyrics", section: .network, anchor: NetworkPermissionsPage.servicesAnchor)
+    ]
+
     static func tabTitle(_ tab: String) -> String {
         switch tab {
         case "lanes": String(localized: "Bar Widgets")
@@ -381,11 +407,26 @@ extension SettingsSearchIndex {
                 "volume",
                 "drawer",
                 "dynamic island",
-                "lake",
                 "focus ribbon",
                 "components"
             ]
         case .menuBar: ["status bar", "hidden bar", "menu bar", "icons"]
+        case .network: [
+                "permissions",
+                "network",
+                "internet",
+                "privacy",
+                "hosts",
+                "servers",
+                "consent",
+                "trust",
+                "providers",
+                "programs",
+                "weather",
+                "lyrics",
+                "organization",
+                "mdm"
+            ]
         case .layouts: ["spacing", "gaps", "margins", "niri", "dwindle", "columns", "tiling"]
         case .monitors: ["monitors", "displays", "screens", "routing"]
         case .appRules: ["app rules", "float", "tile", "ignore", "bundle", "match"]

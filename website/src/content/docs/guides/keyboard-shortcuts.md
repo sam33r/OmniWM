@@ -15,7 +15,7 @@ Settings > Keyboard Shortcuts lists all actions that can be assigned a shortcut,
 
 ## Keyboard modes
 
-Unreleased: available when building from `main`. Keyboard modes help when OmniWM shortcuts clash with app shortcuts. Their actions — **Pause or Resume Shortcuts**, **Begin Prefix**, **Enter or Leave Window Mode**, and **Leave Keyboard Mode** — are unassigned by default; assign them in Settings > Keyboard Shortcuts.
+Keyboard modes help when OmniWM shortcuts clash with app shortcuts. Their actions — **Pause or Resume Shortcuts**, **Begin Prefix**, **Enter or Leave Window Mode**, and **Leave Keyboard Mode** — are unassigned by default; assign them in Settings > Keyboard Shortcuts.
 
 - **Pause** hands every OmniWM shortcut except Pause and Leave Keyboard Mode, when assigned, to the focused app, so `Option + 3` types `#` again. Press it again to resume, or set [`pauseTimeoutSeconds`](/config/settings-reference/#keyboardmodes) to resume automatically. Use it for Screen Sharing, remote desktops, and virtual machines.
 - **Prefix** works like tmux: press the prefix shortcut, then a *mode key*. The mode key runs its action and OmniWM returns to normal. Move and resize actions can be repeated by pressing their mode key again within half a second. Escape, or a key without an action, cancels the prefix; an OmniWM shortcut or a key with Command, Control, or Option ends it and follows normal shortcut routing.
@@ -61,7 +61,7 @@ Creating workspace 10 or higher adds its Switch, Move, and Move Column actions t
 
 **Move Focused Window to Next / Previous Workspace** targets the workspace that **Switch to Next / Previous Workspace** would show on the current monitor, so a matching pair of shortcuts always agrees. **Switch to New Workspace** opens a new empty workspace on the current monitor; **Move Focused Window to New Workspace** creates one on the focused window's monitor, moves the window there and follows it. New workspaces take the next free number and are removed once they are empty and no longer shown, like workspaces created from the overview. Unreleased: available when building from `main`.
 
-Turn on **Settings > Workspaces > Go Back When Switching to the Current Workspace** ([`workspaceAutoBackAndForth`](/config/settings-reference/#general)) to make pressing the shortcut of the workspace you are on return to the previous one, as i3 and AeroSpace do. Unreleased: available when building from `main`.
+Turn on **Settings > Workspaces > Go Back When Switching to the Current Workspace** ([`workspaceAutoBackAndForth`](/config/settings-reference/#general)) to make pressing the shortcut of the workspace you are on return to the previous one, as i3 and AeroSpace do.
 
 ## Focus
 
@@ -97,9 +97,7 @@ Turn on **Settings > Workspaces > Go Back When Switching to the Current Workspac
 | Previous Track | `Unassigned` | `Shared` |
 | Toggle `<drawer or widget>` | `Unassigned` | `Shared` |
 
-Settings > Keyboard Shortcuts lists a Toggle action for every shell drawer and every shell widget with a popout. A bound Toggle stays in the list even while its drawer or widget is missing. The volume, media and Toggle actions are Unreleased: available when building from `main`.
-
-The Set Mark and Remove Mark global actions and the Command Palette mark shortcuts below are available.
+Settings > Keyboard Shortcuts lists a Toggle action for every shell drawer and every shell widget with a popout. A bound Toggle stays in the list even while its drawer or widget is missing.
 
 ### Window marks in the Command Palette
 

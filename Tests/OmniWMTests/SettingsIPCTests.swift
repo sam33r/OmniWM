@@ -212,7 +212,7 @@ final class SettingsIPCTests: XCTestCase {
         XCTAssertEqual(placement?.value, .number(80))
         XCTAssertEqual(
             controller.settings.toExport().quakeTerminal.kitty?.placement?.heightPercent,
-            KittyQuakeSettings.Placement.defaultOverride.heightPercent
+            QuakePlacementOverride.defaultOverride.heightPercent
         )
     }
 

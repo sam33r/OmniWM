@@ -463,6 +463,18 @@ extension IPCSettingsCatalog {
                 "Centers the column when a workspace holds only one."
             ),
             .init(
+                "niri.allowOverscroll",
+                "Allow Overscroll",
+                .bool,
+                "Lets trackpad scrolling go past the first or last column and leave the desktop showing after release."
+            ),
+            .init(
+                "niri.overscrollVisibleStripPercent",
+                "Overscroll Visible Strip",
+                .int(min: 1, max: 100, step: 1),
+                "How much of the edge column stays visible at either overscroll limit, as a percentage of its width. Used only with overscroll allowed."
+            ),
+            .init(
                 "niri.edgeGaps",
                 "Gaps at Screen Edges",
                 .bool,
@@ -584,6 +596,12 @@ extension IPCSettingsCatalog {
                 "Maximum Mouse Focus Scroll",
                 .int(min: 0, max: 100, step: 5),
                 "In Niri, hovering a window doesn't focus it if revealing it would scroll the view by more than this percentage. Unset means no limit."
+            ),
+            .init(
+                "focus.followsMouseOnlyFullyVisible",
+                "Only Focus Fully Visible Niri Windows",
+                .bool,
+                "Ignores partially offscreen Niri windows and turns off hover navigation at screen edges. Click or use the keyboard to reveal them."
             ),
             .init(
                 "focus.edgeNavigationInterval",
@@ -966,9 +984,10 @@ extension IPCSettingsCatalog {
                 "Terminal",
                 .choice([
                     .init(value: "ghostty", title: "Ghostty"),
-                    .init(value: "kitty", title: "Kitty")
+                    .init(value: "kitty", title: "Kitty"),
+                    .init(value: "foot", title: "foot")
                 ]),
-                "Terminal that provides the Quake terminal: embedded Ghostty, or Kitty's quick-access terminal."
+                "Terminal that provides the Quake terminal: embedded Ghostty, Kitty's quick-access terminal, or foot."
             ),
             .init(
                 "quakeTerminal.position",
@@ -1089,6 +1108,52 @@ extension IPCSettingsCatalog {
                 "Max Total Bytes",
                 .int(),
                 "Maximum total size of clipboard history in bytes, including pins."
+            )
+        ]),
+        IPCSettingsCatalogSection(id: "launcher", title: "Launcher", entries: [
+            .init(
+                "launcher.shell",
+                "Shell",
+                .choice([
+                    .init(value: "system", title: "System Login Shell"),
+                    .init(value: "nushell", title: "Nushell"),
+                    .init(value: "fish", title: "fish"),
+                    .init(value: "zsh", title: "zsh"),
+                    .init(value: "bash", title: "Bash")
+                ]),
+                "Shell for saved entries and CLI tools unless an entry overrides it."
+            ),
+            .init(
+                "launcher.shellExecutable",
+                "Shell Executable",
+                .string,
+                "Explicit path to the selected shell. Empty uses the selected shell from PATH."
+            ),
+            .init(
+                "launcher.terminal",
+                "Terminal",
+                .choice([
+                    .init(value: "builtIn", title: "Built-in Quake Terminal"),
+                    .init(value: "terminal", title: "Terminal"),
+                    .init(value: "ghostty", title: "Ghostty"),
+                    .init(value: "iterm", title: "iTerm2"),
+                    .init(value: "kitty", title: "kitty")
+                ]),
+                "Terminal that commands open in unless an entry overrides it. The built-in option requires the Ghostty Quake Terminal."
+            )
+        ]),
+        IPCSettingsCatalogSection(id: "shellPermissions", title: "Network & Permissions", entries: [
+            .init(
+                "shellPermissions.services.weather",
+                "Weather",
+                .bool,
+                "Lets the weather widget send the city or coordinates you set to its weather service."
+            ),
+            .init(
+                "shellPermissions.services.lyrics",
+                "Lyrics",
+                .bool,
+                "Lets the lyrics widget send the playing track's title, artist, album, and length to its lyrics service."
             )
         ])
     ]

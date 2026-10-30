@@ -17,17 +17,21 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
         controller: WMController,
         updateCoordinator: (any AppUpdateCoordinating)? = nil,
         section: SettingsSection? = nil,
+        anchor: String? = nil,
         presentMonitorSetup: Bool = false,
-        appRuleDraft: AppRuleDraft? = nil
+        appRuleDraft: AppRuleDraft? = nil,
+        launcherRequest: LauncherEditorRequest? = nil
     ) {
         let updateCoordinator = updateCoordinator ?? controller.statusBarController?.settingsMenuModel?
             .updateCoordinator
         windowCornerPreferences.refresh()
+        controller.workspaceBarManager.updateShellPermissions(settings, reloadingManagedPolicy: true)
         if presentMonitorSetup {
             navigation.requestMonitorSetupPresentation()
         } else if let section {
-            navigation.section = section
+            navigation.request(SettingsRoute(section: section, anchor: anchor))
         }
+        if let launcherRequest { navigation.presentLauncherEntry(launcherRequest) }
         if let appRuleDraft {
             navigation.presentRuleDraft(appRuleDraft)
         }
