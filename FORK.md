@@ -103,6 +103,10 @@ In the user's own terminal, `make -C ~/src/OmniWM run` does steps 4 and 5 in one
 
 ## Everyday use
 
+- **Update from GitHub** (another Mac): `git -C ~/src/OmniWM pull --ff-only`.
+  If that refuses, the clone predates the switch away from rebasing (2026-10-30).
+  Check for local work first (`git status`, `git log origin/main..main`), then
+  run `git fetch && git reset --hard origin/main`. Then rebuild and restart as below.
 - **Rebuild after a code change:** `Scripts/fork-dev-install.sh`, then
   **(user)** `Scripts/fork-dev-restart.sh` to quit and reopen Dev. (`make use-dev`
   only switches from the release app; it won't restart a running Dev.)
