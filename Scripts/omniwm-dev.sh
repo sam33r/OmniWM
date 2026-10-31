@@ -84,7 +84,8 @@ seed_settings() {
   esac
   local source="$config_base/omniwm/settings.toml"
   local destination="$config_base/omniwm-dev"
-  if [ ! -e "$destination" ]; then
+  # The file, not the directory: dotfiles may create it for shell/shell.toml.
+  if [ ! -e "$destination/settings.toml" ]; then
     mkdir -p "$destination"
     if [ -f "$source" ]; then
       cp -L "$source" "$destination/settings.toml"

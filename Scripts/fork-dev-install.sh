@@ -21,9 +21,10 @@ OMNIWM_SIGNING_IDENTITY="${OMNIWM_SIGNING_IDENTITY:-OmniWM Dev}" \
   ./Scripts/package-app.sh debug dev
 
 # Same seeding as omniwm-dev.sh: Dev gets its own copy of the release settings
-# the first time only.
+# the first time only. Check for the file, not the directory: the dotfiles repo
+# creates ~/.config/omniwm-dev for shell/shell.toml before Dev is installed.
 config_base="${XDG_CONFIG_HOME:-$HOME/.config}"
-if [ ! -e "$config_base/omniwm-dev" ]; then
+if [ ! -e "$config_base/omniwm-dev/settings.toml" ]; then
   mkdir -p "$config_base/omniwm-dev"
   if [ -f "$config_base/omniwm/settings.toml" ]; then
     cp -L "$config_base/omniwm/settings.toml" "$config_base/omniwm-dev/settings.toml"
