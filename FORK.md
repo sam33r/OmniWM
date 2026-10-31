@@ -94,7 +94,18 @@ quitting/launching apps. An agent can do the rest.
    Homebrew OmniWM and opens Dev. On first launch, grant **OmniWM Dev**
    Accessibility and Input Monitoring (Screen Recording is optional), follow
    any restart prompt, then click **Start OmniWM**.
-6. **Verify:** `omniwmctl version` should report `protocol 23` and `debug` with
+6. **Launch at login.** `make use-dev` doesn't touch login items, so a Mac that
+   had the Homebrew app as a login item starts the release again after a
+   reboot. Swap it to Dev (an agent can run this):
+   ```bash
+   osascript -e 'tell application "System Events"
+     if exists login item "OmniWM" then delete login item "OmniWM"
+     if not (exists login item "OmniWM Dev") then make login item at end with properties {path:(POSIX path of (path to home folder)) & "Applications/OmniWM Dev.app", hidden:false}
+     get the name of every login item
+   end tell'
+   ```
+   Or do it in System Settings → General → Login Items.
+7. **Verify:** `omniwmctl version` should report `protocol 23` and `debug` with
    the fork's `main` commit. `~/bin/omniwmctl` picks the CLI of whichever OmniWM is
    running; the fork's IPC protocol differs from the 0.7.6 release, which
    would reject a mismatched client and break the skhd bindings.
@@ -110,7 +121,8 @@ In the user's own terminal, `make -C ~/src/OmniWM run` does steps 4 and 5 in one
 - **Rebuild after a code change:** `Scripts/fork-dev-install.sh`, then
   **(user)** `Scripts/fork-dev-restart.sh` to quit and reopen Dev. (`make use-dev`
   only switches from the release app; it won't restart a running Dev.)
-- **Back to the Homebrew release:** **(user)** `make -C ~/src/OmniWM use-release`.
+- **Back to the Homebrew release:** **(user)** `make -C ~/src/OmniWM use-release`,
+  and swap the login item back to `/Applications/OmniWM.app` (step 6 in reverse).
 - **Tests:** `. ~/.swiftly/env.sh && swift test --arch arm64 --disable-sandbox`.
 - **Settings:** Dev reads `~/.config/omniwm-dev/settings.toml`, not
   `~/.config/omniwm/`. It uses a newer schema (v5) and migrated its copy on
